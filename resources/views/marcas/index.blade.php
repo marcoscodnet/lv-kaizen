@@ -9,13 +9,19 @@
 @section('content')
     <div class="card mb-3">
         <div class="card-header">
-            <div class="row flex-between-end">
-                <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-tags" aria-hidden="true"></i>Marcas</h5>
+
+            <div class="row flex-between-center">
+                <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-tags" aria-hidden="true"></i><span class="ms-2">Marcas</span></h5>
                 </div>
-                <div class="col-auto ms-auto">
-                    <div class="nav nav-pills nav-pills-falcon flex-grow-1" role="tablist">
-                        <a class='pull-right btn btn-success' href="{{ route('marcas.create') }}">Nuevo</a>
+                <div class="col-8 col-sm-auto text-end ps-2">
+
+                    <div id="table-customers-replace-element">
+                        <a class="btn btn-falcon-default btn-sm" href="{{ route('marcas.create') }}">
+                            <span class="fas fa-plus" data-fa-transform="shrink-3 down-2"></span>
+                            <span class="d-none d-sm-inline-block ms-1">Nuevo</span>
+                        </a>
+
                     </div>
                 </div>
             </div>
@@ -28,11 +34,11 @@
                     <tr>
 
 
-                        <th class="text-900 sort">Nombre</th>
+                        <th scope="col">Nombre</th>
 
 
 
-                        <th>Acciones</th>
+                        <th class="text-end" scope="col">Acciones</th>
 
                     </tr>
                     </thead>
@@ -42,7 +48,7 @@
 
                             <td>{{ $marca->nombre }}</td>
 
-                            <td>@can('marca-editar')<a href="{{ route('marcas.edit',$marca->id) }}" alt="Editar" title="Editar" style="margin-right: 5px;"><i class="fas fa-edit"></i></a>@endcan
+                            <td class="text-end"><div>@can('marca-editar')<a class="btn btn-link p-0" href="{{ route('marcas.edit',$marca->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('marca-eliminar')
                                     <form id="delete-form-{{ $marca->id }}" method="post" action="{{ route('marcas.destroy',$marca->id) }}" style="display: none">
@@ -58,8 +64,13 @@
                         }
                         else{
                         event.preventDefault();
-                        }" alt="Eliminar" title="Eliminar"><i class="fas fa-trash"></i></a>@endcan
-                            </td>
+                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+
+
+
+
+
+                            </div></td>
 
                         </tr>
                     @endforeach
@@ -96,6 +107,18 @@
                 scrollX: true,
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
+                },
+                initComplete: function () {
+                    // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
+                    $('select[name="example1_length"]').removeClass('form-control');
+                    $('input[type="search"]').removeClass('form-control');
+                    $('input[type="search"]').css('width', '70%');
+                },
+                initComplete: function () {
+                    // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
+                    $('select[name="example1_length"]').removeClass('form-control');
+                    $('input[type="search"]').removeClass('form-control');
+                    $('input[type="search"]').css('width', '70%');
                 }
             });
         });

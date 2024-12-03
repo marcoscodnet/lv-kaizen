@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-tags" aria-hidden="true"></i>Crear Modelo</h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-tags" aria-hidden="true"></i><span class="ms-2">Crear Modelo</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 

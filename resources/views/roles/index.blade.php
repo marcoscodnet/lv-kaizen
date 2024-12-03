@@ -9,13 +9,19 @@
 @section('content')
     <div class="card mb-3">
         <div class="card-header">
-            <div class="row flex-between-end">
-                <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-user-plus" aria-hidden="true"></i>Roles</h5>
+
+            <div class="row flex-between-center">
+                <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-user-plus" aria-hidden="true"></i><span class="ms-2">Roles</span></h5>
                 </div>
-                <div class="col-auto ms-auto">
-                    <div class="nav nav-pills nav-pills-falcon flex-grow-1" role="tablist">
-                        <a class='pull-right btn btn-success' href="{{ route('roles.create') }}">Nuevo</a>
+                <div class="col-8 col-sm-auto text-end ps-2">
+
+                    <div id="table-customers-replace-element">
+                        <a class="btn btn-falcon-default btn-sm" href="{{ route('roles.create') }}">
+                            <span class="fas fa-plus" data-fa-transform="shrink-3 down-2"></span>
+                            <span class="d-none d-sm-inline-block ms-1">Nuevo</span>
+                        </a>
+
                     </div>
                 </div>
             </div>
@@ -28,10 +34,10 @@
                     <tr>
 
 
-                        <th class="text-900 sort">Nombre</th>
+                        <th scope="col">Nombre</th>
 
 
-                        <th>Acciones</th>
+                        <th class="text-end" scope="col">Acciones</th>
 
                     </tr>
                     </thead>
@@ -40,7 +46,7 @@
                         <tr>
 
                             <td>{{ $role->name }}</td>
-                            <td>@can('rol-editar')<a href="{{ route('roles.edit',$role->id) }}" alt="Editar" title="Editar" style="margin-right: 5px;"><i class="fas fa-edit"></i></a>@endcan
+                            <td class="text-end"><div>@can('rol-editar')<a href="{{ route('roles.edit',$role->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('rol-eliminar')
                                     <form id="delete-form-{{ $role->id }}" method="post" action="{{ route('roles.destroy',$role->id) }}" style="display: none">
@@ -56,8 +62,8 @@
                         }
                         else{
                         event.preventDefault();
-                        }" alt="Eliminar" title="Eliminar"><i class="fas fa-trash"></i></a>@endcan
-                            </td>
+                        }" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                                </div></td>
 
                         </tr>
                     @endforeach
@@ -94,6 +100,12 @@
                 scrollX: true,
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
+                },
+                initComplete: function () {
+                    // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
+                    $('select[name="example1_length"]').removeClass('form-control');
+                    $('input[type="search"]').removeClass('form-control');
+                    $('input[type="search"]').css('width', '70%');
                 }
             });
         });

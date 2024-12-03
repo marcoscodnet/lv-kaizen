@@ -15,13 +15,19 @@
     <div class="card mb-3">
 
     <div class="card-header">
-        <div class="row flex-between-end">
-            <div class="col-auto align-self-center">
-                <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-user" aria-hidden="true"></i>Usuarios</h5>
+
+        <div class="row flex-between-center">
+            <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
+                <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-user" aria-hidden="true"></i><span class="ms-2">Usuarios</span></h5>
             </div>
-            <div class="col-auto ms-auto">
-                <div class="nav nav-pills nav-pills-falcon flex-grow-1" role="tablist">
-                    <a class='pull-right btn btn-success' href="{{ route('users.create') }}">Nuevo</a>
+            <div class="col-8 col-sm-auto text-end ps-2">
+
+                <div id="table-customers-replace-element">
+                    <a class="btn btn-falcon-default btn-sm" href="{{ route('users.create') }}">
+                        <span class="fas fa-plus" data-fa-transform="shrink-3 down-2"></span>
+                        <span class="d-none d-sm-inline-block ms-1">Nuevo</span>
+                    </a>
+
                 </div>
             </div>
         </div>
@@ -33,12 +39,12 @@
                 <thead class="bg-200">
                 <tr>
 
-                    <th class="text-900 sort"></th>
-                    <th class="text-900 sort">Nombre</th>
+                    <th scope="col"></th>
+                    <th scope="col">Nombre</th>
 
-                    <th class="text-900 sort">E-mail</th>
-                    <th class="text-900 sort">Roles</th>
-                    <th>Acciones</th>
+                    <th scope="col">E-mail</th>
+                    <th scope="col">Roles</th>
+                    <th class="text-end" scope="col">Acciones</th>
 
                 </tr>
                 </thead>
@@ -91,7 +97,7 @@
                             if (data) {
                                 return '<img src="{{ url('images/') }}/' + data + '" class="img-circle" width="50px">';
                             } else {
-                                return '<img src="{{ url('images/user.png') }}" class="img-circle">';
+                                return '<img src="{{ url('images/user.png') }}" class="img-circle" width="50px">';
                             }
                         } },
                     { data: 'name', name: 'name' },
@@ -101,10 +107,10 @@
                             var rolesHtml = '';
                             if (data && data.length > 0) {
                                 data.forEach(function(role) {
-                                    rolesHtml += '<label class="badge badge-success">' + role.name + '</label>';
+                                    rolesHtml += '<label class="badge badge-success" style="color: #5d6776;background-color:#e6e8ec ;">' + role.name + '</label>';
                                 });
                             }
-                            return rolesHtml;
+                            return '<div style="text-align: center;">' + rolesHtml + '</div>';
                         } },
                     // Actions column
                     {
@@ -113,11 +119,11 @@
                         "searchable": false,
                         "render": function(data, type, row) {
                             // Construir HTML para las acciones
-                            var actionsHtml = '';
+                            var actionsHtml = '<div>';
 
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('usuario-editar')
-                                actionsHtml += '<a href="{{ route("users.edit", ":id") }}" alt="Editar" title="Editar" style="margin-right: 5px;"><i class="fas fa-edit"></i></a>'.replace(':id', row.id);
+                                actionsHtml += '<a href="{{ route("users.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
 
 
@@ -127,16 +133,23 @@
                             actionsHtml += '{{ csrf_field() }}';
                             actionsHtml += '{{ method_field('DELETE') }}';
                             actionsHtml += '</form>';
-                            actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'delete-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Eliminar" title="Eliminar" ><i class="fas fa-trash"></i></a>';
+                            actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'delete-form-' + row.id + '\').submit();} else {event.preventDefault();}" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>';
                             @endcan
-
+                                actionsHtml += '</div>';
                                 return actionsHtml;
 
                         },
+                        "class": "text-end"
                     }
                 ],
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
+                },
+                initComplete: function () {
+                    // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
+                    $('select[name="example1_length"]').removeClass('form-control');
+                    $('input[type="search"]').removeClass('form-control');
+                    $('input[type="search"]').css('width', '70%');
                 }
             });
         });

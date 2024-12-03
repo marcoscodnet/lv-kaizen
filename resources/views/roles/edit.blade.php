@@ -12,7 +12,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-user-plus" aria-hidden="true"></i>Editar rol</h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-user-plus" aria-hidden="true"></i><span class="ms-2">Editar rol</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
