@@ -73,6 +73,24 @@
                             </div>
                         </a>
                     @endcan
+                    @can('color-listar')
+                        <a class="nav-link" href="{{ route('colors.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-palette"></span></span><span class="nav-link-text ps-1">Colores</span>
+                            </div>
+                        </a>
+                    @endcan
+                    @can('entidad-listar')
+                        <a class="nav-link" href="{{ route('entidads.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-university"></span></span><span class="nav-link-text ps-1">Entidades</span>
+                            </div>
+                        </a>
+                    @endcan
+                    @can('tipo-servicio-listar')
+                        <a class="nav-link" href="{{ route('tipoServicios.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-tools"></span></span><span class="nav-link-text ps-1">Tipos de Servicios</span>
+                            </div>
+                        </a>
+                    @endcan
             </ul>
 
         </div>

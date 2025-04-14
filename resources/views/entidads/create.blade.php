@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-tags" aria-hidden="true"></i><span class="ms-2">Crear Marca</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-university" aria-hidden="true"></i><span class="ms-2">Crear Entidad</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('marcas.store') }}" method="post" >
+            <form role="form" action="{{ route('entidads.store') }}" method="post" >
                 {{ csrf_field() }}
                 <div class="tab-content">
                     <div class="box-body">
@@ -31,23 +31,19 @@
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="{{ old('nombre') }}">
                                 </div>
                             </div>
+                            <div class="col-lg-offset-3 col-lg-6 col-md-1">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="activa" value="0">
+                                    <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"
+                                        {{ old('activa', $obj->activa ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="activa">
+                                        Activa
+                                    </label>
+                                </div>
 
-                        </div>
-                        <div class="row">
-                            <strong>Tipos de unidades que comercializa la marca</strong>
-                            <div class="row">
-                                @foreach($tipoUnidads as $value)
-                                    <div class="col-md-4">
-                                        <div class="form-check">
-                                            <label>
-                                                <input type="checkbox" name="tipos[]" value="{{ $value->id }}" class="name">
-                                                {{ $value->nombre }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                @endforeach
                             </div>
                         </div>
+
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">Guardar</button>

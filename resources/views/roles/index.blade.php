@@ -17,9 +17,9 @@
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
-                        <a class="btn btn-falcon-default btn-sm" href="{{ route('roles.create') }}">
-                            <span class="fas fa-plus" data-fa-transform="shrink-3 down-2"></span>
-                            <span class="d-none d-sm-inline-block ms-1">Nuevo</span>
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('roles.create') }}">
+                            <span class="fas fa-plus"></span>
+                            <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
 
                     </div>

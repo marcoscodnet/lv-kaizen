@@ -12,12 +12,12 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-tags" aria-hidden="true"></i><span class="ms-2">Marcas</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-university" aria-hidden="true"></i><span class="ms-2">Entidades</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
-                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('marcas.create') }}">
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('entidads.create') }}">
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nueva</span>
                         </a>
@@ -39,7 +39,7 @@
 
 
                         <th scope="col">Nombre</th>
-
+                        <th scope="col">Activa</th>
 
 
                         <th class="text-end" scope="col">Acciones</th>
@@ -47,15 +47,15 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach ($marcas as $marca)
+                    @foreach ($entidads as $entidad)
                         <tr>
 
-                            <td>{{ $marca->nombre }}</td>
+                            <td>{{ $entidad->nombre }}</td>
+                            <td>{{ $entidad->activa?'SI':'NO' }}</td>
+                            <td class="text-end"><div>@can('entidad-editar')<a class="btn btn-link p-0" href="{{ route('entidads.edit',$entidad->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
-                            <td class="text-end"><div>@can('marca-editar')<a class="btn btn-link p-0" href="{{ route('marcas.edit',$marca->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
-
-                                @can('marca-eliminar')
-                                    <form id="delete-form-{{ $marca->id }}" method="post" action="{{ route('marcas.destroy',$marca->id) }}" style="display: none">
+                                @can('entidad-eliminar')
+                                    <form id="delete-form-{{ $entidad->id }}" method="post" action="{{ route('entidads.destroy',$entidad->id) }}" style="display: none">
                                         {{ csrf_field() }}
                                         {{ method_field('DELETE') }}
                                     </form>
@@ -64,7 +64,7 @@
                         if(confirm('Está seguro?'))
                         {
                         event.preventDefault();
-                        document.getElementById('delete-form-{{ $marca->id }}').submit();
+                        document.getElementById('delete-form-{{ $entidad->id }}').submit();
                         }
                         else{
                         event.preventDefault();

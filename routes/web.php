@@ -7,6 +7,9 @@ use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TipoUnidadController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\ModeloController;
+use App\Http\Controllers\ColorController;
+use App\Http\Controllers\EntidadController;
+use App\Http\Controllers\TipoServicioController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -36,6 +39,9 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('marcas', MarcaController::class);
     Route::resource('modelos', ModeloController::class);
     Route::post('modelo-datatable', [ModeloController::class, 'dataTable'])->name('modelos.dataTable');
+    Route::resource('colors', ColorController::class);
+    Route::resource('entidads', EntidadController::class);
+    Route::resource('tipoServicios', TipoServicioController::class);
 });
 
 

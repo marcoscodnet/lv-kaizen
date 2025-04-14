@@ -12,22 +12,18 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-tags" aria-hidden="true"></i><span class="ms-2">Marcas</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-tools" aria-hidden="true"></i><span class="ms-2">Tipos de Servicios</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
-                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('marcas.create') }}">
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('tipoServicios.create') }}">
                             <span class="fas fa-plus"></span>
-                            <span class="d-none d-sm-inline-block ms-2">Nueva</span>
+                            <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
 
                     </div>
                 </div>
-
-
-
-
             </div>
             @include('includes.messages')
         </div>
@@ -47,15 +43,15 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach ($marcas as $marca)
+                    @foreach ($tipoServicios as $tipoServicio)
                         <tr>
 
-                            <td>{{ $marca->nombre }}</td>
+                            <td>{{ $tipoServicio->nombre }}</td>
 
-                            <td class="text-end"><div>@can('marca-editar')<a class="btn btn-link p-0" href="{{ route('marcas.edit',$marca->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td class="text-end"><div>@can('tipo-servicio-editar')<a href="{{ route('tipoServicios.edit',$tipoServicio->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
-                                @can('marca-eliminar')
-                                    <form id="delete-form-{{ $marca->id }}" method="post" action="{{ route('marcas.destroy',$marca->id) }}" style="display: none">
+                                @can('tipo-servicio-eliminar')
+                                    <form id="delete-form-{{ $tipoServicio->id }}" method="post" action="{{ route('tipoServicios.destroy',$tipoServicio->id) }}" style="display: none">
                                         {{ csrf_field() }}
                                         {{ method_field('DELETE') }}
                                     </form>
@@ -64,17 +60,12 @@
                         if(confirm('Está seguro?'))
                         {
                         event.preventDefault();
-                        document.getElementById('delete-form-{{ $marca->id }}').submit();
+                        document.getElementById('delete-form-{{ $tipoServicio->id }}').submit();
                         }
                         else{
                         event.preventDefault();
-                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
-
-
-
-
-
-                            </div></td>
+                        }" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                                </div></td>
 
                         </tr>
                     @endforeach
@@ -111,12 +102,6 @@
                 scrollX: true,
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
-                },
-                initComplete: function () {
-                    // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
-                    $('select[name="example1_length"]').removeClass('form-control');
-                    $('input[type="search"]').removeClass('form-control');
-                    $('input[type="search"]').css('width', '70%');
                 },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)

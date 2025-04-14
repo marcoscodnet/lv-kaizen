@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-tags" aria-hidden="true"></i><span class="ms-2">Crear Marca</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-palette" aria-hidden="true"></i><span class="ms-2">Crear Color</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('marcas.store') }}" method="post" >
+            <form role="form" action="{{ route('colors.store') }}" method="post" >
                 {{ csrf_field() }}
                 <div class="tab-content">
                     <div class="box-body">
@@ -33,25 +33,11 @@
                             </div>
 
                         </div>
-                        <div class="row">
-                            <strong>Tipos de unidades que comercializa la marca</strong>
-                            <div class="row">
-                                @foreach($tipoUnidads as $value)
-                                    <div class="col-md-4">
-                                        <div class="form-check">
-                                            <label>
-                                                <input type="checkbox" name="tipos[]" value="{{ $value->id }}" class="name">
-                                                {{ $value->nombre }}
-                                            </label>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
+
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">Guardar</button>
-                                <a href='{{ route('marcas.index') }}' class="btn btn-warning">Volver</a>
+                                <a href='{{ route('colors.index') }}' class="btn btn-warning">Volver</a>
                             </div>
                         </div>
                     </div>
