@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('headSection')
 
-
+    <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
 
 @endsection
 
@@ -41,24 +41,21 @@
                         <div class="row">
                             <div class="col-lg-offset-3 col-lg-6 col-md-2">
                                 <div class="form-group">
-                                    <label for="direccion">Dirección</label>
-                                    <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Dirección" value="{{ old('direccion') }}">
-                                </div>
-                            </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
-                                <div class="form-group">
-                                    <label for="localidad">Localidad</label>
-                                    <input type="text" class="form-control" id="localidad" name="localidad" placeholder="Localidad" value="{{ old('localidad') }}">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-offset-3 col-lg-12 col-md-12">
-                                <div class="form-group">
                                     <label for="email">E-mail</label>
                                     <input type="text" class="form-control" id="email" name="email" placeholder="email" value="{{ old('email') }}">
                                 </div>
                             </div>
+                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                                <div class="form-group">
+                                    <label for="direccion">Dirección</label>
+                                    <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Dirección" value="{{ old('direccion') }}">
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            @include('includes.select-provincia-localidad')
+
                         </div>
                         <div class="row">
 
@@ -101,5 +98,22 @@
     <!-- FastClick -->
     <script src="{{ asset('bower_components/fastclick/lib/fastclick.js') }}"></script>
 
+    <!-- Select2 -->
+    <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
+    <!-- page script -->
+    <script>
+        $(document).ready(function () {
 
+            $('.js-example-basic-single').select2();
+            if ($('.provincia-select').val()) {
+                $('.provincia-select').trigger('change');
+            }
+        });
+    </script>
+
+    <script>
+        var localidadUrl = "{{ url('localidads') }}";
+
+    </script>
 @endsection

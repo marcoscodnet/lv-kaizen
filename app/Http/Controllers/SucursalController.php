@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Sucursal;
+use App\Models\Provincia;
 class SucursalController extends Controller
 {
 /**
@@ -28,6 +29,7 @@ class SucursalController extends Controller
     {
 
         $sucursals = Sucursal::all();
+
         return view ('sucursals.index',compact('sucursals'));
     }
 
@@ -39,7 +41,8 @@ class SucursalController extends Controller
     public function create()
     {
 
-        return view('sucursals.create');
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('sucursals.create',compact('provincias'));
     }
 
     /**
@@ -53,7 +56,7 @@ class SucursalController extends Controller
         $this->validate($request, [
             'nombre' => 'required',
             'telefono' => 'required',
-            'localidad' => 'required'
+            'localidad_id' => 'required'
 
         ]);
 
@@ -90,8 +93,8 @@ class SucursalController extends Controller
     {
         $sucursal = Sucursal::find($id);
 
-
-        return view('sucursals.edit',compact('sucursal'));
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('sucursals.edit',compact('sucursal','provincias'));
     }
 
     /**
@@ -106,7 +109,7 @@ class SucursalController extends Controller
         $this->validate($request, [
             'nombre' => 'required',
             'telefono' => 'required',
-            'localidad' => 'required'
+            'localidad_id' => 'required'
 
         ]);
 

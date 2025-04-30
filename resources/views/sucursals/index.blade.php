@@ -51,7 +51,7 @@
                             <td>{{ $sucursal->nombre }}</td>
                             <td>{{ $sucursal->email }}</td>
                             <td>{{ $sucursal->telefono }}</td>
-                            <td>{{ $sucursal->localidad }}</td>
+                            <td>{{ $sucursal->localidad->nombre }}</td>
                             <td class="text-end"><div>@can('sucursal-editar')<a href="{{ route('sucursals.edit',$sucursal->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('rol-eliminar')

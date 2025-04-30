@@ -8,5 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Sucursal extends Model
 {
     use HasFactory;
-    protected $fillable = ['nombre','email','telefono','direccion','localidad','comentario'];
+    protected $fillable = ['nombre','email','telefono','direccion','localidad_id','comentario'];
+
+    public function localidad()
+    {
+        return $this->belongsTo('App\Models\Localidad');
+    }
 }

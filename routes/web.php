@@ -42,6 +42,11 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('colors', ColorController::class);
     Route::resource('entidads', EntidadController::class);
     Route::resource('tipoServicios', TipoServicioController::class);
+
+    Route::get('/localidads/{provincia_id}', function ($provincia_id) {
+        return \App\Models\Localidad::where('provincia_id', $provincia_id)->get();
+    });
+
 });
 
 
