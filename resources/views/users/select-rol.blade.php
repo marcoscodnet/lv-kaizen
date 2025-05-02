@@ -65,5 +65,6 @@
 <!-- Bootstrap 3.3.7 -->
 <script src="{{ asset('bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
 
+<script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
 </body>
 </html>

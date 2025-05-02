@@ -7,9 +7,13 @@ use App\Http\Controllers\SucursalController;
 use App\Http\Controllers\TipoUnidadController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\ModeloController;
+use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\EntidadController;
 use App\Http\Controllers\TipoServicioController;
+use App\Http\Controllers\ParametroController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\UnidadController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -42,6 +46,17 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('colors', ColorController::class);
     Route::resource('entidads', EntidadController::class);
     Route::resource('tipoServicios', TipoServicioController::class);
+
+    Route::resource('clientes', ClienteController::class);
+    Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');
+
+    Route::resource('parametros', ParametroController::class);
+
+    Route::resource('productos', ProductoController::class);
+    Route::post('producto-datatable', [ProductoController::class, 'dataTable'])->name('productos.dataTable');
+
+    Route::resource('unidads', UnidadController::class);
+    Route::post('unidad-datatable', [UnidadController::class, 'dataTable'])->name('unidads.dataTable');
 
     Route::get('/localidads/{provincia_id}', function ($provincia_id) {
         return \App\Models\Localidad::where('provincia_id', $provincia_id)->get();

@@ -104,6 +104,8 @@
     <!-- Select2 -->
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
     <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
+
+    <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
     <!-- page script -->
     <script>
         $(document).ready(function () {
@@ -113,11 +115,9 @@
                 $('.provincia-select').trigger('change');
             }
         });
-    </script>
-
-    <script>
         var localidadUrl = "{{ url('localidads') }}";
-
     </script>
+
+
 
 @endsection

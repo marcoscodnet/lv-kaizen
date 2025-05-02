@@ -49,15 +49,17 @@
                             <hr class="mb-0 navbar-vertical-divider" />
                         </div>
                     </div>
-                    @can('sucursal-listar')
-                        <a class="nav-link" href="{{ route('sucursals.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-building"></span></span><span class="nav-link-text ps-1">Sucursales</span>
+
+
+                    @can('color-listar')
+                        <a class="nav-link" href="{{ route('colors.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-palette"></span></span><span class="nav-link-text ps-1">Colores</span>
                             </div>
                         </a>
                     @endcan
-                    @can('tipo-unidad-listar')
-                        <a class="nav-link" href="{{ route('tipoUnidads.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-layer-group"></span></span><span class="nav-link-text ps-1">Tipos de Unidades</span>
+                    @can('entidad-listar')
+                        <a class="nav-link" href="{{ route('entidads.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-university"></span></span><span class="nav-link-text ps-1">Entidades</span>
                             </div>
                         </a>
                     @endcan
@@ -73,15 +75,16 @@
                             </div>
                         </a>
                     @endcan
-                    @can('color-listar')
-                        <a class="nav-link" href="{{ route('colors.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-palette"></span></span><span class="nav-link-text ps-1">Colores</span>
+                    @can('modelo-listar')
+                        <a class="nav-link" href="{{ route('parametros.edit','1') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-file-invoice-dollar"></span></span><span class="nav-link-text ps-1">Modificar boleto</span>
                             </div>
                         </a>
                     @endcan
-                    @can('entidad-listar')
-                        <a class="nav-link" href="{{ route('entidads.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-university"></span></span><span class="nav-link-text ps-1">Entidades</span>
+
+                    @can('sucursal-listar')
+                        <a class="nav-link" href="{{ route('sucursals.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-building"></span></span><span class="nav-link-text ps-1">Sucursales</span>
                             </div>
                         </a>
                     @endcan
@@ -91,6 +94,45 @@
                             </div>
                         </a>
                     @endcan
+                    @can('tipo-unidad-listar')
+                        <a class="nav-link" href="{{ route('tipoUnidads.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-layer-group"></span></span><span class="nav-link-text ps-1">Tipos de Unidades</span>
+                            </div>
+                        </a>
+                    @endcan
+                </li>
+                    <li class="nav-item">
+                        <!-- label-->
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">Administración
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider" />
+                            </div>
+                        </div>
+                        @can('cliente-listar')
+                            <a class="nav-link" href="{{ route('clientes.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-user-friends"></span></span><span class="nav-link-text ps-1">Clientes</span>
+                                </div>
+                            </a>
+                        @endcan
+
+
+                        @can('producto-listar')
+                            <a class="nav-link" href="{{ route('productos.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-wrench"></span></span><span class="nav-link-text ps-1">Productos</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                        @can('unidad-listar')
+                            <a class="nav-link" href="{{ route('unidads.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-motorcycle"></span></span><span class="nav-link-text ps-1">Unidades</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                    </li>
             </ul>
 
         </div>

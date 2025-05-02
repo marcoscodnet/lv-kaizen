@@ -62,6 +62,7 @@
     <!-- FastClick -->
     <script src="{{ asset('bower_components/fastclick/lib/fastclick.js') }}"></script>
 
+    <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
     <!-- page script -->
 
 @endsection
