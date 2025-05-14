@@ -12,12 +12,12 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-cubes" aria-hidden="true"></i><span class="ms-2">Modelos</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Stock Piezas</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
-                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('modelos.create') }}">
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('stockPiezas.create') }}">
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
@@ -33,12 +33,15 @@
                     <thead class="bg-200">
                     <tr>
 
-
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Marca</th>
-
-
-
+                        <th scope="col">Remito</th>
+                        <th scope="col">Código</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col">Cantidad</th>
+                        <th scope="col">Costo</th>
+                        <th scope="col">Precio mín.</th>
+                        <th scope="col">Sucrusal</th>
+                        <th scope="col">Proveedor</th>
+                        <th scope="col">Ingreso</th>
                         <th class="text-end" scope="col">Acciones</th>
 
                     </tr>
@@ -68,6 +71,9 @@
     <!-- FastClick -->
     <script src="{{ asset('bower_components/fastclick/lib/fastclick.js') }}"></script>
 
+    <!-- daterangepicker -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
+
 
     <!-- page script -->
     <!-- page script -->
@@ -81,7 +87,7 @@
                 scrollX: true,
                 paging : true,
                 "ajax": {
-                    "url": "{{ route('modelos.dataTable') }}",
+                    "url": "{{ route('stockPiezas.dataTable') }}",
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
@@ -90,14 +96,26 @@
                     }
                 },
                 columns: [
-
-                    { data: 'modelo_nombre', name: 'modelo_nombre' },
-
+                    { data: 'remito', name: 'remito' },
+                    { data: 'codigo', name: 'codigo' },
+                    { data: 'descripcion', name: 'descripcion' },
+                    { data: 'cantidad', name: 'cantidad' },
+                    { data: 'costo', name: 'costo' },
+                    { data: 'precio_minimo', name: 'precio_minimo' },
+                    { data: 'sucursal_nombre', name: 'sucursal_nombre' },
+                    { data: 'proveedor', name: 'proveedor' },
                     {
-                        data: 'marca_nombre', // Acceder al nombre de la marca a través de la relación
-                        name: 'marca_nombre',
-                        orderable: true,
-                        searchable: true
+                        data: 'ingreso',
+                        name: 'ingreso',
+                        render: function(data) {
+                            // Verificar si el dato es válido
+                            if (data) {
+
+                                return moment(data).format('DD/MM/YYYY');
+                            }
+                            // Si no hay datos, retornar un valor por defecto o una cadena vacía
+                            return '';
+                        }
                     },
                     // Actions column
                     {
@@ -109,14 +127,14 @@
                             var actionsHtml = '<div>';
 
                             // Agregar enlace de edición si el usuario tiene permiso
-                            @can('modelo-editar')
-                                actionsHtml += '<a href="{{ route("modelos.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                            @can('stock-pieza-editar')
+                                actionsHtml += '<a href="{{ route("stockPiezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
 
 
-                            // Agregar formulario de eliminación si el modelo tiene permiso
-                            @can('modelo-eliminar')
-                                actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('modelos.destroy', '') }}/' + row.id + '" style="display: none">';
+                            // Agregar formulario de eliminación si el stockPieza tiene permiso
+                            @can('stock-pieza-eliminar')
+                                actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('stockPiezas.destroy', '') }}/' + row.id + '" style="display: none">';
                             actionsHtml += '{{ csrf_field() }}';
                             actionsHtml += '{{ method_field('DELETE') }}';
                             actionsHtml += '</form>';

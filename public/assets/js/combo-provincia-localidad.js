@@ -5,7 +5,7 @@ $(document).ready(function () {
 
         localidadSelect.empty().append('<option value="">Cargando...</option>');
         let selectedLocalidadId = $('.provincia-select').data('old-localidad');
-        console.log('seleccionada: '+selectedLocalidadId);
+        //console.log('seleccionada: '+selectedLocalidadId);
         if (provinciaID) {
             $.ajax({
                 url: localidadUrl + '/' + provinciaID,  // Usando la variable de JS

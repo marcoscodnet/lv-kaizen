@@ -71,7 +71,7 @@
                     @endcan
                     @can('modelo-listar')
                         <a class="nav-link" href="{{ route('modelos.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Modelos</span>
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cubes"></span></span><span class="nav-link-text ps-1">Modelos</span>
                             </div>
                         </a>
                     @endcan
@@ -116,8 +116,18 @@
                                 </div>
                             </a>
                         @endcan
-
-
+                        @can('pieza-listar')
+                            <a class="nav-link" href="{{ route('piezas.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Piezas</span>
+                                </div>
+                            </a>
+                        @endcan
+                        @can('stock-pieza-listar')
+                            <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
+                                </div>
+                            </a>
+                        @endcan
                         @can('producto-listar')
                             <a class="nav-link" href="{{ route('productos.index') }}" role="button">
                                 <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-wrench"></span></span><span class="nav-link-text ps-1">Productos</span>
