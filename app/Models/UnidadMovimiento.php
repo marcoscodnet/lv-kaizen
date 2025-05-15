@@ -13,10 +13,10 @@ class UnidadMovimiento extends Model
 
 
     public function unidad() {
-        return $this->belongsTo('App\Unidad');
+        return $this->belongsTo('App\Models\Unidad');
     }
 
     public function movimiento() {
-        return $this->belongsTo('App\Movimiento');
+        return $this->belongsTo('App\Models\Movimiento');
     }
 }
