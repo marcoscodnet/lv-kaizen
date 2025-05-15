@@ -78,6 +78,7 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::resource('movimientos', MovimientoController::class);
     Route::post('movimiento-datatable', [MovimientoController::class, 'dataTable'])->name('movimientos.dataTable');
+    Route::get('movimiento-pdf', [MovimientoController::class, 'generatePDF'])->name('movimientos.pdf');
 
 });
 

@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\Sucursal;
 use App\Models\Movimiento;
+use App\Models\Unidad;
 use App\Models\UnidadMovimiento;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use DB;
-
+use PDF;
 class MovimientoController extends Controller
 {
     /**
@@ -168,6 +169,11 @@ class MovimientoController extends Controller
                     );
                     try {
                         UnidadMovimiento::create($data2);
+
+                        // Actualizar sucursal_id de la unidad
+                        Unidad::where('id', $request->unidad_id[$item])
+                            ->update(['sucursal_id' => $request->sucursal_destino_id]);
+
                     }catch(QueryException $ex){
                         $error = $ex->getMessage();
                         $ok=0;
@@ -197,117 +203,73 @@ class MovimientoController extends Controller
 
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        $movimiento = Movimiento::find($id);
-
-        $productos = Producto::with(['tipoMovimiento', 'marca', 'modelo', 'color'])
-            ->get()
-            ->mapWithKeys(function ($producto) {
-                $texto = ($producto->tipoMovimiento->nombre ?? '') . ' - '
-                    . ($producto->marca->nombre ?? '') . ' - '
-                    . ($producto->modelo->nombre ?? '') . ' - '
-                    . ($producto->color->nombre ?? '');
-
-                return [$producto->id => $texto];
-            })
-            ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('movimientos.edit', compact('movimiento','productos','sucursals'));
-
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        $rules = [
-            'producto_id' => 'required',
-            'sucursal_id' => 'required',
-            'motor' => 'required',
-            'cuadro' => 'required',
-            'precio' => 'nullable|numeric', // puede ser vacío, o un número (decimal)
-            'minimo' => 'nullable|integer', // puede ser vacío, o un entero
-
-        ];
-
-        // Definir los mensajes de error personalizados
-        $messages = [
-
-            'producto_id.required' => 'El campo Producto es obligatorio.',
-            'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
-            'motor.required' => 'El campo Nro. Motor es obligatorio.',
-            'cuadro.required' => 'El campo Nro. Cuadro es obligatorio.',
-        ];
-
-        // Crear el validador con las reglas y mensajes
-        $validator = Validator::make($request->all(), $rules, $messages);
-
-        // Validar y verificar si hay errores
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $input = $request->all();
-
-
-
-
-        $movimiento = Movimiento::find($id);
-        try {
-            $movimiento->update($input);
-
-        } catch (QueryException $ex) {
-
-            if ($ex->errorInfo[1] == 1062) {
-                $mensajeError = 'El Producto ya existe.';
-            } else {
-                $mensajeError = $ex->getMessage();
-            }
-
-            // Retornar al formulario con error
-            return redirect()->back()
-                ->withErrors(['error' => $mensajeError])
-                ->withInput();
-
-        } catch (\Exception $ex) {
-
-            return redirect()->back()
-                ->withErrors(['error' => $ex->getMessage()])
-                ->withInput();
-        }
-
-        return redirect()->route('movimientos.index')
-            ->with('success','Movimiento modificada con éxito');
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
+        DB::beginTransaction();
+        try {
+            $movimiento = Movimiento::findOrFail($id);
 
+            // Obtenés la sucursal origen desde el movimiento
+            $sucursalOrigen = $movimiento->sucursal_origen_id;
 
-        Movimiento::find($id)->delete();
+            // Revertir todas las unidades que participaron en el movimiento
+            foreach ($movimiento->unidadMovimientos as $um) {
+                // Revertir la unidad a la sucursal original
+                Unidad::where('id', $um->unidad_id)->update([
+                    'sucursal_id' => $sucursalOrigen
+                ]);
 
-        return redirect()->route('movimientos.index')
-            ->with('success','Movimiento eliminada con éxito');
+                // Eliminar el registro intermedio
+                $um->delete();
+            }
+
+            // Finalmente, eliminar el movimiento
+            $movimiento->delete();
+
+            DB::commit();
+            return redirect()->route('movimientos.index')->with('success', 'Movimiento eliminado y unidades revertidas a su sucursal original.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error al eliminar movimiento: ' . $e->getMessage());
+        }
     }
+
+    public function generatePDF(Request $request,$attach = false)
+    {
+        $movimientoId = $request->query('movimiento_id');
+
+
+
+        $movimiento = Movimiento::find($movimientoId);
+
+
+
+        $template = 'movimientos.pdf';
+        //$unidadMovimientos = $movimiento->unidadMovimientos()->get();
+
+        $data = [
+
+        ];
+        //dd($data);
+
+
+
+
+        $pdf = PDF::loadView($template, $data);
+
+        $pdfPath = 'Movimiento_' . $movimientoId . '.pdf';
+
+        if ($attach) {
+            $fullPath = public_path('/temp/' . $pdfPath);
+            $pdf->save($fullPath);
+            return $fullPath; // Devuelve la ruta del archivo para su uso posterior
+        } else {
+
+            return $pdf->download($pdfPath);
+        }
+
+        // Renderiza la vista de previsualización para HTML
+        //return view('integrantes.alta', $data);
+    }
+
 }

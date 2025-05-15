@@ -184,7 +184,7 @@
                 var tr='<tr>'+
                     '<td style="width:40%;">' + selectProducto + '</td>' +
 
-                    '<td style="width:40%;"><select name="unidad_id[]" class="form-control unidadSelect"><option value="">Seleccionar...</option></select></td>' +
+                    '<td style="width:40%;"><select name="unidad_id[]" class="form-control js-example-basic-single unidadSelect"><option value="">Seleccionar...</option></select></td>' +
                     '<td><a href="#" class="btn btn-danger btn-sm removeProducto"><i class="fa fa-times text-white"></i></a></td>'+
 
                     '</tr>';

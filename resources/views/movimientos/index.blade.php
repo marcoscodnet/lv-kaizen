@@ -126,7 +126,7 @@
                             var actionsHtml = '<div>';
 
 
-
+                            actionsHtml += '<a href="{{ route("movimientos.pdf") }}?joven_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 
                             // Agregar formulario de eliminación si el movimiento tiene permiso
                             @can('movimiento-eliminar')

@@ -18,4 +18,10 @@ class Movimiento extends Model
     public function sucursalDestino() {
         return $this->belongsTo('App\Models\Sucursal', 'sucursal_destino_id');
     }
+
+    public function unidadMovimientos()
+    {
+        return $this->hasMany(UnidadMovimiento::class, 'movimiento_id');
+    }
+
 }
