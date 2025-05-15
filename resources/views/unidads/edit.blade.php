@@ -102,16 +102,26 @@
                             </div>
 
                         </div>
+
                         <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
 
-                            <div class="form-group">
-                                <div class="row">
-                                    <label for="observaciones" class="col-md-12">Observaciones</label>
-                                </div>
-
-                                <!-- Fila 2: Área de texto -->
-                                <div class="row">
                                     <textarea id="observaciones" name="observaciones" class="form-control" rows="3">@if (old('observaciones')){{ old('observaciones') }}@else{{ $unidad->observaciones }}@endif</textarea>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
+
+
+                                    <!-- Fila 2: Área de texto -->
+
+                                    <textarea id="observaciones" name="observaciones" class="form-control" rows="3"></textarea>
+
                                 </div>
                             </div>
 

@@ -102,7 +102,7 @@ class ClienteController extends Controller
             'nombre' => 'required',
             'documento' => 'required|unique:clientes,documento',
             'cuil' => 'regex:/^\d{2}-\d{8}-\d{1}$/',
-            'nacimiento' => 'required',
+            'nacimiento' => 'required|date',
             'particular_area' => 'required',
             'particular' => 'required',
             'celular_area' => 'required',

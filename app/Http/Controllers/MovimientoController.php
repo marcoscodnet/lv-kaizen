@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Color;
-use App\Models\Marca;
-use App\Models\Modelo;
 use App\Models\Producto;
-use App\Models\Unidad;
-use App\Models\TipoUnidad;
 use App\Models\Sucursal;
+use App\Models\Movimiento;
+use App\Models\UnidadMovimiento;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use DB;
 
-class UnidadController extends Controller
+class MovimientoController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -23,10 +21,10 @@ class UnidadController extends Controller
      */
     function __construct()
     {
-        $this->middleware('permission:unidad-listar|unidad-crear|unidad-editar|unidad-eliminar', ['only' => ['index','store']]);
-        $this->middleware('permission:unidad-crear', ['only' => ['create','store']]);
-        $this->middleware('permission:unidad-editar', ['only' => ['edit','update']]);
-        $this->middleware('permission:unidad-eliminar', ['only' => ['destroy']]);
+        $this->middleware('permission:movimiento-listar|movimiento-crear|movimiento-editar|movimiento-eliminar', ['only' => ['index','store']]);
+        $this->middleware('permission:movimiento-crear', ['only' => ['create','store']]);
+        $this->middleware('permission:movimiento-editar', ['only' => ['edit','update']]);
+        $this->middleware('permission:movimiento-eliminar', ['only' => ['destroy']]);
     }
 
     /**
@@ -37,25 +35,23 @@ class UnidadController extends Controller
     public function index(Request $request)
     {
 
-        $unidads = Unidad::all();
-        return view ('unidads.index',compact('unidads'));
+        $movimientos = Movimiento::all();
+        return view ('movimientos.index',compact('movimientos'));
     }
 
 
     public function dataTable(Request $request)
     {
-        $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro']; // Define las columnas disponibles
+        $columnas = ['users.name','origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Unidad::select('unidads.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro')
-            ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
-            ->leftJoin('sucursals', 'unidads.sucursal_id', '=', 'sucursals.id')
-            ->leftJoin('tipo_unidads', 'productos.tipo_unidad_id', '=', 'tipo_unidads.id')
-            ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
-            ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+        $query = Movimiento::select('movimientos.id as id', 'users.name','origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha')
+            ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
+            ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
+            ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
+            ;
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
@@ -79,7 +75,7 @@ class UnidadController extends Controller
         $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
 
         // Obtener la cantidad total de registros sin filtrar
-        $recordsTotal = Unidad::count();
+        $recordsTotal = Movimiento::count();
 
 
 
@@ -111,31 +107,34 @@ class UnidadController extends Controller
                 return [$producto->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $origens = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $destinos = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('unidads.create', compact('productos','sucursals'));
+        return view('movimientos.create', compact('productos','origens','destinos'));
     }
 
     public function store(Request $request)
     {
         $rules = [
-            'producto_id' => 'required',
-            'sucursal_id' => 'required',
-            'motor' => 'required',
-            'cuadro' => 'required',
-            'precio' => 'nullable|numeric', // puede ser vacío, o un número (decimal)
-            'minimo' => 'nullable|integer', // puede ser vacío, o un entero
-
+            'sucursal_origen_id' => 'required',
+            'sucursal_destino_id' => 'required',
+            'fecha' => 'required|date',
+            'unidad_id' => 'required|array|min:1',
+            'unidad_id.*' => 'required|distinct',
         ];
+
 
         // Definir los mensajes de error personalizados
         $messages = [
-
-            'producto_id.required' => 'El campo Producto es obligatorio.',
-            'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
-            'motor.required' => 'El campo Nro. Motor es obligatorio.',
-            'cuadro.required' => 'El campo Nro. Cuadro es obligatorio.',
+            'sucursal_origen_id.required' => 'El campo Origen es obligatorio.',
+            'sucursal_destino_id.required' => 'El campo Destino es obligatorio.',
+            'fecha.required' => 'La fecha es obligatoria.',
+            'unidad_id.required' => 'Debe agregar al menos una unidad.',
+            'unidad_id.min' => 'Debe agregar al menos una unidad.',
+            'unidad_id.*.required' => 'Debe seleccionar una unidad para cada producto.',
+            'unidad_id.*.distinct' => 'No puede repetir unidades.',
         ];
+
 
         // Crear el validador con las reglas y mensajes
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -149,13 +148,53 @@ class UnidadController extends Controller
 
 
         $input = $request->all();
+        // Obtener el ID del usuario autenticado
+        $userId = Auth::id();
+        $input['user_id'] = $userId;
+
+        DB::beginTransaction();
+        $ok=1;
+        try {
+            $movimiento = Movimiento::create($input);
+
+            $lastid=$movimiento->id;
+            if(count($request->unidad_id) > 0)
+            {
+                foreach($request->unidad_id as $item=>$v){
+
+                    $data2=array(
+                        'movimiento_id'=>$lastid,
+                        'unidad_id'=>$request->unidad_id[$item]
+                    );
+                    try {
+                        UnidadMovimiento::create($data2);
+                    }catch(QueryException $ex){
+                        $error = $ex->getMessage();
+                        $ok=0;
+                        continue;
+                    }
+                }
+            }
+
+        }catch(Exception $e){
+            //if email or phone exist before in db redirect with error messages
+            $ok=0;
+        }
+        if ($ok){
+            DB::commit();
+            $respuestaID='success';
+            $respuestaMSJ='Registro creado satisfactoriamente';
+        }
+        else{
+            DB::rollback();
+            $respuestaID='error';
+            $respuestaMSJ=$error;
+        }
+
+        return redirect()->route('movimientos.index')->with($respuestaID,$respuestaMSJ);
 
 
-        $unidad = Unidad::create($input);
 
-
-        return redirect()->route('unidads.index')
-            ->with('success','Unidad creada con éxito');
     }
 
     /**
@@ -166,12 +205,12 @@ class UnidadController extends Controller
      */
     public function edit($id)
     {
-        $unidad = Unidad::find($id);
+        $movimiento = Movimiento::find($id);
 
-        $productos = Producto::with(['tipoUnidad', 'marca', 'modelo', 'color'])
+        $productos = Producto::with(['tipoMovimiento', 'marca', 'modelo', 'color'])
             ->get()
             ->mapWithKeys(function ($producto) {
-                $texto = ($producto->tipoUnidad->nombre ?? '') . ' - '
+                $texto = ($producto->tipoMovimiento->nombre ?? '') . ' - '
                     . ($producto->marca->nombre ?? '') . ' - '
                     . ($producto->modelo->nombre ?? '') . ' - '
                     . ($producto->color->nombre ?? '');
@@ -180,7 +219,7 @@ class UnidadController extends Controller
             })
             ->prepend('', ''); // si necesitas un vacío al principio
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('unidads.edit', compact('unidad','productos','sucursals'));
+        return view('movimientos.edit', compact('movimiento','productos','sucursals'));
 
     }
 
@@ -227,9 +266,9 @@ class UnidadController extends Controller
 
 
 
-        $unidad = Unidad::find($id);
+        $movimiento = Movimiento::find($id);
         try {
-            $unidad->update($input);
+            $movimiento->update($input);
 
         } catch (QueryException $ex) {
 
@@ -251,8 +290,8 @@ class UnidadController extends Controller
                 ->withInput();
         }
 
-        return redirect()->route('unidads.index')
-            ->with('success','Unidad modificada con éxito');
+        return redirect()->route('movimientos.index')
+            ->with('success','Movimiento modificada con éxito');
     }
 
 
@@ -266,35 +305,9 @@ class UnidadController extends Controller
     {
 
 
-        Unidad::find($id)->delete();
+        Movimiento::find($id)->delete();
 
-        return redirect()->route('unidads.index')
-            ->with('success','Unidad eliminada con éxito');
+        return redirect()->route('movimientos.index')
+            ->with('success','Movimiento eliminada con éxito');
     }
-
-    public function getUnidadsPorProducto($productoId)
-    {
-
-        $sucursalOrigenId = request('sucursal_origen_id');
-
-        // Si no envían sucursal_origen_id, devolver array vacío
-        if (!$sucursalOrigenId) {
-            return response()->json([]);
-        }
-
-        $unidades = Unidad::where('producto_id', $productoId)
-            ->where('sucursal_id', $sucursalOrigenId)
-            ->get();
-
-        // Retornar JSON con id y texto formateado
-        return response()->json(
-            $unidades->map(function ($unidad) {
-                return [
-                    'id' => $unidad->id,
-                    'texto' => 'Motor: ' . $unidad->motor . ' - Cuadro: ' . $unidad->cuadro,
-                ];
-            })
-        );
-    }
-
 }

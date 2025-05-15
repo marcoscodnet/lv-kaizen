@@ -16,6 +16,7 @@ use App\Http\Controllers\TipoServicioController;
 use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\UnidadController;
+use App\Http\Controllers\MovimientoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -59,6 +60,7 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::resource('unidads', UnidadController::class);
     Route::post('unidad-datatable', [UnidadController::class, 'dataTable'])->name('unidads.dataTable');
+    Route::get('/api/unidads-por-producto/{productoId}', [UnidadController::class, 'getUnidadsPorProducto'])->name('api.unidads.getUnidadsPorProducto');
 
     Route::resource('piezas', PiezaController::class);
     Route::post('pieza-datatable', [PiezaController::class, 'dataTable'])->name('piezas.dataTable');
@@ -73,6 +75,9 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('/localidads/{provincia_id}', function ($provincia_id) {
         return \App\Models\Localidad::where('provincia_id', $provincia_id)->get();
     });
+
+    Route::resource('movimientos', MovimientoController::class);
+    Route::post('movimiento-datatable', [MovimientoController::class, 'dataTable'])->name('movimientos.dataTable');
 
 });
 

@@ -57,16 +57,27 @@
                         <div class="row">
                             @include('includes.select-provincia-localidad')
                         </div>
-                        <div class="row">
 
-                            <div class="form-group">
-                                <div class="row">
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
+
                                     <label for="comentario" class="col-md-12">Comentario</label>
                                 </div>
+                            </div>
 
-                                <!-- Fila 2: Área de texto -->
-                                <div class="row">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
+
+
+                                    <!-- Fila 2: Área de texto -->
+
                                     <textarea id="comentario" name="comentario" class="form-control" rows="3">@if (old('comentario')){{ old('comentario') }}@else{{ $sucursal->comentario }}@endif</textarea>
+
                                 </div>
                             </div>
 

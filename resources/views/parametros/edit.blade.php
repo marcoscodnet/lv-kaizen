@@ -27,15 +27,24 @@
                         @include('includes.messages')
 
                         <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
 
-                            <div class="form-group">
-                                <div class="row">
                                     <label for="contenido" class="col-md-12">En la impresión, el siguiente texto, se mostrará justificado y con un formato establecido.</label>
                                 </div>
+                            </div>
 
-                                <!-- Fila 2: Área de texto -->
-                                <div class="row">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
+
+
+                                    <!-- Fila 2: Área de texto -->
+
                                     <textarea id="contenido" name="contenido" class="form-control" rows="20">@if (old('contenido')){{ old('contenido') }}@else{{ $parametro->contenido }}@endif</textarea>
+
                                 </div>
                             </div>
 

@@ -122,12 +122,6 @@
                                 </div>
                             </a>
                         @endcan
-                        @can('stock-pieza-listar')
-                            <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
-                                </div>
-                            </a>
-                        @endcan
                         @can('producto-listar')
                             <a class="nav-link" href="{{ route('productos.index') }}" role="button">
                                 <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-wrench"></span></span><span class="nav-link-text ps-1">Productos</span>
@@ -141,6 +135,32 @@
                                 </div>
                             </a>
                         @endcan
+
+                    </li>
+                    <li class="nav-item">
+                        <!-- label-->
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">Stock
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider" />
+                            </div>
+                        </div>
+
+                        @can('stock-pieza-listar')
+                            <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                        @can('movimiento-listar')
+                            <a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos</span>
+                                </div>
+                            </a>
+                        @endcan
+
 
                     </li>
             </ul>

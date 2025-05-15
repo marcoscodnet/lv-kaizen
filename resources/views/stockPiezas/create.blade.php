@@ -158,7 +158,7 @@
                 if (piezaId) {
                     let url = piezaUrlTemplate.replace('PIEZA_ID', piezaId);
 
-                    $.ajax({
+                        $.ajax({
                         url: url,
                         type: 'GET',
                         success: function (data) {
