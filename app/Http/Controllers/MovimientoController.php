@@ -237,18 +237,21 @@ class MovimientoController extends Controller
     public function generatePDF(Request $request,$attach = false)
     {
         $movimientoId = $request->query('movimiento_id');
-
-
-
         $movimiento = Movimiento::find($movimientoId);
 
 
 
         $template = 'movimientos.pdf';
-        //$unidadMovimientos = $movimiento->unidadMovimientos()->get();
+        $unidadMovimientos = $movimiento->unidadMovimientos()->get();
+
+
 
         $data = [
-
+            'remito' => $movimientoId,
+            'fecha' => $movimiento->fecha,
+            'origen' => $movimiento->sucursalOrigen,
+            'destino' => $movimiento->sucursalDestino,
+            'unidades' => $unidadMovimientos,
         ];
         //dd($data);
 
