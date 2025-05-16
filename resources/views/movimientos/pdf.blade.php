@@ -153,7 +153,7 @@
     </div>
 </div>
 <div class="content" style="border: 1px solid #000;">
-    <div class="content" style="margin-top: 10px;margin-bottom: 10px;">
+    <div class="content" style="margin-top: 10px;margin-bottom: 10px;margin-left: 5px;">
         Remitimos a ud. lo siguiente:
     </div>
 
@@ -224,7 +224,7 @@
     </div>
 </div>
 <div class="content" style="border: 1px solid #000;">
-    <div class="content" style="margin-top: 10px;margin-bottom: 10px;">
+    <div class="content" style="margin-top: 10px;margin-bottom: 10px;margin-left: 5px;">
         Remitimos a ud. lo siguiente:
     </div>
 
