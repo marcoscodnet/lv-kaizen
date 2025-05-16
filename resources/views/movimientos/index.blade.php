@@ -95,7 +95,7 @@
                 },
                 columns: [
 
-                    { data: 'name', name: 'name' },
+                    { data: 'usuario_nombre', name: 'usuario_nombre' },
 
 
 

@@ -43,12 +43,12 @@ class MovimientoController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['users.name','origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha']; // Define las columnas disponibles
+        $columnas = [   DB::raw("IFNULL(users.name, movimientos.user_name)"),'origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Movimiento::select('movimientos.id as id', 'users.name','origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha')
+        $query = Movimiento::select('movimientos.id as id', DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),'origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha')
             ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
             ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
