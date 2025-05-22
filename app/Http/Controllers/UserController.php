@@ -128,7 +128,7 @@ class UserController extends Controller
 
         $input = $request->all();
         $input['password'] = Hash::make($input['password']);
-
+        $input['activo'] = isset($request->activo) ? 1 : 0;
         if ($files = $request->file('image')) {
             $image = $request->file('image');
             $name = time().'.'.$image->getClientOriginalExtension();
@@ -200,7 +200,7 @@ class UserController extends Controller
         }else{
             $input = Arr::except($input,array('password'));
         }
-
+        $input['activo'] = isset($request->activo) ? 1 : 0;
         if ($files = $request->file('image')) {
             $image = $request->file('image');
             $name = time().'.'.$image->getClientOriginalExtension();

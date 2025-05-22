@@ -147,12 +147,7 @@
                             </div>
                         </div>
 
-                        @can('stock-pieza-listar')
-                            <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
-                                </div>
-                            </a>
-                        @endcan
+
 
                         @can('movimiento-listar')
                             <a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
@@ -161,6 +156,19 @@
                             </a>
                         @endcan
 
+                        @can('stock-pieza-listar')
+                            <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                        @can('venta-pieza-listar')
+                            <a class="nav-link" href="{{ route('ventaPiezas.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-shopping-cart"></span></span><span class="nav-link-text ps-1">Venta Piezas</span>
+                                </div>
+                            </a>
+                        @endcan
 
                     </li>
             </ul>

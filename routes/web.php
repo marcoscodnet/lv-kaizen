@@ -17,6 +17,7 @@ use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\UnidadController;
 use App\Http\Controllers\MovimientoController;
+use App\Http\Controllers\VentaPiezaController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -79,6 +80,10 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('movimientos', MovimientoController::class);
     Route::post('movimiento-datatable', [MovimientoController::class, 'dataTable'])->name('movimientos.dataTable');
     Route::get('movimiento-pdf', [MovimientoController::class, 'generatePDF'])->name('movimientos.pdf');
+
+    Route::resource('ventaPiezas', VentaPiezaController::class);
+    Route::post('ventaPieza-datatable', [VentaPiezaController::class, 'dataTable'])->name('ventaPiezas.dataTable');
+    Route::get('ventaPieza-pdf', [VentaPiezaController::class, 'generatePDF'])->name('ventaPiezas.pdf');
 
 });
 

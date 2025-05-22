@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'image',
         'sucursal_id', // Nuevo campo facultad_id
+        'activo',
     ];
 
     /**

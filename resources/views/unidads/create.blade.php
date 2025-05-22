@@ -118,7 +118,9 @@
 
                                     <!-- Fila 2: Área de texto -->
 
-                                    <textarea id="observaciones" name="observaciones" class="form-control" rows="3"></textarea>
+                                    <textarea id="observaciones" name="observaciones" class="form-control" rows="3">
+                                        @if (old('observaciones')){{ old('observaciones') }}@endif
+                                    </textarea>
 
                                 </div>
                             </div>

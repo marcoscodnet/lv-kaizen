@@ -39,7 +39,7 @@ class StockPiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso']; // Define las columnas disponibles
+        $columnas = ['stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');

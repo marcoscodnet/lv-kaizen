@@ -65,7 +65,14 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-lg-offset-3 col-lg-6 col-md-5">
+                                <div class="form-group">
+                                    <label for="activo">Activo</label><br>
+                                    <input type="checkbox"  id="activo" name="activo" value="true"  checked>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="row">
                             <div class="col-lg-offset-3 col-lg-6 col-md-5">
                                 <div class="form-group">
