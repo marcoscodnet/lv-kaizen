@@ -39,7 +39,7 @@
                         <th scope="col">Cantidad</th>
                         <th scope="col">Costo</th>
                         <th scope="col">Precio mín.</th>
-                        <th scope="col">Sucrusal</th>
+                        <th scope="col">Sucursal</th>
                         <th scope="col">Proveedor</th>
                         <th scope="col">Ingreso</th>
                         <th class="text-end" scope="col">Acciones</th>

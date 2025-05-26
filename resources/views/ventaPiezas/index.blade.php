@@ -112,7 +112,7 @@
                     { data: 'cliente', name: 'cliente' },
                     { data: 'pedido', name: 'pedido' },
                     { data: 'destino', name: 'destino' },
-                    { data: 'monto', name: 'monto' },
+                    { data: 'precio_total', name: 'precio_total' },
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'usuario_nombre', name: 'usuario_nombre' },
                     { data: 'piezas_codigos', name: 'piezas_codigos' },
@@ -126,6 +126,10 @@
                             // Construir HTML para las acciones
                             var actionsHtml = '<div>';
 
+                            // Agregar enlace de edición si el usuario tiene permiso
+                            @can('venta-pieza-editar')
+                                actionsHtml += '<a href="{{ route("ventaPiezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-right: 5px;"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                            @endcan
 
                             actionsHtml += '<a href="{{ route("ventaPiezas.pdf") }}?venta_pieza_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 

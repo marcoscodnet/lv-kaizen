@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Crear venta pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Editar venta pieza</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -18,8 +18,9 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('ventaPiezas.store') }}" method="post" >
-                {{ csrf_field() }}
+            <form role="form" action="{{ route('ventaPiezas.update',$ventaPieza->id) }}" method="post" enctype="multipart/form-data">
+                    {{ csrf_field() }}
+                    {{ method_field('PUT') }}
                 <div class="tab-content">
                     <div class="box-body">
 
@@ -33,7 +34,7 @@
 
                                         @foreach($users as $userId => $user)
                                             <option value="{{ $userId }}"
-                                                {{ old('user_id', auth()->id()) == $userId ? 'selected' : '' }}>
+                                                {{ old('user_id', $ventaPieza->user_id) == $userId ? 'selected' : '' }}>
                                                 {{ $user }}
                                             </option>
                                         @endforeach
@@ -44,7 +45,7 @@
                             <div class="col-lg-offset-3 col-lg-3 col-md-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
-                                    <input type="date" class="form-control" id="fecha" name="fecha"  value="{{ now()->format('Y-m-d') }}" readonly required>
+                                    <input type="date" class="form-control" id="fecha" name="fecha"  value="@if (old('fecha')){{ old('fecha') }}@else{{ ($ventaPieza->fecha)?date('Y-m-d', strtotime($ventaPieza->fecha)):'' }}@endif" readonly required>
                                 </div>
                             </div>
                         </div>
@@ -71,10 +72,26 @@
                                 <tbody id="cuerpoPieza">
                                 @php
                                     $oldPiezas = old('pieza_id', []);
+                                    $oldSucursalIds = old('sucursal_id_item', []);
+                                    $oldCostos = old('costo', []);
+                                    $oldPreciosMinimos = old('precio_minimo', []);
+                                    $oldCantidades = old('cantidad', []);
+                                    $oldPrecios = old('precio', []);
                                 @endphp
 
-                                @foreach($oldPiezas as $i => $piezaId)
-                                    <tr>
+                                @foreach($oldPiezas ?: $ventaPieza->piezas as $i => $pieza)
+                                    @php
+                                        // Para el caso old, $pieza es el id. Si viene del modelo, es un objeto.
+                                        $piezaId = is_object($pieza) ? $pieza->pieza_id : $pieza;
+
+                                        // Para sucursal, costo, precio_minimo, cantidad, precio tratamos igual
+                                        $sucursalId = old('sucursal_id_item.' . $i) ?? (is_object($pieza) ? $pieza->sucursal_id : '');
+                                        $costo = old('costo.' . $i) ?? (is_object($pieza) ? $pieza->costo : '');
+                                        $precioMinimo = old('precio_minimo.' . $i) ?? (is_object($pieza) ? $pieza->precio_minimo : '');
+                                        $cantidad = old('cantidad.' . $i) ?? (is_object($pieza) ? $pieza->cantidad : '');
+                                        $precio = old('precio.' . $i) ?? (is_object($pieza) ? $pieza->precio : '');
+                                    @endphp
+                                    <tr data-sucursal-id="{{ $pieza->sucursal_id }}">
                                         <td style="width: 25%;">
                                             <select name="pieza_id[]" class="form-control js-example-basic-single selectPieza" required>
                                                 <option value="">Seleccione...</option>
@@ -88,24 +105,20 @@
                                         <td style="width: 20%;">
                                             <select name="sucursal_id_item[]" class="form-control sucursalSelect" required>
                                                 <option value="">Seleccione...</option>
-                                                @foreach($sucursals as $sucursalId => $sucursal)
-                                                    <option value="{{ $sucursalId }}" {{ old('sucursal_id_item.' . $i) == $sucursalId ? 'selected' : '' }}>
-                                                        {{ $sucursal }}
-                                                    </option>
-                                                @endforeach
+                                                <!-- Las opciones se llenan con JS -->
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" name="costo[]" class="form-control" value="{{ old('costo.' . $i) }}">
+                                            <input type="number" name="costo[]" class="form-control" value="{{ $costo }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="precio_minimo[]" class="form-control" value="{{ old('precio_minimo.' . $i) }}">
+                                            <input type="number" name="precio_minimo[]" class="form-control" value="{{ $precioMinimo }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="cantidad[]" class="form-control" value="{{ old('cantidad.' . $i) }}">
+                                            <input type="number" name="cantidad[]" class="form-control" value="{{ $cantidad }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="precio[]" class="form-control" value="{{ old('precio.' . $i) }}">
+                                            <input type="number" name="precio[]" class="form-control" value="{{ $precio }}">
                                         </td>
                                         <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
                                     </tr>
@@ -138,7 +151,7 @@
                                     <!-- Fila 2: Área de texto -->
 
                                         <textarea id="descripcion" name="descripcion" class="form-control" rows="3">
-                                            @if (old('descripcion')){{ old('descripcion') }}@endif
+                                            {{ old('descripcion', $ventaPieza->descripcion) }}
                                         </textarea>
 
                                 </div>
@@ -155,7 +168,7 @@
                                             Seleccionar...
                                         </option>
                                         @foreach (config('destinos') as $key => $label)
-                                            <option value="{{ $key }}" {{ old('destino', $ventaPiea->destino ?? '') == $key ? 'selected' : '' }}>
+                                            <option value="{{ $key }}" {{ old('destino', $ventaPieza->destino ?? '') == $key ? 'selected' : '' }}>
                                                 {{ $label }}
                                             </option>
                                         @endforeach
@@ -171,25 +184,25 @@
                             <div class="col-lg-offset-3 col-lg-4 col-md-2">
                                 <div class="form-group">
                                     <label for="cliente">Cliente</label>
-                                    <input type="text" class="form-control" id="cliente" name="cliente" placeholder="Cliente" value="{{ old('cliente') }}">
+                                    <input type="text" class="form-control" id="cliente" name="cliente" placeholder="Cliente" value="{{ old('cliente', $ventaPieza->cliente) }}">
                                 </div>
                             </div>
                             <div class="col-lg-offset-3 col-lg-2 col-md-2">
                                 <div class="form-group">
                                     <label for="documento">Documento</label>
-                                    <input type="text" class="form-control" id="documento" name="documento" placeholder="Documento" value="{{ old('documento') }}">
+                                    <input type="text" class="form-control" id="documento" name="documento" placeholder="Documento" value="{{ old('documento', $ventaPieza->documento) }}">
                                 </div>
                             </div>
                             <div class="col-lg-offset-3 col-lg-2 col-md-2">
                                 <div class="form-group">
                                     <label for="telefono">Teléfono</label>
-                                    <input type="text" class="form-control" id="telefono" name="telefono" placeholder="Teléfono" value="{{ old('telefono') }}">
+                                    <input type="text" class="form-control" id="telefono" name="telefono" placeholder="Teléfono" value="{{ old('telefono', $ventaPieza->telefono) }}">
                                 </div>
                             </div>
                             <div class="col-lg-offset-3 col-lg-3 col-md-2">
                                 <div class="form-group">
                                     <label for="moto">Moto</label>
-                                    <input type="text" class="form-control" id="moto" name="moto" placeholder="Moto" value="{{ old('moto') }}">
+                                    <input type="text" class="form-control" id="moto" name="moto" placeholder="Moto" value="{{ old('moto', $ventaPieza->moto) }}">
                                 </div>
                             </div>
 
@@ -205,7 +218,7 @@
                                     <select name="sucursal_id" class="form-control js-example-basic-single">
 
                                         @foreach($sucursals as $sucursalId => $sucursal)
-                                            <option value="{{ $sucursalId }}" {{ old('sucursal_id') == $sucursalId ? 'selected' : '' }}>{{ $sucursal }}</option>
+                                            <option value="{{ $sucursalId }}" {{ old('sucursal_id', $ventaPieza->sucursal_id) == $sucursalId ? 'selected' : '' }}>{{ $sucursal }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -213,7 +226,7 @@
                             <div class="col-lg-offset-3 col-lg-3 col-md-2">
                                 <div class="form-group">
                                     <label for="pedido">Nro. Pedido Reparación</label>
-                                    <input type="text" class="form-control" id="pedido_sucursal" name="pedido_sucursal" placeholder="Nro. Pedido Reparación" value="{{ old('pedido') }}">
+                                    <input type="text" class="form-control" id="pedido_sucursal" name="pedido_sucursal" placeholder="Nro. Pedido Reparación" value="{{ old('pedido', $ventaPieza->pedido) }}">
                                 </div>
                             </div>
 
@@ -228,12 +241,13 @@
                             <div class="col-lg-offset-3 col-lg-3 col-md-2">
                                 <div class="form-group">
                                     <label for="pedido">Nro. Pedido Reparación</label>
-                                    <input type="text" class="form-control" id="pedido_taller" name="pedido_taller" placeholder="Nro. Pedido Reparación" value="{{ old('pedido') }}">
+                                    <input type="text" class="form-control" id="pedido_taller" name="pedido_taller" placeholder="Nro. Pedido Reparación" value="{{ old('pedido', $ventaPieza->pedido) }}">
                                 </div>
                             </div>
 
 
-                            <input type="hidden" name="pedido" id="pedido_hidden" value="{{ old('pedido') }}">
+                            <input type="hidden" name="pedido" id="pedido_hidden" value="{{ old('pedido', $ventaPieza->pedido) }}">
+
 
                         </div>
 
@@ -391,6 +405,26 @@
                         precioMinimoInput.val(match.precio_minimo);
                     }
                 }
+            });
+
+            $('#cuerpoPieza tr').each(function () {
+                const row = $(this);
+                const piezaSelect = row.find('.selectPieza');
+                const sucursalSelect = row.find('.sucursalSelect');
+                const costoInput = row.find('.costo');
+                const precioMinimoInput = row.find('.precio_minimo');
+
+                const sucursalIdGuardada = row.data('sucursal-id');
+
+                // Disparo el change para cargar las sucursales en el select
+                piezaSelect.trigger('change');
+
+                // Espera un pequeño delay para que cargue el select de sucursal (ya que se llena dinámicamente)
+                setTimeout(() => {
+                    if (sucursalIdGuardada) {
+                        sucursalSelect.val(sucursalIdGuardada).trigger('change');
+                    }
+                }, 100);
             });
 
             $('form').on('submit', function () {
