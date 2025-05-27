@@ -48,7 +48,7 @@ class VentaPiezaController extends Controller
         SELECT SUM(pvp.precio)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
-    ) as precio_total"),'sucursals.nombre as sucursal_nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+    ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
             DB::raw("(
     SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
     FROM pieza_venta_piezas pvp
@@ -478,7 +478,7 @@ class VentaPiezaController extends Controller
             'remito' => str_pad($ventaPieza->id,8,'0',STR_PAD_LEFT),
             'fecha' => $ventaPieza->fecha,
             'destino' => $destino,
-            'vendedor' => $ventaPieza->user->name,
+            'vendedor' => (isset($ventaPieza->user))?$ventaPieza->user->name:$ventaPieza->user_name,
             'piezaVentapiezas' => $ventaPieza->piezas,
             'descripcion' => $descripcion,
         ];
