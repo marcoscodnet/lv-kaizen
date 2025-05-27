@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use DB;
 use Carbon\Carbon;
+use PDF;
 class VentaPiezaController extends Controller
 {
     /**
@@ -442,5 +443,64 @@ class VentaPiezaController extends Controller
 
         return redirect()->route('ventaPiezas.index')
             ->with('success','Venta pieza anulada con éxito');
+    }
+
+    public function generatePDF(Request $request,$attach = false)
+    {
+        $ventaPiezaId = $request->query('venta_pieza_id');
+        $ventaPieza = VentaPieza::find($ventaPiezaId);
+
+
+
+        $template = 'ventaPiezas.pdf';
+        /*$unidadMovimientos = $ventaPieza->unidadMovimientos()->get();*/
+        $destino='';
+        $descripcion='';
+        switch ($ventaPieza->destino) {
+            case 'Salón':
+                $destino ='Apellido y Nombre: '.$ventaPieza->cliente.'<br>Moto: '.$ventaPieza->moto.'<br>Documento: '.$ventaPieza->documento.'<br>Tel: '.$ventaPieza->telefono;
+                $descripcion='Descripción:<br>'.$ventaPieza->descripcion;
+                break;
+
+            case 'Sucursal':
+                $destino ='Sucursal: '.$ventaPieza->sucursal->nombre;
+                $descripcion='Nro. de Reparación: '.$ventaPieza->pedido;
+                break;
+
+            case 'Taller':
+                $destino ='Destino: Taller';
+                $descripcion='Nro. de Reparación: '.$ventaPieza->pedido;
+                break;
+        }
+
+
+        $data = [
+            'remito' => str_pad($ventaPieza->id,8,'0',STR_PAD_LEFT),
+            'fecha' => $ventaPieza->fecha,
+            'destino' => $destino,
+            'vendedor' => $ventaPieza->user->name,
+            'piezaVentapiezas' => $ventaPieza->piezas,
+            'descripcion' => $descripcion,
+        ];
+        //dd($data);
+
+
+
+
+        $pdf = PDF::loadView($template, $data);
+
+        $pdfPath = 'Venta_Pieza_' . $ventaPiezaId . '.pdf';
+
+        if ($attach) {
+            $fullPath = public_path('/temp/' . $pdfPath);
+            $pdf->save($fullPath);
+            return $fullPath; // Devuelve la ruta del archivo para su uso posterior
+        } else {
+
+            return $pdf->download($pdfPath);
+        }
+
+        // Renderiza la vista de previsualización para HTML
+        //return view('integrantes.alta', $data);
     }
 }

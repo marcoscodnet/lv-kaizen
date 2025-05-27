@@ -71,9 +71,6 @@
             text-align: center;
         }
 
-        tr:nth-child(even) {
-            background-color: #f9f9f9; /* opcional para filas intercaladas */
-        }
 
         .footer {
             position: fixed;

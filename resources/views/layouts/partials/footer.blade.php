@@ -23,6 +23,26 @@
     <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
     <!-- jQuery UI 1.11.4 -->
     <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
-    @section('footerSection')
+    <script>
+        $(function() {
+            function ajustarTabla() {
+                setTimeout(function () {
+                    if ($.fn.dataTable.isDataTable('#example1')) {
+                        $('#example1').DataTable().columns.adjust().responsive.recalc();
+                        console.log("Tabla ajustada tras toggle sidebar");
+                    }
+                }, 300); // un pequeño delay para que el DOM termine el cambio
+            }
+
+            $('.navbar-vertical-toggle').on('click', function() {
+                ajustarTabla();
+            });
+        });
+    </script>
+
+
+
+
+@section('footerSection')
     @show
 </footer>
