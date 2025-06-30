@@ -138,7 +138,7 @@
 
         <div class="row2">
             <div class="cell left-section2">
-                {{ $destino }}
+                {!!  $destino !!}
             </div>
             <div class="cell right-section2">
                 Vendedor: {{ $vendedor }}
@@ -169,7 +169,7 @@
         </div>
 
         <div class="content" style="margin-top: 10px; margin-bottom: 10px; margin-left: 5px;">
-            {{ $descripcion }}
+            {!! $descripcion !!}
         </div>
     </div>
 
