@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Provincia;
+use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use App\Models\Cliente;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ClienteController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -138,7 +140,7 @@ class ClienteController extends Controller
         }
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $cliente = Cliente::create($input);
@@ -210,7 +212,7 @@ class ClienteController extends Controller
                 ->withInput();
         }
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

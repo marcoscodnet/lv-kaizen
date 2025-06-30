@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\TipoUnidad;
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Color;
 class ColorController extends Controller
 {
-/**
+
+    use SanitizesInput;
+    /**
 * Display a listing of the resource.
 *
 * @return \Illuminate\Http\Response
@@ -58,7 +61,7 @@ class ColorController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $color = Color::create($input);
@@ -109,7 +112,7 @@ class ColorController extends Controller
 
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

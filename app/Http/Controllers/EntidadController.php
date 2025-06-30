@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\TipoUnidad;
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Entidad;
 class EntidadController extends Controller
 {
+    use SanitizesInput;
 /**
 * Display a listing of the resource.
 *
@@ -58,7 +60,7 @@ class EntidadController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $entidad = Entidad::create($input);
@@ -109,7 +111,7 @@ class EntidadController extends Controller
 
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

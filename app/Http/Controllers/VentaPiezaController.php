@@ -7,6 +7,7 @@ use App\Models\Sucursal;
 use App\Models\VentaPieza;
 use App\Models\PiezaVentaPieza;
 use App\Http\Controllers\Controller;
+use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,7 @@ use Carbon\Carbon;
 use PDF;
 class VentaPiezaController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -214,7 +216,7 @@ class VentaPiezaController extends Controller
         }
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         DB::beginTransaction();
@@ -222,15 +224,15 @@ class VentaPiezaController extends Controller
         try {
             // Guardar la venta principal
             $venta = new VentaPieza();
-            $venta->user_id = $request->user_id;
-            $venta->fecha = $request->fecha;
-            $venta->destino = $request->destino;
-            $venta->cliente = $request->cliente;
-            $venta->documento = $request->documento;
-            $venta->telefono = $request->telefono;
-            $venta->moto = $request->moto;
-            $venta->sucursal_id = $request->sucursal_id; // solo si aplica
-            $venta->pedido = $request->pedido; // solo si aplica
+            $venta->user_id = $this->sanitizeInput($request->user_id);
+            $venta->fecha = $this->sanitizeInput($request->fecha);
+            $venta->destino = $this->sanitizeInput($request->destino);
+            $venta->cliente = $this->sanitizeInput($request->cliente);
+            $venta->documento = $this->sanitizeInput($request->documento);
+            $venta->telefono = $this->sanitizeInput($request->telefono);
+            $venta->moto = $this->sanitizeInput($request->moto);
+            $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id); // solo si aplica
+            $venta->pedido = $this->sanitizeInput($request->pedido); // solo si aplica
             $venta->save();
 
             // Guardar piezas relacionadas
@@ -238,11 +240,11 @@ class VentaPiezaController extends Controller
                 $detalle = new PiezaVentaPieza();
                 $detalle->venta_pieza_id = $venta->id;
                 $detalle->pieza_id = $piezaId;
-                $detalle->sucursal_id = $request->sucursal_id_item[$i];
+                $detalle->sucursal_id = $this->sanitizeInput($request->sucursal_id_item[$i]);
                 /*$detalle->costo = $request->costo[$i];
                 $detalle->precio_minimo = $request->precio_minimo[$i];*/
-                $detalle->cantidad = $request->cantidad[$i];
-                $detalle->precio = $request->precio[$i];
+                $detalle->cantidad = $this->sanitizeInput($request->cantidad[$i]);
+                $detalle->precio = $this->sanitizeInput($request->precio[$i]);
                 $detalle->save();
                 $stockPiezas = StockPieza::where('pieza_id',$piezaId)->where('sucursal_id',$request->sucursal_id_item[$i])->get();
                 $cantidadRestante = $request->cantidad[$i];

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Parametro;
 
 class ParametroController extends Controller
 {
+    use SanitizesInput;
     /**
      * Show the form for editing the specified resource.
      *
@@ -36,7 +38,7 @@ class ParametroController extends Controller
 
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -16,7 +17,7 @@ use App\Http\Controllers\ProyectoController;
 
 class UserController extends Controller
 {
-
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -118,7 +119,7 @@ class UserController extends Controller
             'roles' => 'required',
             'sucursal_id' => 'nullable|exists:sucursals,id', // Validación de sucursal_id
 
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
 
@@ -126,12 +127,27 @@ class UserController extends Controller
 
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
         $input['password'] = Hash::make($input['password']);
         $input['activo'] = isset($request->activo) ? 1 : 0;
         if ($files = $request->file('image')) {
             $image = $request->file('image');
-            $name = time().'.'.$image->getClientOriginalExtension();
+            $extension = strtolower($image->getClientOriginalExtension());
+
+            if ($extension === 'svg') {
+                return back()->withErrors(['image' => 'El formato SVG no está permitido.']);
+            }
+
+            // Eliminar imagen anterior
+            if (!empty($user->image)) {
+                $rutaAnterior = public_path('images/' . $user->image);
+                if (file_exists($rutaAnterior)) {
+                    unlink($rutaAnterior); // Borra físicamente la imagen anterior
+                }
+            }
+
+
+            $name = time().'.'.$extension;
             $destinationPath = public_path('/images');
             $image->move($destinationPath, $name);
             $input['image'] = "$name";
@@ -191,10 +207,10 @@ class UserController extends Controller
             'roles' => 'required',
             'sucursal_id' => 'nullable|exists:sucursals,id', // Validación de sucursal_id
 
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
         if(!empty($input['password'])){
             $input['password'] = Hash::make($input['password']);
         }else{
@@ -240,7 +256,11 @@ class UserController extends Controller
      */
     public function perfil(Request $request)
     {
-        $user = User::find($request->get('idUser'));
+        $id=$request->get('idUser');
+        if (auth()->id() != $id) {
+            abort(403, 'No autorizado.');
+        }
+        $user = User::find($id);
 
         $sucursales = DB::table('sucursals')->pluck('nombre', 'id');
         $userSucursal = $user->sucursal_id; // Sucursal asignada al usuario
@@ -257,14 +277,17 @@ class UserController extends Controller
     public function updatePerfil(Request $request)
     {
        $id=$request->get('idUser');
+        if (auth()->id() != $id) {
+            abort(403, 'No autorizado.');
+        }
         $this->validate($request, [
             'name' => 'required',
             'email' => 'required|email|unique:users,email,'.$id,
             'password' => 'confirmed',
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
         if(!empty($input['password'])){
             $input['password'] = Hash::make($input['password']);
         }else{

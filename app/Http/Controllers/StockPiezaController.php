@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Pieza;
 use App\Models\Sucursal;
 use App\Models\StockPieza;
+use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use DB;
 class StockPiezaController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -147,7 +149,7 @@ class StockPiezaController extends Controller
 
         try {
 
-            $stockPieza = StockPieza::create($request->all());
+            $stockPieza = StockPieza::create($this->sanitizeInput($request->all()));
 
             // 2. Obtener la suma total de cantidad para esa pieza
             $stockTotal = StockPieza::where('pieza_id', $request->pieza_id)
@@ -156,8 +158,8 @@ class StockPiezaController extends Controller
             // 3. Buscar la pieza y actualizar su stock_actual, costo y precio_minimo
             $pieza = Pieza::findOrFail($request->pieza_id);
             $pieza->stock_actual = $stockTotal;
-            $pieza->costo = $request->costo;
-            $pieza->precio_minimo = $request->precio_minimo;
+            $pieza->costo = $this->sanitizeInput($request->costo);
+            $pieza->precio_minimo = $this->sanitizeInput($request->precio_minimo);
             $pieza->save();
 
 
@@ -246,7 +248,7 @@ class StockPiezaController extends Controller
                 ->withInput();
         }
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 
@@ -272,8 +274,8 @@ class StockPiezaController extends Controller
 
             $pieza = Pieza::findOrFail($stockPieza->pieza_id);
             $pieza->stock_actual = $stockTotal;
-            $pieza->costo = $request->costo;
-            $pieza->precio_minimo = $request->precio_minimo;
+            $pieza->costo = $this->sanitizeInput($request->costo);
+            $pieza->precio_minimo = $this->sanitizeInput($request->precio_minimo);
             $pieza->save();
 
         }

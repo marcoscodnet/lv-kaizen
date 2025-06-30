@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Role;
@@ -11,6 +12,7 @@ use DB;
 
 class RoleController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -67,7 +69,7 @@ class RoleController extends Controller
             'permission.min' => 'Debes seleccionar al menos un permiso.',
         ]);
 
-        $role = Role::create(['name' => $request->input('name')]);
+        $role = Role::create(['name' => $this->sanitizeInput($request->input('name'))]);
         $role->syncPermissions($request->input('permission'));
 
         return redirect()->route('roles.index')
@@ -121,7 +123,7 @@ class RoleController extends Controller
         ]);
 
         $role = Role::find($id);
-        $role->name = $request->input('name');
+        $role->name = $this->sanitizeInput($request->input('name'));
         $role->save();
 
         $role->syncPermissions($request->input('permission'));

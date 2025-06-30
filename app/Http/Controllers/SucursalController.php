@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Sucursal;
 use App\Models\Provincia;
 class SucursalController extends Controller
 {
+    use SanitizesInput;
 /**
 * Display a listing of the resource.
 *
@@ -61,7 +63,7 @@ class SucursalController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $sucursal = Sucursal::create($input);
@@ -113,7 +115,7 @@ class SucursalController extends Controller
 
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

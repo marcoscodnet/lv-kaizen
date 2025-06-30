@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Producto;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use App\Models\Color;
 
 class ProductoController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -135,7 +137,7 @@ class ProductoController extends Controller
         }
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $producto = Producto::create($input);
@@ -201,7 +203,7 @@ class ProductoController extends Controller
                 ->withInput();
         }
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\TipoUnidad;
 class TipoUnidadController extends Controller
 {
+    use SanitizesInput;
 /**
 * Display a listing of the resource.
 *
@@ -56,7 +58,7 @@ class TipoUnidadController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $tipoUnidad = TipoUnidad::create($input);
@@ -106,7 +108,7 @@ class TipoUnidadController extends Controller
 
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

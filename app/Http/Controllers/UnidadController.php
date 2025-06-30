@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\Unidad;
 use App\Models\TipoUnidad;
 use App\Models\Sucursal;
+use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UnidadController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -148,7 +150,7 @@ class UnidadController extends Controller
         }
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $unidad = Unidad::create($input);
@@ -222,7 +224,7 @@ class UnidadController extends Controller
                 ->withInput();
         }
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

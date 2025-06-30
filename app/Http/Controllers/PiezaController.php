@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Pieza;
 
 class PiezaController extends Controller
 {
+    use SanitizesInput;
     function __construct()
     {
         $this->middleware('permission:pieza-listar|pieza-crear|pieza-editar|pieza-eliminar', ['only' => ['index','store']]);
@@ -101,7 +103,7 @@ class PiezaController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $pieza = Pieza::create($input);
@@ -153,7 +155,7 @@ class PiezaController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 

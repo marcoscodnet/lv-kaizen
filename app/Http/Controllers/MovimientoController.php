@@ -7,6 +7,7 @@ use App\Models\Sucursal;
 use App\Models\Movimiento;
 use App\Models\Unidad;
 use App\Models\UnidadMovimiento;
+use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,7 @@ use DB;
 use PDF;
 class MovimientoController extends Controller
 {
+    use SanitizesInput;
     /**
      * Display a listing of the resource.
      *
@@ -148,7 +150,7 @@ class MovimientoController extends Controller
         }
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
         // Obtener el ID del usuario autenticado
         $userId = Auth::id();
         $input['user_id'] = $userId;

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\TipoUnidad;
+use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Marca;
 class MarcaController extends Controller
 {
+    use SanitizesInput;
 /**
 * Display a listing of the resource.
 *
@@ -58,7 +60,7 @@ class MarcaController extends Controller
         ]);
 
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
         $marca = Marca::create($input);
@@ -112,7 +114,7 @@ class MarcaController extends Controller
 
         ]);
 
-        $input = $request->all();
+        $input = $this->sanitizeInput($request->all());
 
 
 
