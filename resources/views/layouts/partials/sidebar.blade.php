@@ -124,7 +124,7 @@
                         @endcan
                         @can('producto-listar')
                             <a class="nav-link" href="{{ route('productos.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-wrench"></span></span><span class="nav-link-text ps-1">Productos</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-box"></span></span><span class="nav-link-text ps-1">Productos</span>
                                 </div>
                             </a>
                         @endcan
@@ -166,6 +166,13 @@
                         @can('venta-pieza-listar')
                             <a class="nav-link" href="{{ route('ventaPiezas.index') }}" role="button">
                                 <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-shopping-cart"></span></span><span class="nav-link-text ps-1">Venta Piezas</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                        @can('venta-listar')
+                            <a class="nav-link" href="{{ route('ventas.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-money-bill"></span></span><span class="nav-link-text ps-1">Ventas</span>
                                 </div>
                             </a>
                         @endcan
