@@ -262,4 +262,36 @@ class ClienteController extends Controller
             ->with('success','Cliente eliminado con éxito');
     }
 
+    public function search(Request $request)
+    {
+        /*$cities = City::where('name', 'LIKE', '%'.$request->input('term', '').'%')
+            ->get(['id', 'name as text']);*/
+        $search = $request->search;
+        $search = trim($search);
+        $search = preg_replace('/\s+/', ' ', $search);
+        $search = htmlspecialchars($search, ENT_QUOTES, 'UTF-8');
+
+        $clientes = Cliente::select('clientes.*')
+
+            ->where(function ($query) use ($search) {
+                $query->where('nombre', 'LIKE', "%$search%")
+                    ->orWhere('celular', 'LIKE', "%$search%")
+                    ->orWhere('particular', 'LIKE', "%$search%")
+                    ->orWhere('cuil', 'LIKE', "%$search%");
+            })
+            ->orderBy('nombre', 'asc')
+            ->get();
+
+        $response = array();
+        foreach($clientes as $cliente){
+            $response[] = array(
+                "id"=>$cliente->id,
+                "text"=>$cliente->full_name_phone
+            );
+        }
+
+        //return ['results' => $clientes];
+        return response()->json($response);
+    }
+
 }

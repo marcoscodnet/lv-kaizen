@@ -17,4 +17,9 @@ class Cliente extends Model
         return $this->belongsTo('App\Models\Localidad');
     }
 
+    public function getFullNamePhoneAttribute()
+    {
+        return $this->nombre.' '.' ('.$this->cuil.')';
+    }
+
 }

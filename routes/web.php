@@ -86,10 +86,13 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('ventaPieza-datatable', [VentaPiezaController::class, 'dataTable'])->name('ventaPiezas.dataTable');
     Route::get('ventaPieza-pdf', [VentaPiezaController::class, 'generatePDF'])->name('ventaPiezas.pdf');
 
+    Route::get('/ventas/unidads', [VentaController::class, 'unidads'])->name('ventas.unidads');
     Route::resource('ventas', VentaController::class);
     Route::post('venta-datatable', [VentaController::class, 'dataTable'])->name('ventas.dataTable');
     Route::get('venta-pdf', [VentaController::class, 'generatePDF'])->name('ventas.pdf');
-
+    Route::post('unidadsavender-datatable', [VentaController::class, 'unidadDataTable'])->name('unidadsavender.dataTable');
+    Route::get('ventas/{unidad}/vender', [VentaController::class, 'vender'])->name('unidads.vender');
+    Route::get('clientesearch', [ClienteController::class, 'search'])->name('cliente.search');
 });
 
 
