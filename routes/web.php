@@ -54,6 +54,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::resource('clientes', ClienteController::class);
     Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');
+    Route::post('/clientes/quickstore', [ClienteController::class, 'quickStore'])->name('clientes.quickstore');
+
 
     Route::resource('parametros', ParametroController::class);
 

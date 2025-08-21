@@ -7,7 +7,7 @@
     },
     "decimal": ",",
     "emptyTable": "No hay datos disponibles en la Tabla",
-    "infoFiltered": "Filtrado de _MAX_ entradas totales",
+    "infoFiltered": "",
     "infoThousands": ".",
     "lengthMenu": "Mostrar _MENU_ entradas",
     "loadingRecords": "Cargando...",

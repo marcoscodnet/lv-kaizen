@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Provincia;
 use App\Models\Sucursal;
 use App\Models\Unidad;
 use App\Models\Venta;
@@ -128,9 +129,11 @@ class VentaController extends Controller
             ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('colors', 'productos.color_id', '=', 'colors.id')
+            ->where('productos.discontinuo',0)
             ->whereNotIn('unidads.id', function ($q) {
                 $q->select('unidad_id')->from('ventas');
             });
+
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
@@ -175,7 +178,8 @@ class VentaController extends Controller
             ->prepend('', '');
 
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('ventas.vender', compact('users','sucursals', 'unidad'));
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('ventas.vender', compact('users','sucursals', 'unidad','provincias'));
     }
 
 

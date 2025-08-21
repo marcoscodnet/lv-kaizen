@@ -109,6 +109,11 @@ class ClienteController extends Controller
             'particular' => 'required',
             'celular_area' => 'required',
             'celular' => 'required',
+            'email' => [
+                'required',
+                'email',
+                'regex:/^[^@]+@[^@]+\.[^@]+$/i'
+            ],
             'calle' => 'required',
             'nro' => 'required',
             'cp' => 'required',
@@ -293,5 +298,52 @@ class ClienteController extends Controller
         //return ['results' => $clientes];
         return response()->json($response);
     }
+
+    public function quickStore(Request $request)
+    {
+        $rules = [
+            'nombre' => 'required',
+            'documento' => 'required|unique:clientes,documento',
+            'cuil' => 'regex:/^\d{2}-\d{8}-\d{1}$/',
+            'nacimiento' => 'required|date',
+            'particular_area' => 'required',
+            'particular' => 'required',
+            'celular_area' => 'required',
+            'celular' => 'required',
+            'calle' => 'required',
+            'nro' => 'required',
+            'cp' => 'required',
+            'localidad_id' => 'required',
+            'nacionalidad' => 'required',
+            'estado_civil' => 'required',
+            'llego' => 'required',
+            'iva' => 'required',
+        ];
+
+        $messages = [
+            'cuil.regex' => 'El formato del CUIL es inválido.',
+            'particular_area.required' => 'El campo Área del teléfono particular es obligatorio.',
+            'celular_area.required' => 'El campo Área del teléfono celular es obligatorio.',
+            'localidad_id.required' => 'El campo Localidad es obligatorio.',
+            'llego.required' => 'El campo Como llegó? es obligatorio.',
+            'iva.required' => 'El campo Condición IVA es obligatorio.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $input = $this->sanitizeInput($request->all());
+        $cliente = Cliente::create($input);
+
+        return response()->json([
+            'id' => $cliente->id,
+            'text' => $cliente->nombre
+        ]);
+    }
+
+
 
 }

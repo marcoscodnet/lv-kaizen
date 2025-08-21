@@ -78,7 +78,7 @@
                             <div class="col-lg-offset-3 col-lg-5 col-md-2">
                                 <div class="form-group">
                                     <label for="email">E-mail</label>
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="email" value="{{ old('email') }}">
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="email" value="{{ old('email') }}" required>
                                 </div>
                             </div>
 
