@@ -330,60 +330,15 @@
                 });
             });
 
-            // Inicializar Select2 de provincias y localidades dentro del modal
             $('#nuevoClienteModal').on('shown.bs.modal', function () {
-                var $provincia = $('#provincia_id');
-
-                // Destruir si ya estaba inicializado
-                if ($provincia.hasClass('select2-hidden-accessible')) {
-                    $provincia.select2('destroy');
-                }
-
-                $provincia.select2({
+                $('#provincia_id, #localidad').select2({
                     theme: 'bootstrap-5',
-                    dropdownParent: $('#nuevoClienteModal'),
-                    width: '100%',
-                    placeholder: 'Seleccione una provincia'
+                    dropdownParent: $('#nuevoClienteModal')
                 });
 
-                // Trigger change si ya hay valor
-                if ($provincia.val()) {
-                    $provincia.trigger('change');
-                }
 
-                // Cargar localidades dependientes
-                $provincia.off('change').on('change', function () {
-                    var provinciaId = $(this).val();
-                    var $localidad = $('#localidad_id');
-
-                    // Destruir y vaciar antes de cargar nuevas
-                    if ($localidad.hasClass('select2-hidden-accessible')) {
-                        $localidad.select2('destroy');
-                    }
-                    $localidad.empty();
-
-                    if (provinciaId) {
-                        $.ajax({
-                            url: localidadUrl + '/' + provinciaId,
-                            type: 'GET',
-                            dataType: 'json',
-                            success: function (data) {
-                                var localidades = data.map(function (loc) {
-                                    return { id: loc.id, text: loc.nombre };
-                                });
-
-                                $localidad.select2({
-                                    theme: 'bootstrap-5',
-                                    dropdownParent: $('#nuevoClienteModal'),
-                                    width: '100%',
-                                    data: localidades,
-                                    placeholder: 'Seleccione una localidad'
-                                });
-                            }
-                        });
-                    }
-                });
             });
+
         });
     </script>
 

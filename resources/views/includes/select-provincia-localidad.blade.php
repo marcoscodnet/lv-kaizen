@@ -7,7 +7,7 @@
 <div class="col-lg-offset-3 col-lg-5 col-md-2">
     <div class="form-group">
         <label for="email">Provincia</label>
-        <select name="provincia_id" class="form-control provincia-select js-example-basic-single"
+        <select name="provincia_id" id="provincia_id" class="form-control provincia-select js-example-basic-single"
                 data-old-localidad="{{ $localidadSeleccionada }}" required>
             <option value=""></option>
             @foreach($provincias as $provinciaId => $provincia)

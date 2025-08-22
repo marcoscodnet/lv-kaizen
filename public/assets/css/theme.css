@@ -29001,7 +29001,7 @@ a[href].bg-200:hover, a[href].bg-200:focus {
   }
 }
 /*-----------------------------------------------
-|  Back to top button   
+|  Back to top button
 -----------------------------------------------*/
 .btn-back-to-top {
   background-color: var(--falcon-dark);
@@ -31427,4 +31427,9 @@ html[data-bs-theme=dark] .bg-priority-low:checked {
 .input-search-width {
   width: 13.75rem;
 }
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    z-index: 2000 !important;
+}
+
 /*# sourceMappingURL=theme.css.map */
