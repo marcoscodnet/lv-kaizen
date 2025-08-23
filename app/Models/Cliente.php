@@ -17,9 +17,23 @@ class Cliente extends Model
         return $this->belongsTo('App\Models\Localidad');
     }
 
+    public function getFullAddressAttribute()
+    {
+        return ' Dirección: '.$this->calle
+            . ' ' . $this->nro
+            . ($this->piso ? ' ' . $this->piso : '')
+            . ($this->depto ? ' ' . $this->depto : '');
+    }
+
+
+    public function getFullPhoneAttribute()
+    {
+        return ' Celular: ('.$this->celular_area.') '.$this->celular;
+    }
+
     public function getFullNamePhoneAttribute()
     {
-        return $this->nombre.' '.' ('.$this->cuil.')';
+        return $this->nombre.' '.' ('.$this->cuil.')'.$this->getFullAddressAttribute().$this->getFullPhoneAttribute();
     }
 
 }

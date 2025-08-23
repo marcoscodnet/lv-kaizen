@@ -18,13 +18,16 @@
         <div class="card-body bg-body-tertiary">
             <form role="form" action="{{ route('ventas.store') }}" method="post">
                 {{ csrf_field() }}
+                @can('unidad-autorizar')
+                    <input type="hidden" id="autorizada" name="autorizada" value="">
+                @endcan
                 <div class="tab-content">
                     <div class="box-body">
                         @include('includes.messages')
 
                         {{-- Datos de la unidad --}}
                         <div class="row">
-                            <div class="col-lg-5">
+                            <div class="col-lg-9">
                                 <div class="form-group">
                                     <label for="producto">Producto</label>
                                     <input type="hidden" id="unidad_id" name="unidad_id" value="{{ $unidad->id }}">
@@ -33,6 +36,11 @@
                                            readonly>
                                 </div>
                             </div>
+
+                        </div>
+
+                        <div class="row">
+
                             <div class="col-lg-3">
                                 <div class="form-group">
                                     <label for="motor">Motor</label>
@@ -43,6 +51,13 @@
                                 <div class="form-group">
                                     <label for="cuadro">Cuadro</label>
                                     <input type="text" class="form-control" id="cuadro" name="cuadro" value="{{ $unidad->cuadro }}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="form-group">
+                                    <label for="precio">Importe sugerido</label>
+                                    <input type="text" class="form-control" id="precio" name="precio"
+                                           value="{{ isset($unidad->producto) ? $unidad->producto->precio : '' }}" readonly>
                                 </div>
                             </div>
                         </div>
@@ -85,7 +100,7 @@
 
                         {{-- Cliente --}}
                         <div class="row">
-                            <div class="col-lg-6">
+                            <div class="col-lg-9">
                                 <div class="form-group d-flex align-items-end gap-2">
                                     <div class="flex-grow-1">
                                         <label for="cliente_id">Cliente</label>
@@ -97,13 +112,90 @@
                                 </div>
                             </div>
 
+
+                        </div>
+
+                        <div class="row">
                             <div class="col-lg-3">
-                                <div class="form-group">
-                                    <label for="precio">Importe sugerido</label>
-                                    <input type="text" class="form-control" id="precio" name="precio"
-                                           value="{{ isset($unidad->producto) ? $unidad->producto->precio : '' }}" readonly>
+                                <div class="form-group d-flex align-items-end gap-2">
+                                    <div class="flex-grow-1">
+                                        <label for="forma">Forma de pago</label>
+                                        <select name="forma" id="forma" class="form-control" required>
+                                        <option value="">
+                                            Seleccionar...
+                                        </option>
+                                        @foreach (config('formas') as $key => $label)
+                                            <option value="{{ $key }}" {{ old('forma', $venta->forma ?? '') == $key ? 'selected' : '' }}>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                        </select>
+                                    </div>
+
                                 </div>
                             </div>
+
+
+                        </div>
+<p></p>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div id="cuerpoVenta">
+                                    <div class="row">
+                                        <div class="col text-start">
+                                            <button type="button" id="addItemPago" class="btn btn-success btn-sm mt-2">
+                                                <i class="fa fa-plus"></i> Agregar pago
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card p-3 mb-3 pago-item">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label>Entidad</label>
+                                                <select name="entidad_id[]" class="form-control js-example-basic-single">
+                                                    <option value="">Seleccione...</option>
+                                                    @foreach($entidads as $entidadId => $entidad)
+                                                        <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
+                                                            {{ $entidad }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label id="fechaPago"></label>
+                                                <input type="date" name="fecha[]" class="form-control">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label>Acreditado</label>
+                                                <input type="number" name="pagado[]" class="form-control">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label>Fecha</label>
+                                                <input type="date" name="contadora[]" class="form-control">
+                                            </div>
+
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-5">
+                                                <label>Observaciones vendedor</label>
+                                                <textarea name="detalle[]" class="form-control" rows="2"></textarea>
+                                            </div>
+                                            <div class="col-5">
+                                                <label>Observaciones</label>
+                                                <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end">
+                                                <button type="button" class="btn btn-danger btn-sm removeItemPago"><i class="fa fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+
+
                         </div>
 
                         {{-- Botones --}}
@@ -135,63 +227,63 @@
                             <!-- Nombre -->
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Nombre</label>
-                                <input type="text" name="nombre" class="form-control" required>
+                                <input type="text" name="nombre" id="nombre" class="form-control" required>
                             </div>
 
                             <!-- Documento -->
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Documento</label>
-                                <input type="text" name="documento" class="form-control" required>
+                                <input type="text" name="documento" id="documento" class="form-control" required>
                             </div>
 
                             <!-- CUIL -->
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">CUIL</label>
-                                <input type="text" name="cuil" placeholder="XX-XXXXXXXX-X" class="form-control">
+                                <input type="text" name="cuil" id="cuil" placeholder="XX-XXXXXXXX-X" class="form-control">
                             </div>
 
                             <!-- Nacimiento -->
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">F. Nacimiento</label>
-                                <input type="date" name="nacimiento" class="form-control" required>
+                                <input type="date" name="nacimiento" id="nacimiento" class="form-control" required>
                             </div>
 
                             <!-- Particular -->
                             <div class="col-md-1 mb-3">
                                 <label class="form-label">Área</label>
-                                <input type="text" name="particular_area" class="form-control" required>
+                                <input type="text" name="particular_area" id="particular_area" class="form-control" required>
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Particular</label>
-                                <input type="text" name="particular" class="form-control" required>
+                                <input type="text" name="particular" id="particular" class="form-control" required>
                             </div>
 
                             <!-- Celular -->
                             <div class="col-md-1 mb-3">
                                 <label class="form-label">Área</label>
-                                <input type="text" name="celular_area" class="form-control" required>
+                                <input type="text" name="celular_area" id="celular_area" class="form-control" required>
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Celular</label>
-                                <input type="text" name="celular" class="form-control" required>
+                                <input type="text" name="celular" id="celular" class="form-control" required>
                             </div>
                             <!-- Email -->
                             <div class="col-md-5 mb-3">
                                 <label class="form-label">E-mail</label>
-                                <input type="email" name="email" class="form-control" required>
+                                <input type="email" name="email" id="email" class="form-control" required>
                             </div>
                             <!-- Dirección -->
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Calle</label>
-                                <input type="text" name="calle" class="form-control" required>
+                                <input type="text" name="calle" id="calle" class="form-control" required>
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Nro</label>
-                                <input type="text" name="nro" class="form-control" required>
+                                <input type="text" name="nro" id="nro" class="form-control" required>
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">CP</label>
-                                <input type="text" name="cp" class="form-control" required>
+                                <input type="text" name="cp" id="cp" class="form-control" required>
                             </div>
 
                                 @include('includes.select-provincia-localidad')
@@ -201,13 +293,13 @@
                             <!-- Nacionalidad -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Nacionalidad</label>
-                                <input type="text" name="nacionalidad" class="form-control" required>
+                                <input type="text" name="nacionalidad" id="nacionalidad" class="form-control" required>
                             </div>
 
                             <!-- Estado Civil -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Estado Civil</label>
-                                <select name="estado_civil" class="form-control" required>
+                                <select name="estado_civil" id="estado_civil" class="form-control" required>
                                     <option value="">
                                         Seleccionar...
                                     </option>
@@ -221,8 +313,8 @@
 
                             <!-- Cómo llegó -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Cómo llegó? *</label>
-                                <select name="llego" class="form-control" required>
+                                <label class="form-label">Cómo llegó?</label>
+                                <select name="llego" id="llego" class="form-control" required>
                                     <option value="">
                                         Seleccionar...
                                     </option>
@@ -236,8 +328,8 @@
 
                             <!-- IVA -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Condición IVA *</label>
-                                <select name="iva" class="form-control" required>
+                                <label class="form-label">Condición IVA</label>
+                                <select name="iva" id="iva" class="form-control" required>
                                     <option value="">
                                         Seleccionar...
                                     </option>
@@ -267,6 +359,8 @@
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ asset('bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
+
 
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
@@ -277,20 +371,43 @@
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-            // InputMask
-            $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
 
+            function toggleDivs() {
+                const valor = $('#forma').val();
+
+                // Ocultar todos
+                $('#cuerpoVenta').hide();
+
+                // Mostrar el que corresponde
+                if (valor !== '') {
+                    if (valor === 'Contado') {
+
+                        $('#fechaPago').html('Fecha de pago');
+                    }
+                    else{
+                        $('#fechaPago').html('Fecha de Aprobación Crédito');
+                    }
+                    $('#cuerpoVenta').show();
+                }
+            }
+
+            // Ejecutar al cargar por si hay uno preseleccionado
+            toggleDivs();
+
+            // Ejecutar al cambiar
+            $('#forma').on('change', toggleDivs);
             // Inicializar Select2 básico
             $('.js-example-basic-single').each(function () {
                 if ($(this).hasClass("select2-hidden-accessible")) {
                     $(this).select2('destroy'); // destruir si ya estaba inicializado
                 }
-                $(this).select2({ width: '100%' });
+                $(this).select2({ width: '100%'});
             });
 
             // Select2 para clientes con búsqueda AJAX
             $('#cliente_id').select2({
                 minimumInputLength: 3,
+                language: 'es',
                 ajax: {
                     url: '{{ route("cliente.search") }}',
                     type: "get",
@@ -334,11 +451,88 @@
                 $('#provincia_id, #localidad').select2({
                     theme: 'bootstrap-5',
                     dropdownParent: $('#nuevoClienteModal')
-                });
-
+                }).next('.select2-container').addClass('form-control');;
+                // InputMask
+                $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
 
             });
 
+            // función que devuelve el bloque de pago
+            function getPagoHtml() {
+                return `
+        <div class="card p-3 mb-3 pago-item">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label>Entidad</label>
+                                                <select name="entidad_id[]" class="form-control js-example-basic-single">
+                                                    <option value="">Seleccione...</option>
+                                                    @foreach($entidads as $entidadId => $entidad)
+                <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
+                                                            {{ $entidad }}
+                </option>
+@endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label id="fechaPago"></label>
+                <input type="date" name="fecha[]" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label>Acreditado</label>
+                <input type="number" name="pagado[]" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label>Fecha</label>
+                <input type="date" name="contadora[]" class="form-control">
+            </div>
+
+        </div>
+        <div class="row mt-2">
+            <div class="col-5">
+                <label>Observaciones vendedor</label>
+                <textarea name="detalle[]" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-5">
+                <label>Observaciones</label>
+                <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-danger btn-sm removeItemPago"><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </div>`;
+            }
+
+            // Agregar pago
+            $('#addItemPago').on('click', function () {
+                $('#cuerpoVenta').append(getPagoHtml());
+            });
+
+            // Eliminar pago
+            $('body').on('click', '.removeItemPago', function () {
+                $(this).closest('.pago-item').remove();
+            });
+            $("form").on("submit", function(e) {
+                @can('unidad-autorizar')
+                // Preguntar solo si existe el input
+                let autorizadaInput = $("#autorizada");
+                if (autorizadaInput.length && autorizadaInput.val() === "") {
+                    //e.preventDefault(); // primero detenemos el submit
+
+                    // Primera confirmación
+                    if (confirm("¿Desea autorizar la unidad a vender?")) {
+                        // Segunda confirmación
+                        if (confirm("Confirma que desea autorizar la unidad a vender")) {
+                            autorizadaInput.val("1"); // marcar como autorizada
+                        } else {
+                            autorizadaInput.val(""); // no autorizada
+                        }
+                    } else {
+                        autorizadaInput.val(""); // no autorizada
+                    }
+                }
+                @endcan
+            });
         });
     </script>
 

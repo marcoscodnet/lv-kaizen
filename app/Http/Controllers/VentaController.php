@@ -7,6 +7,7 @@ use App\Models\Provincia;
 use App\Models\Sucursal;
 use App\Models\Unidad;
 use App\Models\Venta;
+use App\Models\Entidad;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
@@ -179,7 +180,8 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('ventas.vender', compact('users','sucursals', 'unidad','provincias'));
+        $entidads = Entidad::orderBy('nombre')->where('activa',1)->pluck('nombre', 'id')->prepend('', '');
+        return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
     }
 
 
