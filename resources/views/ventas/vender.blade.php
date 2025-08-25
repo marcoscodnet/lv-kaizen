@@ -104,7 +104,14 @@
                                 <div class="form-group d-flex align-items-end gap-2">
                                     <div class="flex-grow-1">
                                         <label for="cliente_id">Cliente</label>
-                                        <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single" required></select>
+                                        <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single" required>
+                                            @if(old('cliente_id'))
+                                                {{-- Agregamos una opción para que Select2 la muestre --}}
+                                                <option value="{{ old('cliente_id') }}" selected>
+                                                    {{ old('cliente_nombre', '') }}
+                                                </option>
+                                            @endif
+                                        </select>
                                     </div>
                                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
                                         <i class="fa fa-plus"></i>
@@ -148,47 +155,66 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="card p-3 mb-3 pago-item">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <label>Entidad</label>
-                                                <select name="entidad_id[]" class="form-control js-example-basic-single">
-                                                    <option value="">Seleccione...</option>
-                                                    @foreach($entidads as $entidadId => $entidad)
-                                                        <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
-                                                            {{ $entidad }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label id="fechaPago"></label>
-                                                <input type="date" name="fecha[]" class="form-control">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label>Acreditado</label>
-                                                <input type="number" name="pagado[]" class="form-control">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label>Fecha</label>
-                                                <input type="date" name="contadora[]" class="form-control">
+
+                                    @php
+                                        $oldPagos = old('entidad_id') ? collect(old('entidad_id'))->keys() : [0];
+                                    @endphp
+
+                                    @foreach($oldPagos as $i)
+                                        <div class="card p-3 mb-3 pago-item">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <label>Entidad</label>
+                                                    <select name="entidad_id[]" class="form-control js-example-basic-single" required>
+                                                        <option value="">Seleccione...</option>
+                                                        @foreach($entidads as $entidadId => $entidad)
+                                                            <option value="{{ $entidadId }}"
+                                                                {{ old('entidad_id.'.$i) == $entidadId ? 'selected' : '' }}>
+                                                                {{ $entidad }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label>Importe</label>
+                                                    <input type="number" name="monto[]" class="form-control"
+                                                           value="{{ old('monto.'.$i) }}" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label id="fechaPago">Fecha Pago</label>
+                                                    <input type="date" name="fecha_pago[]" class="form-control"
+                                                           value="{{ old('fecha_pago.'.$i) }}" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label>Acreditado</label>
+                                                    <input type="number" name="pagado[]" class="form-control"
+                                                           value="{{ old('pagado.'.$i) }}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label>Fecha Contadora</label>
+                                                    <input type="date" name="contadora[]" class="form-control"
+                                                           value="{{ old('contadora.'.$i) }}">
+                                                </div>
                                             </div>
 
+                                            <div class="row mt-2">
+                                                <div class="col-5">
+                                                    <label>Observaciones vendedor</label>
+                                                    <textarea name="detalle[]" class="form-control" rows="2">{{ old('detalle.'.$i) }}</textarea>
+                                                </div>
+                                                <div class="col-5">
+                                                    <label>Observaciones</label>
+                                                    <textarea name="observaciones[]" class="form-control" rows="2">{{ old('observaciones.'.$i) }}</textarea>
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger btn-sm removeItemPago">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="row mt-2">
-                                            <div class="col-5">
-                                                <label>Observaciones vendedor</label>
-                                                <textarea name="detalle[]" class="form-control" rows="2"></textarea>
-                                            </div>
-                                            <div class="col-5">
-                                                <label>Observaciones</label>
-                                                <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
-                                            </div>
-                                            <div class="col-md-1 d-flex align-items-end">
-                                                <button type="button" class="btn btn-danger btn-sm removeItemPago"><i class="fa fa-times"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    @endforeach
+
 
                                 </div>
 
@@ -196,6 +222,16 @@
                             </div>
 
 
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label>Importe total</label>
+                                <input type="text" id="totalMonto" name="totalMonto" class="form-control" value="0" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Importe Acreditado</label>
+                                <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control" value="0" readonly>
+                            </div>
                         </div>
 
                         {{-- Botones --}}
@@ -367,11 +403,36 @@
     <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
 
     <script>
+        function actualizarTotales() {
+            let totalMonto = 0;
+            let totalAcreditado = 0;
+
+            $('input[name="monto[]"]').each(function() {
+                let val = parseFloat($(this).val());
+                if (!isNaN(val)) totalMonto += val;
+            });
+
+            $('input[name="pagado[]"]').each(function() {
+                let val = parseFloat($(this).val());
+                if (!isNaN(val)) totalAcreditado += val;
+            });
+
+            $('#totalMonto').val(totalMonto.toFixed(2));
+            $('#totalAcreditado').val(totalAcreditado.toFixed(2));
+        }
+
+        // Ejecutar al cambiar monto o pagado
+        $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotales);
+
+        // Ejecutar al agregar o eliminar pagos
+        $('body').on('click', '#addItemPago, .removeItemPago', function() {
+            setTimeout(actualizarTotales, 100); // pequeño delay para que el DOM se actualice
+        });
         var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-
+            actualizarTotales
             function toggleDivs() {
                 const valor = $('#forma').val();
 
@@ -462,9 +523,9 @@
                 return `
         <div class="card p-3 mb-3 pago-item">
                                         <div class="row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label>Entidad</label>
-                                                <select name="entidad_id[]" class="form-control js-example-basic-single">
+                                                <select name="entidad_id[]" class="form-control js-example-basic-single" required>
                                                     <option value="">Seleccione...</option>
                                                     @foreach($entidads as $entidadId => $entidad)
                 <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
@@ -473,15 +534,19 @@
 @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                                                <label>Importe</label>
+                                                <input type="number" name="monto[]" class="form-control" required>
+                                            </div>
+            <div class="col-md-2">
                 <label id="fechaPago"></label>
-                <input type="date" name="fecha[]" class="form-control">
+                <input type="date" name="fecha_pago[]" class="form-control" required>
             </div>
             <div class="col-md-2">
                 <label>Acreditado</label>
                 <input type="number" name="pagado[]" class="form-control">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label>Fecha</label>
                 <input type="date" name="contadora[]" class="form-control">
             </div>

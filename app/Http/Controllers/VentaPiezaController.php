@@ -174,7 +174,7 @@ class VentaPiezaController extends Controller
             'pieza_id.min' => 'Debe agregar al menos una pieza.',
             'pieza_id.*.required' => 'Debe seleccionar una pieza.',
             'pieza_id.*.distinct' => 'No puede repetir piezas.',
-            'pieza_id.*.required' => 'Debe seleccionar una sucursal.',
+            'sucursal_id.*.required' => 'Debe seleccionar una sucursal.',
         ];
 
         // Agregar validaciones condicionales según el destino

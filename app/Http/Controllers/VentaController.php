@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cliente;
 use App\Models\Provincia;
 use App\Models\Sucursal;
 use App\Models\Unidad;
@@ -184,5 +185,139 @@ class VentaController extends Controller
         return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
     }
 
+    public function store(Request $request)
+    {
+        //dd($request->all());
+
+        $precioSugerido = $request->input('precio', 0);
+
+// Sumamos los montos ingresados
+        $totalMonto = $request->input('totalMonto', 0);
+        $totalAcreditado = $request->input('totalAcreditado', 0);
+
+
+        $rules = [
+            'unidad_id' => 'required',
+            'user_id' => 'required',
+            'cliente_id' => 'required',
+            'sucursal_id' => 'required',
+            'forma' => 'required',
+            'fecha' => 'required|date',
+            'entidad_id' => 'required|array|min:1',
+            'entidad_id.*' => 'required',
+        ];
+
+
+        // Definir los mensajes de error personalizados
+        $messages = [
+
+            'fecha.required' => 'La fecha es obligatoria.',
+            'entidad_id.required' => 'Debe agregar al menos un pago.',
+            'entidad_id.min' => 'Debe agregar al menos un pago.',
+            'entidad_id.*.required' => 'Debe seleccionar una entidad.',
+
+        ];
+
+
+
+        // Crear el validador con las reglas y mensajes
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        $validator->after(function ($validator) use ($totalMonto, $precioSugerido) {
+            if ($totalMonto < $precioSugerido) {
+                $validator->errors()->add('monto', "El importe total de los pagos ($totalMonto) debe ser igual o mayor al precio sugerido ($precioSugerido).");
+            }
+        });
+
+        // Validar y verificar si hay errores
+        if ($validator->fails()) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->all() + [
+                        'cliente_nombre' => optional($cliente)->full_name_phone, // 👈 tu accessor
+                    ]);
+        }
+
+
+        $input = $this->sanitizeInput($request->all());
+
+
+        DB::beginTransaction();
+        $ok=1;
+        try {
+            // Guardar la venta principal
+            $venta = new VentaPieza();
+            $venta->user_id = $this->sanitizeInput($request->user_id);
+            $venta->fecha = $this->sanitizeInput($request->fecha);
+            $venta->destino = $this->sanitizeInput($request->destino);
+            $venta->cliente = $this->sanitizeInput($request->cliente);
+            $venta->documento = $this->sanitizeInput($request->documento);
+            $venta->telefono = $this->sanitizeInput($request->telefono);
+            $venta->moto = $this->sanitizeInput($request->moto);
+            $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id); // solo si aplica
+            $venta->pedido = $this->sanitizeInput($request->pedido); // solo si aplica
+            $venta->save();
+
+            // Guardar piezas relacionadas
+            foreach ($request->pieza_id as $i => $piezaId) {
+                $detalle = new PiezaVentaPieza();
+                $detalle->venta_pieza_id = $venta->id;
+                $detalle->pieza_id = $piezaId;
+                $detalle->sucursal_id = $this->sanitizeInput($request->sucursal_id_item[$i]);
+                /*$detalle->costo = $request->costo[$i];
+                $detalle->precio_minimo = $request->precio_minimo[$i];*/
+                $detalle->cantidad = $this->sanitizeInput($request->cantidad[$i]);
+                $detalle->precio = $this->sanitizeInput($request->precio[$i]);
+                $detalle->save();
+                $stockPiezas = StockPieza::where('pieza_id',$piezaId)->where('sucursal_id',$request->sucursal_id_item[$i])->get();
+                $cantidadRestante = $request->cantidad[$i];
+
+                foreach ($stockPiezas as $stockPieza) {
+                    if ($stockPieza->cantidad >= $cantidadRestante) {
+                        // Descontar y guardar
+                        $stockPieza->cantidad -= $cantidadRestante;
+                        $cantidadRestante = 0;
+                    } else {
+                        // Descontar todo lo que tenga y continuar
+                        $cantidadRestante -= $stockPieza->cantidad;
+                        $stockPieza->cantidad = 0;
+                    }
+
+                    // Si después del descuento, la cantidad es 0, eliminamos el stock
+                    if ($stockPieza->cantidad == 0) {
+                        $stockPieza->delete(); // o $stockPieza->forceDelete() si es soft deletes
+                    } else {
+                        // Guardar el stock actualizado
+                        $stockPieza->save();
+                    }
+
+                    if ($cantidadRestante <= 0) {
+                        break; // Ya se descontó todo lo necesario
+                    }
+                }
+            }
+
+        }catch(QueryException $ex){
+            $error = $ex->getMessage();
+            $ok=0;
+
+        }
+        if ($ok){
+            DB::commit();
+            $respuestaID='success';
+            $respuestaMSJ='Registro creado satisfactoriamente';
+        }
+        else{
+            DB::rollback();
+            $respuestaID='error';
+            $respuestaMSJ=$error;
+        }
+
+        return redirect()->route('ventaPiezas.index')->with($respuestaID,$respuestaMSJ);
+
+
+
+    }
 
 }
