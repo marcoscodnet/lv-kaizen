@@ -24,6 +24,10 @@ class Venta extends Model
         return $this->belongsTo('App\Models\Unidad', 'unidad_id');
     }
 
+    public function cliente() {
+        return $this->belongsTo('App\Models\Cliente', 'cliente_id');
+    }
+
     public function pagos()
     {
         return $this->hasMany(Pago::class, 'venta_id');

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Autorizacion;
 use App\Models\Cliente;
+use App\Models\Pago;
 use App\Models\Provincia;
 use App\Models\Sucursal;
 use App\Models\Unidad;
@@ -48,7 +50,7 @@ class VentaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [  'ventas.fecha','clientes.nombre as cliente','unidads.motor','modelos.nombre as modelo', DB::raw("IFNULL(users.name, ventas.user_name)"),'sucursals.nombre',
+        $columnas = [  'ventas.fecha','clientes.nombre as cliente','unidads.motor','modelos.nombre as modelo', DB::raw("IFNULL(users.name, ventas.user_name)"),'sucursals.nombre as sucursal_nombre',
             DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
             'ventas.forma'
 
@@ -57,7 +59,7 @@ class VentaController extends Controller
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Venta::select('ventas.id as id', 'ventas.fecha','clientes.nombre as cliente','unidads.motor','modelos.nombre as modelo',DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+        $query = Venta::select('ventas.id as id', 'ventas.fecha','clientes.nombre as cliente','unidads.motor','modelos.nombre as modelo', DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),'sucursals.nombre as sucursal_nombre',DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
             'ventas.forma'
 
         )
@@ -82,6 +84,14 @@ class VentaController extends Controller
             });
         }
 
+        // Totales
+        $totalVentas = $query->count(); // total de ventas filtradas
+        $ventasAutorizadas = $query->whereNotNull('autorizacions.id')->count();
+        $ventasNoAutorizadas = $totalVentas - $ventasAutorizadas;
+
+// Sumar montos desde la tabla pagos
+        $totalAcreditado = Pago::whereIn('venta_id', $query->pluck('id'))->sum('pagado');
+        $totalVentasImporte = Pago::whereIn('venta_id', $query->pluck('id'))->sum('monto'); // si quieres contar ventas únicas
 
 
 
@@ -101,6 +111,13 @@ class VentaController extends Controller
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
+            'totales' => [
+                'totalVentas' => $totalVentas,
+                'ventasAutorizadas' => $ventasAutorizadas,
+                'ventasNoAutorizadas' => $ventasNoAutorizadas,
+                'totalAcreditado' => $totalAcreditado,
+                'totalVentasImporte' => $totalVentasImporte
+            ]
         ]);
     }
 
@@ -205,6 +222,10 @@ class VentaController extends Controller
             'fecha' => 'required|date',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
+            'monto.*' => 'required|numeric|min:1',
+            'fecha_pago.*' => 'required|date',
+            'pagado.*' => 'nullable|numeric|min:0',
+            'contadora.*' => 'nullable|date',
         ];
 
 
@@ -212,10 +233,12 @@ class VentaController extends Controller
         $messages = [
 
             'fecha.required' => 'La fecha es obligatoria.',
+            'sucursal_id.required' => 'Debe seleccionar una sucursal.',
             'entidad_id.required' => 'Debe agregar al menos un pago.',
             'entidad_id.min' => 'Debe agregar al menos un pago.',
             'entidad_id.*.required' => 'Debe seleccionar una entidad.',
-
+            'monto.*.required' => 'El importe es obligatorio.',
+            'fecha_pago.*.required' => 'La fecha de pago es obligatoria.',
         ];
 
 
@@ -247,55 +270,39 @@ class VentaController extends Controller
         $ok=1;
         try {
             // Guardar la venta principal
-            $venta = new VentaPieza();
+            $venta = new Venta();
+            $venta->unidad_id = $this->sanitizeInput($request->unidad_id);
             $venta->user_id = $this->sanitizeInput($request->user_id);
+            $venta->cliente_id = $this->sanitizeInput($request->cliente_id);
+            $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id);
             $venta->fecha = $this->sanitizeInput($request->fecha);
-            $venta->destino = $this->sanitizeInput($request->destino);
-            $venta->cliente = $this->sanitizeInput($request->cliente);
-            $venta->documento = $this->sanitizeInput($request->documento);
-            $venta->telefono = $this->sanitizeInput($request->telefono);
-            $venta->moto = $this->sanitizeInput($request->moto);
-            $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id); // solo si aplica
-            $venta->pedido = $this->sanitizeInput($request->pedido); // solo si aplica
+            $venta->monto = $this->sanitizeInput($request->precio);
+            $venta->total = $this->sanitizeInput($request->precio);
+            $venta->forma = $this->sanitizeInput($request->forma);
+
             $venta->save();
 
             // Guardar piezas relacionadas
-            foreach ($request->pieza_id as $i => $piezaId) {
-                $detalle = new PiezaVentaPieza();
-                $detalle->venta_pieza_id = $venta->id;
-                $detalle->pieza_id = $piezaId;
-                $detalle->sucursal_id = $this->sanitizeInput($request->sucursal_id_item[$i]);
-                /*$detalle->costo = $request->costo[$i];
-                $detalle->precio_minimo = $request->precio_minimo[$i];*/
-                $detalle->cantidad = $this->sanitizeInput($request->cantidad[$i]);
-                $detalle->precio = $this->sanitizeInput($request->precio[$i]);
+            foreach ($request->entidad_id as $i => $entidadId) {
+                $detalle = new Pago();
+                $detalle->venta_id = $venta->id;
+                $detalle->entidad_id = $entidadId;
+                $detalle->monto = $this->sanitizeInput($request->monto[$i]);
+                $detalle->fecha = $this->sanitizeInput($request->fecha_pago[$i]);
+                $detalle->pagado = $this->sanitizeInput($request->pagado[$i]);
+                $detalle->contadora = $this->sanitizeInput($request->contadora[$i]);
+                $detalle->detalle = $this->sanitizeInput($request->detalle[$i]);
+                $detalle->observacion = $this->sanitizeInput($request->observaciones[$i]);
                 $detalle->save();
-                $stockPiezas = StockPieza::where('pieza_id',$piezaId)->where('sucursal_id',$request->sucursal_id_item[$i])->get();
-                $cantidadRestante = $request->cantidad[$i];
 
-                foreach ($stockPiezas as $stockPieza) {
-                    if ($stockPieza->cantidad >= $cantidadRestante) {
-                        // Descontar y guardar
-                        $stockPieza->cantidad -= $cantidadRestante;
-                        $cantidadRestante = 0;
-                    } else {
-                        // Descontar todo lo que tenga y continuar
-                        $cantidadRestante -= $stockPieza->cantidad;
-                        $stockPieza->cantidad = 0;
-                    }
-
-                    // Si después del descuento, la cantidad es 0, eliminamos el stock
-                    if ($stockPieza->cantidad == 0) {
-                        $stockPieza->delete(); // o $stockPieza->forceDelete() si es soft deletes
-                    } else {
-                        // Guardar el stock actualizado
-                        $stockPieza->save();
-                    }
-
-                    if ($cantidadRestante <= 0) {
-                        break; // Ya se descontó todo lo necesario
-                    }
-                }
+            }
+            $autorizada = $this->sanitizeInput($request->autorizada);
+            if ($autorizada){
+                $autorizacion = new Autorizacion();
+                $autorizacion->user_id = $this->sanitizeInput($request->user_id);
+                $autorizacion->unidad_id = $this->sanitizeInput($request->unidad_id);
+                $autorizacion->fecha = $this->sanitizeInput($request->fecha);
+                $autorizacion->save();
             }
 
         }catch(QueryException $ex){
@@ -314,10 +321,123 @@ class VentaController extends Controller
             $respuestaMSJ=$error;
         }
 
-        return redirect()->route('ventaPiezas.index')->with($respuestaID,$respuestaMSJ);
+        return redirect()->route('ventas.index')->with($respuestaID,$respuestaMSJ);
 
 
 
+    }
+
+    public function edit($id) {
+        $venta = Venta::with('pagos', 'unidad', 'cliente')->findOrFail($id);
+        $users = \App\Models\User::where('activo', 1)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('', '');
+
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $entidads = Entidad::orderBy('nombre')->where('activa',1)->pluck('nombre', 'id')->prepend('', '');
+
+        return view('ventas.edit', compact('venta', 'users', 'sucursals', 'entidads','provincias'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $venta = Venta::with('pagos')->findOrFail($id);
+
+        $precioSugerido = $request->input('precio', 0);
+        $totalMonto = $request->input('totalMonto', 0);
+        $totalAcreditado = $request->input('totalAcreditado', 0);
+
+        $rules = [
+            'unidad_id' => 'required',
+            'user_id' => 'required',
+            'cliente_id' => 'required',
+            'sucursal_id' => 'required',
+            'forma' => 'required',
+            'fecha' => 'required|date',
+            'entidad_id' => 'required|array|min:1',
+            'entidad_id.*' => 'required',
+            'monto.*' => 'required|numeric|min:1',
+            'fecha_pago.*' => 'required|date',
+            'pagado.*' => 'nullable|numeric|min:0',
+            'contadora.*' => 'nullable|date',
+        ];
+
+        $messages = [
+            'fecha.required' => 'La fecha es obligatoria.',
+            'sucursal_id.required' => 'Debe seleccionar una sucursal.',
+            'entidad_id.required' => 'Debe agregar al menos un pago.',
+            'entidad_id.min' => 'Debe agregar al menos un pago.',
+            'entidad_id.*.required' => 'Debe seleccionar una entidad.',
+            'monto.*.required' => 'El importe es obligatorio.',
+            'fecha_pago.*.required' => 'La fecha de pago es obligatoria.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        $validator->after(function ($validator) use ($totalMonto, $precioSugerido) {
+            if ($totalMonto < $precioSugerido) {
+                $validator->errors()->add('monto', "El importe total de los pagos ($totalMonto) debe ser igual o mayor al precio sugerido ($precioSugerido).");
+            }
+        });
+
+        if ($validator->fails()) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->all() + [
+                        'cliente_nombre' => optional($cliente)->full_name_phone,
+                    ]);
+        }
+
+        $input = $this->sanitizeInput($request->all());
+
+        DB::beginTransaction();
+        $ok = 1;
+        try {
+            // Actualizar la venta
+            $venta->unidad_id = $input['unidad_id'];
+            $venta->user_id = $input['user_id'];
+            $venta->cliente_id = $input['cliente_id'];
+            $venta->sucursal_id = $input['sucursal_id'];
+            $venta->fecha = $input['fecha'];
+            $venta->monto = $input['precio'];
+            $venta->total = $input['precio'];
+            $venta->forma = $input['forma'];
+            $venta->save();
+
+            // Eliminar pagos anteriores
+            $venta->pagos()->delete();
+
+            // Guardar pagos nuevos
+            foreach ($request->entidad_id as $i => $entidadId) {
+                $detalle = new Pago();
+                $detalle->venta_id = $venta->id;
+                $detalle->entidad_id = $entidadId;
+                $detalle->monto = $input['monto'][$i];
+                $detalle->fecha = $input['fecha_pago'][$i];
+                $detalle->pagado = $input['pagado'][$i] ?? null;
+                $detalle->contadora = $input['contadora'][$i] ?? null;
+                $detalle->detalle = $input['detalle'][$i] ?? null;
+                $detalle->observacion = $input['observaciones'][$i] ?? null;
+                $detalle->save();
+            }
+
+
+
+        } catch(QueryException $ex) {
+            $error = $ex->getMessage();
+            $ok = 0;
+        }
+
+        if ($ok) {
+            DB::commit();
+            return redirect()->route('ventas.index')->with('success', 'Registro actualizado satisfactoriamente');
+        } else {
+            DB::rollback();
+            return redirect()->back()->with('error', $error);
+        }
     }
 
 }

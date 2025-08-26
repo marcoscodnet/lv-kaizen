@@ -50,6 +50,7 @@
                     </tbody>
 
                 </table>
+                <div id="totales-ventas" class="mt-3 fs-10"></div>
             </div>
         </div>
 
@@ -91,6 +92,26 @@
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
+                    },
+                    "dataSrc": function(json) {
+                        // Forzar que los totales sean números
+                        let totalVentas = Number(json.totales.totalVentas) || 0;
+                        let ventasAutorizadas = Number(json.totales.ventasAutorizadas) || 0;
+                        let ventasNoAutorizadas = Number(json.totales.ventasNoAutorizadas) || 0;
+                        let totalAcreditado = Number(json.totales.totalAcreditado) || 0;
+                        let totalVentasImporte = Number(json.totales.totalVentasImporte) || 0;
+
+                        $('#totales-ventas').html(`
+                            <div>
+                                <strong>Total de ventas realizadas:</strong> ${totalVentas} <br>
+                                <strong>Cantidad de ventas autorizadas:</strong> ${ventasAutorizadas} <br>
+                                <strong>Cantidad de ventas no autorizadas:</strong> ${ventasNoAutorizadas} <br>
+                                <strong>Importe total acreditado:</strong> $${totalAcreditado.toFixed(2)} <br>
+                                <strong>Importe total de ventas realizadas:</strong> $${totalVentasImporte.toFixed(2)}
+                            </div>
+                        `);
+
+                        return json.data;
                     }
                 },
                 columns: [

@@ -421,18 +421,21 @@
             $('#totalAcreditado').val(totalAcreditado.toFixed(2));
         }
 
-        // Ejecutar al cambiar monto o pagado
-        $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotales);
 
-        // Ejecutar al agregar o eliminar pagos
-        $('body').on('click', '#addItemPago, .removeItemPago', function() {
-            setTimeout(actualizarTotales, 100); // pequeño delay para que el DOM se actualice
-        });
         var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-            actualizarTotales
+            actualizarTotales();
+
+            // Ejecutar al cambiar monto o pagado
+            $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotales);
+
+            // Ejecutar al agregar o eliminar pagos
+            $('body').on('click', '#addItemPago, .removeItemPago', function() {
+                setTimeout(actualizarTotales, 100); // pequeño delay para que el DOM se actualice
+            });
+
             function toggleDivs() {
                 const valor = $('#forma').val();
 

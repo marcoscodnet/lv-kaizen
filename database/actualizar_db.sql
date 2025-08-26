@@ -565,3 +565,89 @@ WHERE pieza_id NOT IN (SELECT id FROM piezas);
 
 SELECT `cd_ventapieza` as venta_pieza_id, `cd_pieza` as pieza_id,`cd_sucursal` as sucursal_id,`nu_cantidadpedida` as cantidad, `qt_montoacobrar` as precio
 FROM `ventapieza_unidad` WHERE 1
+
+###############################################25/08/2025#################################################
+SELECT
+    cd_cliente AS id,
+    ds_apynom AS nombre,
+    nu_doc AS documento,
+    ds_cuil_cuit AS cuil,
+    dt_nacimiento as nacimiento,
+    EC AS estado_civil,
+    ds_email AS email,
+
+    -- Teléfono particular
+    CASE
+        WHEN ds_telparticular LIKE '%-%'
+            THEN SUBSTRING_INDEX(REGEXP_REPLACE(ds_telparticular, '[^0-9-]', ''), '-', 1)
+        WHEN LENGTH(num_solo_particular) > 7
+            THEN LEFT(num_solo_particular, LENGTH(num_solo_particular) - 7)
+    ELSE NULL
+END AS particular_area,
+    CASE
+        WHEN ds_telparticular LIKE '%-%'
+            THEN SUBSTRING_INDEX(REGEXP_REPLACE(ds_telparticular, '[^0-9-]', ''), '-', -1)
+        WHEN LENGTH(num_solo_particular) > 7
+            THEN RIGHT(num_solo_particular, 7)
+        ELSE num_solo_particular
+END AS particular,
+
+    -- Teléfono laboral
+    CASE
+        WHEN ds_tellaboral LIKE '%-%'
+            THEN SUBSTRING_INDEX(REGEXP_REPLACE(ds_tellaboral, '[^0-9-]', ''), '-', 1)
+        WHEN LENGTH(num_solo_laboral) > 7
+            THEN LEFT(num_solo_laboral, LENGTH(num_solo_laboral) - 7)
+        ELSE NULL
+END AS celular_area,
+    CASE
+        WHEN ds_tellaboral LIKE '%-%'
+            THEN SUBSTRING_INDEX(REGEXP_REPLACE(ds_tellaboral, '[^0-9-]', ''), '-', -1)
+        WHEN LENGTH(num_solo_laboral) > 7
+            THEN RIGHT(num_solo_laboral, 7)
+        ELSE num_solo_laboral
+END AS celular,
+
+    ds_dircalle AS calle,
+    ds_dirnro AS nro,
+    ds_dirpiso AS piso,
+    ds_dirdepto AS depto,
+    cd_localidad AS localidad_id,
+    ds_cp AS cp,
+    ds_nacionalidad AS nacionalidad,
+    ds_actividad_ocupacion AS ocupacion,
+    ds_lugar_trabajo AS trabajo,
+    CI AS iva,
+    CL AS llego
+
+FROM (
+    SELECT
+        cd_cliente,
+        ds_apynom,
+        nu_doc,
+        ds_cuil_cuit,
+        dt_nacimiento,
+        estadocivil.ds_estadocivil AS EC,
+        ds_email,
+        ds_telparticular,
+        ds_tellaboral,
+        REGEXP_REPLACE(ds_telparticular, '[^0-9]', '') AS num_solo_particular,
+        REGEXP_REPLACE(ds_tellaboral, '[^0-9]', '') AS num_solo_laboral,
+        ds_dircalle,
+        ds_dirnro,
+        ds_dirpiso,
+        ds_dirdepto,
+        cd_localidad,
+        ds_cp,
+        ds_nacionalidad,
+        ds_actividad_ocupacion,
+        ds_lugar_trabajo,
+        condiva.ds_condiva AS CI,
+        comollego.ds_comollego AS CL
+    FROM cliente
+    LEFT JOIN estadocivil ON cliente.cd_estadocivil = estadocivil.cd_estadocivil
+    LEFT JOIN condiva ON cliente.cd_condiva = condiva.cd_condiva
+    LEFT JOIN comollego ON cliente.cd_comollego = comollego.cd_comollego
+) AS sub;
+
+
