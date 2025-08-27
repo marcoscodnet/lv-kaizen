@@ -149,7 +149,7 @@
                             <div class="col-lg-12">
                                 <div id="cuerpoVenta">
                                     <div class="row">
-                                        <div class="col text-start">
+                                        <div class="col text-start" style="margin-bottom: 1%">
                                             <button type="button" id="addItemPago" class="btn btn-success btn-sm mt-2">
                                                 <i class="fa fa-plus"></i> Agregar pago
                                             </button>
@@ -400,7 +400,7 @@
 
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
-    <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
+    <script src="{{ asset('assets/js/combo-provincia-localidad-modal.js') }}"></script>
 
     <script>
         function actualizarTotales() {
@@ -449,7 +449,7 @@
                         $('#fechaPago').html('Fecha de pago');
                     }
                     else{
-                        $('#fechaPago').html('Fecha de Aprobación Crédito');
+                        $('#fechaPago').html('Aprobación Crédito');
                     }
                     $('#cuerpoVenta').show();
                 }

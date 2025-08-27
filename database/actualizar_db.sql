@@ -566,17 +566,128 @@ WHERE pieza_id NOT IN (SELECT id FROM piezas);
 SELECT `cd_ventapieza` as venta_pieza_id, `cd_pieza` as pieza_id,`cd_sucursal` as sucursal_id,`nu_cantidadpedida` as cantidad, `qt_montoacobrar` as precio
 FROM `ventapieza_unidad` WHERE 1
 
-###############################################25/08/2025#################################################
+###############################################25/08/2025 me traigo las tablas enteras para sinitizarlas#################################################
+cliente hasta 18721
+venta hasta 20467
+servicio hasta 21219
+
+    🔹 Paso 1: Identificar el cliente principal por nu_doc
+
+Dejamos como “principal” el de menor cd_cliente:
+
+CREATE TEMPORARY TABLE clientes_principales AS
+SELECT nu_doc, MIN(cd_cliente) AS cliente_principal
+FROM cliente
+WHERE nu_doc IS NOT NULL AND nu_doc <> ''
+GROUP BY nu_doc
+HAVING COUNT(*) > 1;
+
+🔹 Paso 2: Actualizar relaciones en venta
+
+Migramos todas las ventas que apuntaban a duplicados hacia el cliente principal:
+
+UPDATE venta v
+    JOIN cliente c ON v.cd_cliente = c.cd_cliente
+    JOIN clientes_principales cp
+    ON c.nu_doc = cp.nu_doc
+    AND c.cd_cliente <> cp.cliente_principal
+    SET v.cd_cliente = cp.cliente_principal;
+
+🔹 Paso 3: Actualizar relaciones en servicio
+
+Hacemos lo mismo para los servicios:
+
+UPDATE servicio s
+    JOIN cliente c ON s.cd_cliente = c.cd_cliente
+    JOIN clientes_principales cp
+    ON c.nu_doc = cp.nu_doc
+    AND c.cd_cliente <> cp.cliente_principal
+    SET s.cd_cliente = cp.cliente_principal;
+
+🔹 Paso 4: Eliminar los clientes duplicados
+
+Una vez actualizadas las relaciones, eliminamos los clientes sobrantes:
+
+DELETE c
+FROM cliente c
+JOIN clientes_principales cp
+     ON c.nu_doc = cp.nu_doc
+     AND c.cd_cliente <> cp.cliente_principal;
+
+🔹 Paso 5: Verificación
+
+Podés chequear si quedó todo correcto con:
+
+SELECT nu_doc, COUNT(*) AS cantidad
+FROM cliente
+GROUP BY nu_doc
+HAVING COUNT(*) > 1;
+
+
+Debería devolverte cero filas ✅
+
+
+
+
+###############################################26/08/2025#################################################
+
+ALTER TABLE `clientes`
+    CHANGE COLUMN `iva` `iva` ENUM('Responsable Inscripto','Responsable No inscripto','Excento','No Inscripto','Monotributista','Consumidor Final') NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci' AFTER `trabajo`;
+
+
+
+INSERT INTO clientes (
+    id,
+    nombre,
+    documento,
+    cuil,
+    nacimiento,
+    estado_civil,
+    email,
+    particular_area,
+    particular,
+    celular_area,
+    celular,
+    calle,
+    nro,
+    piso,
+    depto,
+    localidad_id,
+    cp,
+    nacionalidad,
+    ocupacion,
+    trabajo,
+    iva,
+    llego,
+    created_at,
+    updated_at
+)
 SELECT
     cd_cliente AS id,
     ds_apynom AS nombre,
     nu_doc AS documento,
-    ds_cuil_cuit AS cuil,
-    dt_nacimiento as nacimiento,
-    EC AS estado_civil,
+    CASE
+        WHEN LENGTH(REGEXP_REPLACE(ds_cuil_cuit, '[^0-9]', '')) = 11
+            THEN CONCAT(
+            SUBSTRING(REGEXP_REPLACE(ds_cuil_cuit, '[^0-9]', ''),1,2), '-',
+            SUBSTRING(REGEXP_REPLACE(ds_cuil_cuit, '[^0-9]', ''),3,8), '-',
+            SUBSTRING(REGEXP_REPLACE(ds_cuil_cuit, '[^0-9]', ''),11,1)
+                 )
+        ELSE ds_cuil_cuit
+        END AS cuil,
+    dt_nacimiento AS nacimiento,
+
+    CASE cd_estadocivil
+        WHEN 1 THEN 'Viudo/a'
+        WHEN 2 THEN 'Casado/a'
+        WHEN 3 THEN 'Soltero/a'
+        WHEN 4 THEN 'Divorciado/a'
+        WHEN 5 THEN 'Concubino/a'
+        ELSE NULL
+        END AS estado_civil,
+
     ds_email AS email,
 
-    -- Teléfono particular
     CASE
         WHEN ds_telparticular LIKE '%-%'
             THEN SUBSTRING_INDEX(REGEXP_REPLACE(ds_telparticular, '[^0-9-]', ''), '-', 1)
@@ -592,7 +703,6 @@ END AS particular_area,
         ELSE num_solo_particular
 END AS particular,
 
-    -- Teléfono laboral
     CASE
         WHEN ds_tellaboral LIKE '%-%'
             THEN SUBSTRING_INDEX(REGEXP_REPLACE(ds_tellaboral, '[^0-9-]', ''), '-', 1)
@@ -612,42 +722,52 @@ END AS celular,
     ds_dirnro AS nro,
     ds_dirpiso AS piso,
     ds_dirdepto AS depto,
-    cd_localidad AS localidad_id,
+
+    -- Control de localidad_id para FK
+    CASE
+        WHEN cd_localidad = 0 THEN NULL
+        ELSE cd_localidad
+END AS localidad_id,
+
     ds_cp AS cp,
     ds_nacionalidad AS nacionalidad,
     ds_actividad_ocupacion AS ocupacion,
     ds_lugar_trabajo AS trabajo,
-    CI AS iva,
-    CL AS llego
+
+    CASE cd_condiva
+        WHEN 1 THEN 'Responsable Inscripto'
+        WHEN 2 THEN 'Responsable No inscripto'
+        WHEN 3 THEN 'Excento'
+        WHEN 4 THEN 'No Inscripto'
+        WHEN 5 THEN 'Monotributista'
+        WHEN 6 THEN 'Consumidor Final'
+        ELSE NULL
+END AS iva,
+
+    CASE cd_comollego
+        WHEN 1 THEN 'Google'
+        WHEN 2 THEN 'Diario'
+        WHEN 3 THEN 'Recomendado'
+        WHEN 4 THEN 'Radio'
+        WHEN 5 THEN 'Ya compró'
+        WHEN 6 THEN 'Página Web'
+        WHEN 7 THEN 'Ya conocía'
+        WHEN 8 THEN 'Mercado Libre'
+        WHEN 9 THEN 'Otro'
+        ELSE NULL
+END AS llego,
+
+    NOW() AS created_at,
+    NOW() AS updated_at
 
 FROM (
     SELECT
-        cd_cliente,
-        ds_apynom,
-        nu_doc,
-        ds_cuil_cuit,
-        dt_nacimiento,
-        estadocivil.ds_estadocivil AS EC,
-        ds_email,
-        ds_telparticular,
-        ds_tellaboral,
+        cliente.*,
         REGEXP_REPLACE(ds_telparticular, '[^0-9]', '') AS num_solo_particular,
-        REGEXP_REPLACE(ds_tellaboral, '[^0-9]', '') AS num_solo_laboral,
-        ds_dircalle,
-        ds_dirnro,
-        ds_dirpiso,
-        ds_dirdepto,
-        cd_localidad,
-        ds_cp,
-        ds_nacionalidad,
-        ds_actividad_ocupacion,
-        ds_lugar_trabajo,
-        condiva.ds_condiva AS CI,
-        comollego.ds_comollego AS CL
+        REGEXP_REPLACE(ds_tellaboral, '[^0-9]', '') AS num_solo_laboral
     FROM cliente
-    LEFT JOIN estadocivil ON cliente.cd_estadocivil = estadocivil.cd_estadocivil
-    LEFT JOIN condiva ON cliente.cd_condiva = condiva.cd_condiva
-    LEFT JOIN comollego ON cliente.cd_comollego = comollego.cd_comollego
-) AS sub;
+) AS cliente;
+
+
 
 

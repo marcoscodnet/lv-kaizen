@@ -95,6 +95,8 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('unidadsavender-datatable', [VentaController::class, 'unidadDataTable'])->name('unidadsavender.dataTable');
     Route::get('ventas/{unidad}/vender', [VentaController::class, 'vender'])->name('unidads.vender');
     Route::get('clientesearch', [ClienteController::class, 'search'])->name('cliente.search');
+    Route::post('autorizar/{id}', [VentaController::class, 'autorizar'])->name('ventas.autorizar');
+    Route::post('desautorizar/{id}', [VentaController::class, 'desautorizar'])->name('ventas.desautorizar');
 });
 
 

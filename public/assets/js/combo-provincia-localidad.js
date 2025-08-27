@@ -1,63 +1,28 @@
 $(document).ready(function () {
-    $('.provincia-select').each(function () {
-        let $provincia = $(this);
-        let $form = $provincia.closest('form');
-        let $localidad = $form.find('.localidad-select');
+    $('.provincia-select').on('change', function () {
+        let provinciaID = $(this).val();
+        let localidadSelect = $(this).closest('form').find('.localidad-select');
 
-        // Detectar si estamos dentro de un modal
-        let $modal = $form.closest('.modal');
-        let dropdownParent = $modal.length ? $modal : $('body');
-
-        // Inicializamos Select2 al cargar
-        $provincia.select2({
-            theme: 'bootstrap-5',
-            dropdownParent: dropdownParent,
-            width: '100%'
-        });
-
-        $localidad.select2({
-            theme: 'bootstrap-5',
-            dropdownParent: dropdownParent,
-            width: '100%'
-        });
-
-        // Evento de cambio de provincia
-        $provincia.on('change', function () {
-            let provinciaID = $(this).val();
-            let selectedLocalidadId = $(this).data('old-localidad');
-
-            // Vaciar y mostrar "Cargando..."
-            $localidad.select2('destroy');
-            $localidad.empty().append('<option value="">Cargando...</option>');
-
-            if (provinciaID) {
-                $.getJSON(localidadUrl + '/' + provinciaID, function (data) {
-                    $localidad.empty().append('<option value=""></option>');
+        localidadSelect.empty().append('<option value="">Cargando...</option>');
+        let selectedLocalidadId = $('.provincia-select').data('old-localidad');
+        //console.log('seleccionada: '+selectedLocalidadId);
+        if (provinciaID) {
+            $.ajax({
+                url: localidadUrl + '/' + provinciaID,  // Usando la variable de JS
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    localidadSelect.empty().append('<option value=""></option>');
                     $.each(data, function (key, value) {
                         let selected = value.id == selectedLocalidadId ? 'selected' : '';
-                        $localidad.append('<option value="' + value.id + '" ' + selected + '>' + value.nombre + '</option>');
+                        localidadSelect.append('<option value="' + value.id + '" ' + selected + '>' + value.nombre + '</option>');
                     });
-
-                    // Reinicializamos Select2 manteniendo el theme y dropdownParent
-                    $localidad.select2({
-                        theme: 'bootstrap-5',
-                        dropdownParent: dropdownParent,
-                        width: '100%'
-                    }).next('.select2-container').addClass('form-control');;
-
-                    // Abrir dropdown si hay valor seleccionado
-                    if (selectedLocalidadId) {
-                        $localidad.select2('open');
-                    }
-                });
-            } else {
-                $localidad.empty().append('<option value="">Seleccione una provincia primero</option>');
-                $localidad.select2({
-                    theme: 'bootstrap-5',
-                    dropdownParent: dropdownParent,
-                    width: '100%'
-                }).next('.select2-container').addClass('form-control');;
-            }
-        });
+                    localidadSelect.select2();
+                }
+            });
+        } else {
+            localidadSelect.empty().append('<option value="">Seleccione una provincia primero</option>');
+            localidadSelect.select2(); // También reinicializás si está vacío
+        }
     });
 });

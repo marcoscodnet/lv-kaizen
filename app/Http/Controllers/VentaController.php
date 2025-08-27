@@ -50,18 +50,32 @@ class VentaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [  'ventas.fecha','clientes.nombre as cliente','unidads.motor','modelos.nombre as modelo', DB::raw("IFNULL(users.name, ventas.user_name)"),'sucursals.nombre as sucursal_nombre',
+        $columnas = [
+            'ventas.fecha',
+            'clientes.nombre as cliente',
+            'unidads.motor',
+            'modelos.nombre as modelo',
+            DB::raw("IFNULL(users.name, ventas.user_name)"),
+            'sucursals.nombre as sucursal_nombre',
             DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
             'ventas.forma'
+        ];
 
-        ]; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Venta::select('ventas.id as id', 'ventas.fecha','clientes.nombre as cliente','unidads.motor','modelos.nombre as modelo', DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),'sucursals.nombre as sucursal_nombre',DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+        // Query base
+        $query = Venta::select(
+            'ventas.id as id',
+            'ventas.fecha',
+            'clientes.nombre as cliente',
+            'unidads.motor',
+            'modelos.nombre as modelo',
+            DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
+            'sucursals.nombre as sucursal_nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
             'ventas.forma'
-
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
@@ -69,45 +83,47 @@ class VentaController extends Controller
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id')
-        ;
+            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
 
-        // Aplicar la búsqueda
+        // Aplicar búsqueda
         if (!empty($busqueda)) {
             $query->where(function ($query) use ($columnas, $busqueda) {
                 foreach ($columnas as $columna) {
-                    if ($columna){
+                    if ($columna) {
                         $query->orWhere($columna, 'like', "%$busqueda%");
                     }
-
                 }
             });
         }
 
+        // Clonar para evitar pisar el query
+        $baseQuery = clone $query;
+
         // Totales
-        $totalVentas = $query->count(); // total de ventas filtradas
-        $ventasAutorizadas = $query->whereNotNull('autorizacions.id')->count();
+        $totalVentas = (clone $baseQuery)->count();
+        $ventasAutorizadas = (clone $baseQuery)->whereNotNull('autorizacions.id')->count();
         $ventasNoAutorizadas = $totalVentas - $ventasAutorizadas;
 
-// Sumar montos desde la tabla pagos
-        $totalAcreditado = Pago::whereIn('venta_id', $query->pluck('id'))->sum('pagado');
-        $totalVentasImporte = Pago::whereIn('venta_id', $query->pluck('id'))->sum('monto'); // si quieres contar ventas únicas
+        // IDs de ventas para pagos
+        $ventaIds = (clone $baseQuery)->pluck('ventas.id');
+        $totalAcreditado = Pago::whereIn('venta_id', $ventaIds)->sum('pagado');
+        $totalVentasImporte = Pago::whereIn('venta_id', $ventaIds)->sum('monto');
 
+        // Cantidad filtrada
+        $recordsFiltered = (clone $baseQuery)->count();
 
+        // Datos paginados
+        $datos = (clone $baseQuery)
+            ->orderBy($columnaOrden, $orden)
+            ->skip($request->input('start'))
+            ->take($request->input('length'))
+            ->get();
 
-        // Obtener la cantidad total de registros después de aplicar el filtro de búsqueda
-        $recordsFiltered = $query->count();
-
-
-        $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
-
-        // Obtener la cantidad total de registros sin filtrar
+        // Total sin filtros
         $recordsTotal = Venta::count();
 
-
-
         return response()->json([
-            'data' => $datos, // Obtener solo los elementos paginados
+            'data' => $datos,
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
@@ -120,6 +136,7 @@ class VentaController extends Controller
             ]
         ]);
     }
+
 
     /**
      * Display a listing of the resource.
@@ -438,6 +455,82 @@ class VentaController extends Controller
             DB::rollback();
             return redirect()->back()->with('error', $error);
         }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $venta = Venta::findOrFail($id);
+
+        // Buscar la autorización correspondiente a esa unidad
+        $autorizacion = Autorizacion::where('unidad_id', $venta->unidad_id)
+            ->first();
+
+        if ($autorizacion) {
+            $autorizacion->delete();
+        }
+
+        // Elimina las relaciones
+        $venta->pagos()->delete();
+
+
+        // Elimina el venta
+        $venta->delete();
+
+        return redirect()->route('ventas.index')
+            ->with('success','Venta eliminada con éxito');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function autorizar($id)
+    {
+
+        $venta = Venta::findOrFail($id);
+
+
+        $autorizacion = new Autorizacion();
+        $autorizacion->user_id = $this->sanitizeInput(auth()->id());
+        $autorizacion->unidad_id = $this->sanitizeInput($venta->unidad_id);
+        $autorizacion->fecha = $this->sanitizeInput(Carbon::now()->toDateString());
+        $autorizacion->save();
+
+        return redirect()->route('ventas.index')
+            ->with('success','Unidad autorizada con éxito');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function desautorizar($id)
+    {
+
+        $venta = Venta::findOrFail($id);
+
+        // Buscar la autorización correspondiente a esa unidad
+        $autorizacion = Autorizacion::where('unidad_id', $venta->unidad_id)
+
+            ->first();
+
+        if ($autorizacion) {
+            $autorizacion->delete();
+        }
+
+
+        return redirect()->route('ventas.index')
+            ->with('success','Unidad desautorizada con éxito');
     }
 
 }

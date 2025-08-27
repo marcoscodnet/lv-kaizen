@@ -28,12 +28,12 @@ class Cliente extends Model
 
     public function getFullPhoneAttribute()
     {
-        return ' Celular: ('.$this->celular_area.') '.$this->celular;
+        return ' Teléfono: ('.$this->particular_area.') '.$this->particular;
     }
 
     public function getFullNamePhoneAttribute()
     {
-        return $this->nombre.' '.' ('.$this->cuil.')'.$this->getFullAddressAttribute().$this->getFullPhoneAttribute();
+        return $this->nombre.' '.' ('.$this->documento.')'.$this->getFullAddressAttribute().$this->getFullPhoneAttribute();
     }
 
 }

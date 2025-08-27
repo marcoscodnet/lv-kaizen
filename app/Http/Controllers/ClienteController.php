@@ -281,8 +281,10 @@ class ClienteController extends Controller
             ->where(function ($query) use ($search) {
                 $query->where('nombre', 'LIKE', "%$search%")
                     ->orWhere('celular', 'LIKE', "%$search%")
+                    ->orWhere('calle', 'LIKE', "%$search%")
+                    ->orWhere('nro', 'LIKE', "%$search%")
                     ->orWhere('particular', 'LIKE', "%$search%")
-                    ->orWhere('cuil', 'LIKE', "%$search%");
+                    ->orWhere('documento', 'LIKE', "%$search%");
             })
             ->orderBy('nombre', 'asc')
             ->get();

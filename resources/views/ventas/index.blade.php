@@ -147,11 +147,33 @@
                             var actionsHtml = '<div>';
 
                             // Agregar enlace de edición si el usuario tiene permiso
-                            @can('venta-pieza-editar')
+                            @can('venta-editar')
                                 actionsHtml += '<a href="{{ route("ventas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-right: 5px;"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
 
                             actionsHtml += '<a href="{{ route("ventas.pdf") }}?venta_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
+
+
+                            if (row.autorizacion == 'No autorizada') {
+                                @can('unidad-autorizar')
+                                    actionsHtml += '<form id="admit-form-' + row.id + '" method="post" action="{{ route('ventas.autorizar', '') }}/' + row.id + '" style="display: none">';
+                                actionsHtml += '{{ csrf_field() }}';
+
+                                actionsHtml += '</form>';
+                                actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'admit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Autorizar" title="Autorizar"><i class="fa fa-check-circle text-500"></i></a>';
+                                @endcan
+
+                            }
+                            if (row.autorizacion == 'Autorizada') {
+                                @can('unidad-autorizar')
+                                    actionsHtml += '<form id="noadmit-form-' + row.id + '" method="post" action="{{ route('ventas.desautorizar', '') }}/' + row.id + '" style="display: none">';
+                                actionsHtml += '{{ csrf_field() }}';
+
+                                actionsHtml += '</form>';
+                                actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'noadmit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Desautorizar" title="Desautorizar"><i class="fa fa-times-circle text-500"></i></a>';
+                                @endcan
+
+                            }
 
                             // Agregar formulario de eliminación si el venta_ tiene permiso
                             @can('venta-eliminar')
