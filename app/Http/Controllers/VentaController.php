@@ -533,4 +533,46 @@ class VentaController extends Controller
             ->with('success','Unidad desautorizada con éxito');
     }
 
+    public function generateBoleto(Request $request,$attach = false)
+    {
+        $ventaId = $request->query('venta_id');
+        $venta = Venta::find($ventaId);
+
+
+
+        $template = 'ventas.boleto';
+        /*$unidadMovimientos = $ventaPieza->unidadMovimientos()->get();*/
+
+
+        $data = [
+            //'remito' => str_pad($ventaPieza->id,8,'0',STR_PAD_LEFT),
+            'venta' => $venta,
+            'fecha' => $venta->fecha,
+            //'destino' => $destino,
+            'vendedor' => (isset($venta->user))?$venta->user->name:$venta->user_name,
+            /*'piezaVentapiezas' => $ventaPieza->piezas,
+            'descripcion' => $descripcion,*/
+        ];
+        //dd($data);
+
+
+
+
+        $pdf = PDF::loadView($template, $data);
+
+        $pdfPath = 'Venta_' . $ventaId . '.pdf';
+
+        if ($attach) {
+            $fullPath = public_path('/temp/' . $pdfPath);
+            $pdf->save($fullPath);
+            return $fullPath; // Devuelve la ruta del archivo para su uso posterior
+        } else {
+
+            return $pdf->download($pdfPath);
+        }
+
+        // Renderiza la vista de previsualización para HTML
+        //return view('integrantes.alta', $data);
+    }
+
 }
