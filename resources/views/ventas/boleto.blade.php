@@ -113,10 +113,15 @@
                 <div class="cell left-section2">
                     <p><span style="font-weight: bold">Localidad:</span> {{$venta->cliente->localidad->nombre}}</p>
                     <p><span style="font-weight: bold">Provincia:</span> {{$venta->cliente->localidad->provincia->nombre}}</p>
+                    <p><span style="font-weight: bold">Fecha nacimiento:</span>{{ ($venta->cliente->nacimiento)?date('d/m/Y', strtotime($venta->cliente->nacimiento)):'' }}</p>
+                    <p><span style="font-weight: bold">Estado civil:</span> {{$venta->cliente->estado_civil}}</p>
+                    <p><span style="font-weight: bold">Conyuge:</span> {{$venta->cliente->estado_civil}}</p>
                 </div>
                 <div class="cell left-section2">
                     <p><span style="font-weight: bold">Código postal:</span> {{ $venta->cliente->cp }}</p>
                     <p><span style="font-weight: bold">TE particular:</span> ({{ $venta->cliente->particular_area}})  {{$venta->cliente->particular}}</p>
+                    <p><span style="font-weight: bold">TE movil:</span> ({{ $venta->cliente->celular_area}})  {{$venta->cliente->celular}}</p>
+                    <p><span style="font-weight: bold">E-mail:</span> {{$venta->cliente->email}}</p>
                 </div>
             </div>
         </div>

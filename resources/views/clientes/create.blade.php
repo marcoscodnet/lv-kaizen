@@ -121,16 +121,16 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
                                 <div class="form-group">
                                     <label for="nacionalidad">Nacionalidad</label>
                                     <input type="text" class="form-control" id="nacionalidad" name="nacionalidad" placeholder="Nacionalidad" value="{{ old('nacionalidad') }}" required>
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
-                                    <label for="estado_civil">E. Civil</label>
+                                    <label for="estado_civil">Estado Civil</label>
 
                                     <select name="estado_civil" id="estado_civil" class="form-control" required>
                                         <option value="">
@@ -146,7 +146,13 @@
 
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                                <div class="form-group">
+                                    <label for="conyuge">Cónyuge</label>
+                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cònyuge" value="{{ old('conyuge') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
                                     <label for="llego">Como llegó?</label>
 

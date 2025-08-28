@@ -769,5 +769,7 @@ FROM (
 ) AS cliente;
 
 
-
+################################# 27/08/2025 ########################################################
+ALTER TABLE `clientes`
+    ADD COLUMN `conyuge` VARCHAR(255) NULL DEFAULT NULL AFTER `estado_civil`;
 
