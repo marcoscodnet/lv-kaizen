@@ -122,14 +122,14 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
                                 <div class="form-group">
                                     <label for="nacionalidad">Nacionalidad</label>
                                     <input type="text" class="form-control" id="nacionalidad" name="nacionalidad" placeholder="Nacionalidad" value="@if (old('nacionalidad')){{ old('nacionalidad') }}@else{{ $cliente->nacionalidad }}@endif" required>
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
                                     <label for="estado_civil">E. Civil</label>
 
@@ -147,7 +147,15 @@
 
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
+                                <div class="form-group">
+                                    <label for="conyuge">Cónyuge</label>
+                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cònyuge" value="@if (old('conyuge')){{ old('conyuge') }}@else{{ $cliente->conyuge }}@endif" required>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
                                     <label for="llego">Como llegó?</label>
 
@@ -264,6 +272,24 @@
 
         });
         var localidadUrl = "{{ url('localidads') }}";
+
+        // Mostrar/ocultar cónyuge
+        function toggleConyuge() {
+            var estadoCivil = $('#estado_civil').val();
+            if (estadoCivil === 'Casado/a' || estadoCivil === 'Concubino/a') {
+                $('#conyuge-container').show();
+                $('#conyuge').attr('required', true);
+            } else {
+                $('#conyuge-container').hide();
+                $('#conyuge').removeAttr('required').val('');
+            }
+        }
+
+        $('#estado_civil').on('change', toggleConyuge);
+
+        // Ejecutar al cargar (por si hay old() con Casado/a o Concubino/a)
+        toggleConyuge();
+
     </script>
 
 

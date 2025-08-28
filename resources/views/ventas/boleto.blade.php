@@ -30,7 +30,7 @@
             border: 1px solid #000;
             /*padding: 20px;
             margin-bottom: 10px;*/
-            height: 50px;
+            height: 40px;
             box-sizing: border-box;
             position: relative;
         }
@@ -87,6 +87,51 @@
         p{
             margin: 5px;
         }
+
+        .datos-titular {
+            width: 100%;
+            border-collapse: collapse;
+
+        }
+
+        .datos-titular td {
+            vertical-align: top;
+            padding: 0 8px;
+            width: 50%;
+        }
+
+        .datos-bien {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .datos-bien td {
+            width: 25%; /* 4 columnas iguales */
+            padding: 0 8px;
+            vertical-align: top;
+        }
+
+        .datos-vendedor {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .datos-vendedor td {
+
+            padding: 0 8px;
+            vertical-align: top;
+        }
+
+        .datos-vendedor .label {
+            width: 25%;
+            background-color: darkgrey;
+        }
+        .signature { margin-top: 50px; text-align: center; }
+        .signature div { display: inline-block; width: 30%; text-align: center; }
+        .signature-line {
+            border-top: 1px solid black;
+            margin: 20px 10px 10px 10px;
+        }
     </style>
 </head>
 <body>
@@ -107,27 +152,116 @@
         </div>
 
         <div class="description">
-            <p><span style="font-weight: bold">Apellido y nombre/Razón Social:</span> {{$venta->cliente->nombre}}</p>
-            <p><span style="font-weight: bold">Domicilio:</span> {{$venta->cliente->calle}} <span style="font-weight: bold">Nº:</span> {{$venta->cliente->nro}} <span style="font-weight: bold">Piso:</span> {{$venta->cliente->piso}} <span style="font-weight: bold">Depto.:</span> {{$venta->cliente->depto}}</p>
-            <div class="row2">
-                <div class="cell left-section2">
-                    <p><span style="font-weight: bold">Localidad:</span> {{$venta->cliente->localidad->nombre}}</p>
-                    <p><span style="font-weight: bold">Provincia:</span> {{$venta->cliente->localidad->provincia->nombre}}</p>
-                    <p><span style="font-weight: bold">Fecha nacimiento:</span>{{ ($venta->cliente->nacimiento)?date('d/m/Y', strtotime($venta->cliente->nacimiento)):'' }}</p>
-                    <p><span style="font-weight: bold">Estado civil:</span> {{$venta->cliente->estado_civil}}</p>
-                    <p><span style="font-weight: bold">Conyuge:</span> {{$venta->cliente->estado_civil}}</p>
-                </div>
-                <div class="cell left-section2">
-                    <p><span style="font-weight: bold">Código postal:</span> {{ $venta->cliente->cp }}</p>
-                    <p><span style="font-weight: bold">TE particular:</span> ({{ $venta->cliente->particular_area}})  {{$venta->cliente->particular}}</p>
-                    <p><span style="font-weight: bold">TE movil:</span> ({{ $venta->cliente->celular_area}})  {{$venta->cliente->celular}}</p>
-                    <p><span style="font-weight: bold">E-mail:</span> {{$venta->cliente->email}}</p>
-                </div>
-            </div>
+            <table class="datos-titular">
+                <tr>
+                    <td colspan="2"><strong>Apellido y nombre/Razón Social:</strong> {{$venta->cliente->nombre}}</td>
+
+                </tr>
+                <tr>
+                    <td><strong>Domicilio:</strong> {{$venta->cliente->calle}}
+
+                    </td>
+                    <td><strong>Nº:</strong> {{$venta->cliente->nro}}
+                        <strong>Piso:</strong> {{$venta->cliente->piso}}
+                        <strong>Depto.:</strong> {{$venta->cliente->depto}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Localidad:</strong> {{$venta->cliente->localidad->nombre}}</td>
+                    <td><strong>Código postal:</strong> {{$venta->cliente->cp}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Provincia:</strong> {{$venta->cliente->localidad->provincia->nombre}}</td>
+                    <td><strong>TE particular:</strong> ({{$venta->cliente->particular_area}}) {{$venta->cliente->particular}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Fecha nacimiento:</strong> {{ ($venta->cliente->nacimiento)?date('d/m/Y', strtotime($venta->cliente->nacimiento)):'' }}</td>
+                    <td><strong>TE móvil:</strong> ({{$venta->cliente->celular_area}}) {{$venta->cliente->celular}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Estado civil:</strong> {{$venta->cliente->estado_civil}}</td>
+                    <td><strong>E-mail:</strong> {{$venta->cliente->email}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Cónyuge:</strong> {{$venta->cliente->conyuge}}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>Nacionalidad:</strong> {{$venta->cliente->nacionalidad}}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>DNI:</strong> {{$venta->cliente->documento}}</td>
+                    <td><strong>CUIT/CUIL:</strong> {{$venta->cliente->cuil}}</td>
+                </tr>
+
+            </table>
         </div>
-        <div class="content">
-            <!-- Contenido del boleto -->
+
+        <div class="subtitle">
+            <p class="titulo">DATOS DEL BIEN</p>
+
         </div>
+        <div class="description">
+            <table class="datos-bien">
+                <tr>
+                    <td><strong>Tipo</strong> </td>
+                    <td><strong>Marca</strong> </td>
+                    <td><strong>Modelo</strong> </td>
+                    <td><strong>Año - Modelo</strong></td>
+                </tr>
+                <tr>
+                    <td>{{$venta->unidad->producto->tipoUnidad->nombre}}</td>
+                    <td>{{$venta->unidad->producto->marca->nombre}}</td>
+                    <td>{{$venta->unidad->producto->modelo->nombre}}</td>
+                    <td> {{$venta->unidad->year}}</td>
+                </tr>
+                <tr>
+
+                    <td><strong>Patente</strong> </td>
+                    <td><strong>Nro. Motor</strong> </td>
+                    <td><strong>Nro. Cuadro</strong> </td>
+                    <td><strong>Color</strong> </td>
+                </tr>
+                <tr>
+                    <td>{{$venta->unidad->patente}}</td>
+                    <td>{{$venta->unidad->motor}}</td>
+                    <td>{{$venta->unidad->cuadro}}</td>
+                    <td>{{$venta->unidad->producto->color->nombre}}</td>
+                </tr>
+
+
+
+            </table>
+        </div>
+        <div class="description">
+            <table class="datos-vendedor">
+                <tr>
+                    <td class="label"><strong>Vendedor</strong> </td>
+                    <td>{{(isset($venta->user))?$venta->user->name:$venta->user_name}}</td>
+
+                </tr>
+
+
+
+            </table>
+        </div>
+        <div class="description" style="white-space: pre-wrap;">
+            {!! $parametro->contenido !!}
+            @php
+                setlocale(LC_TIME, 'es_ES.UTF-8'); // Para que el mes salga en español
+                $fecha = \Carbon\Carbon::now();    // Fecha actual
+                $dia = $fecha->day;
+                $mes = $fecha->translatedFormat('F'); // Mes en español
+                $anio = $fecha->year;
+            @endphp
+            En prueba de conformidad se firman dos ejemplares del mismo tenor y a un solo efecto en la ciudad de La Plata, a los {{ $dia }} días, del mes de {{ ucfirst($mes) }} de {{ $anio }}.
+        </div>
+        <div class="signature">
+            <div class="signature-line">Firma del titular</div>
+            <div class="signature-line">Firma del Autorizado</div>
+            <div class="signature-line">Sello del concesionario</div>
+        </div>
+
     </div>
 @endfor
 

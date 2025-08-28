@@ -332,13 +332,13 @@
 
 
                             <!-- Nacionalidad -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Nacionalidad</label>
                                 <input type="text" name="nacionalidad" id="nacionalidad" class="form-control" required>
                             </div>
 
                             <!-- Estado Civil -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-3 mb-3">
                                 <label class="form-label">Estado Civil</label>
                                 <select name="estado_civil" id="estado_civil" class="form-control" required>
                                     <option value="">
@@ -350,6 +350,13 @@
                                         </option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
+                                <div class="form-group">
+                                    <label for="conyuge">Cónyuge</label>
+                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cònyuge" value="{{ old('conyuge') }}" required>
+                                </div>
                             </div>
 
                             <!-- Cómo llegó -->
@@ -580,6 +587,23 @@
             $('#addItemPago').on('click', function () {
                 $('#cuerpoVenta').append(getPagoHtml());
             });
+
+            // Mostrar/ocultar cónyuge
+            function toggleConyuge() {
+                var estadoCivil = $('#estado_civil').val();
+                if (estadoCivil === 'Casado/a' || estadoCivil === 'Concubino/a') {
+                    $('#conyuge-container').show();
+                    $('#conyuge').attr('required', true);
+                } else {
+                    $('#conyuge-container').hide();
+                    $('#conyuge').removeAttr('required').val('');
+                }
+            }
+
+            $('#estado_civil').on('change', toggleConyuge);
+
+            // Ejecutar al cargar (por si hay old() con Casado/a o Concubino/a)
+            toggleConyuge();
 
             // Eliminar pago
             $('body').on('click', '.removeItemPago', function () {

@@ -171,6 +171,7 @@
 
                                 actionsHtml += '</form>';
                                 actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'noadmit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Desautorizar" title="Desautorizar"><i class="fa fa-times-circle text-500"></i></a>';
+                                actionsHtml += '<a href="{{ route("ventas.formulario") }}?venta_id=' + row.id + '" alt="Descargar formulario" title="Descargar formulario" target="_blank" class="btn btn-link p-0"><span class="fas fa-scroll text-500"></span></a>';
                                 @endcan
 
                             }

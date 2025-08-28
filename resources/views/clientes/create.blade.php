@@ -146,7 +146,7 @@
 
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
                                 <div class="form-group">
                                     <label for="conyuge">Cónyuge</label>
                                     <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cònyuge" value="{{ old('conyuge') }}" required>
@@ -271,6 +271,24 @@
 
         });
         var localidadUrl = "{{ url('localidads') }}";
+
+        // Mostrar/ocultar cónyuge
+        function toggleConyuge() {
+            var estadoCivil = $('#estado_civil').val();
+            if (estadoCivil === 'Casado/a' || estadoCivil === 'Concubino/a') {
+                $('#conyuge-container').show();
+                $('#conyuge').attr('required', true);
+            } else {
+                $('#conyuge-container').hide();
+                $('#conyuge').removeAttr('required').val('');
+            }
+        }
+
+        $('#estado_civil').on('change', toggleConyuge);
+
+        // Ejecutar al cargar (por si hay old() con Casado/a o Concubino/a)
+        toggleConyuge();
+
     </script>
 
 

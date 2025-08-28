@@ -120,6 +120,7 @@ class ClienteController extends Controller
             'localidad_id' => 'required',
             'nacionalidad' => 'required',
             'estado_civil' => 'required',
+            'conyuge' => 'required_if:estado_civil,Casado/a,Concubino/a',
             'llego' => 'required',
             'iva' => 'required',
         ];
@@ -130,6 +131,7 @@ class ClienteController extends Controller
             'particular_area.required' => 'El campo Área del teléfono particular es obligatorio.',
             'celular_area.required' => 'El campo Área del teléfono celular es obligatorio.',
             'localidad_id.required' => 'El campo Localidad es obligatorio.',
+            'conyuge.required_if' => 'El campo Cónyuge es obligatorio si el estado civil es Casado/a o Concubino/a.',
             'llego.required' => 'El campo Como llegó? es obligatorio.',
             'iva.required' => 'El campo Condivión IVA es obligatorio.',
         ];
@@ -193,6 +195,7 @@ class ClienteController extends Controller
             'localidad_id' => 'required',
             'nacionalidad' => 'required',
             'estado_civil' => 'required',
+            'conyuge' => 'required_if:estado_civil,Casado/a,Concubino/a',
             'llego' => 'required',
             'iva' => 'required',
         ];
@@ -203,6 +206,7 @@ class ClienteController extends Controller
             'particular_area.required' => 'El campo Área del teléfono particular es obligatorio.',
             'celular_area.required' => 'El campo Área del teléfono celular es obligatorio.',
             'localidad_id.required' => 'El campo Localidad es obligatorio.',
+            'conyuge.required_if' => 'El campo Cónyuge es obligatorio si el estado civil es Casado/a o Concubino/a.',
             'llego.required' => 'El campo Como llegó? es obligatorio.',
             'iva.required' => 'El campo Condivión IVA es obligatorio.',
         ];
@@ -318,6 +322,7 @@ class ClienteController extends Controller
             'localidad_id' => 'required',
             'nacionalidad' => 'required',
             'estado_civil' => 'required',
+            'conyuge' => 'required_if:estado_civil,Casado/a,Concubino/a',
             'llego' => 'required',
             'iva' => 'required',
         ];
@@ -327,6 +332,7 @@ class ClienteController extends Controller
             'particular_area.required' => 'El campo Área del teléfono particular es obligatorio.',
             'celular_area.required' => 'El campo Área del teléfono celular es obligatorio.',
             'localidad_id.required' => 'El campo Localidad es obligatorio.',
+            'conyuge.required_if' => 'El campo Cónyuge es obligatorio si el estado civil es Casado/a o Concubino/a.',
             'llego.required' => 'El campo Como llegó? es obligatorio.',
             'iva.required' => 'El campo Condición IVA es obligatorio.',
         ];

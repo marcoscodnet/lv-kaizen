@@ -92,6 +92,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('ventas', VentaController::class);
     Route::post('venta-datatable', [VentaController::class, 'dataTable'])->name('ventas.dataTable');
     Route::get('venta-boleto', [VentaController::class, 'generateBoleto'])->name('ventas.boleto');
+    Route::get('venta-formulario', [VentaController::class, 'generateFormulario'])->name('ventas.formulario');
     Route::post('unidadsavender-datatable', [VentaController::class, 'unidadDataTable'])->name('unidadsavender.dataTable');
     Route::get('ventas/{unidad}/vender', [VentaController::class, 'vender'])->name('unidads.vender');
     Route::get('clientesearch', [ClienteController::class, 'search'])->name('cliente.search');

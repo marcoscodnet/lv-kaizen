@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Autorizacion;
 use App\Models\Cliente;
 use App\Models\Pago;
+use App\Models\Parametro;
 use App\Models\Provincia;
 use App\Models\Sucursal;
 use App\Models\Unidad;
@@ -538,7 +539,7 @@ class VentaController extends Controller
         $ventaId = $request->query('venta_id');
         $venta = Venta::find($ventaId);
 
-
+        $parametro = Parametro::where('nombre','boleto_compra_venta')->first();;
 
         $template = 'ventas.boleto';
         /*$unidadMovimientos = $ventaPieza->unidadMovimientos()->get();*/
@@ -549,7 +550,49 @@ class VentaController extends Controller
             'venta' => $venta,
             'fecha' => $venta->fecha,
             //'destino' => $destino,
-            'vendedor' => (isset($venta->user))?$venta->user->name:$venta->user_name,
+            'parametro' => $parametro,
+            /*'piezaVentapiezas' => $ventaPieza->piezas,
+            'descripcion' => $descripcion,*/
+        ];
+        //dd($data);
+
+
+
+
+        $pdf = PDF::loadView($template, $data);
+
+        $pdfPath = 'Venta_' . $ventaId . '.pdf';
+
+        if ($attach) {
+            $fullPath = public_path('/temp/' . $pdfPath);
+            $pdf->save($fullPath);
+            return $fullPath; // Devuelve la ruta del archivo para su uso posterior
+        } else {
+
+            return $pdf->download($pdfPath);
+        }
+
+        // Renderiza la vista de previsualización para HTML
+        //return view('integrantes.alta', $data);
+    }
+
+    public function generateFormulario(Request $request,$attach = false)
+    {
+        $ventaId = $request->query('venta_id');
+        $venta = Venta::find($ventaId);
+
+        $parametro = Parametro::where('nombre','boleto_compra_venta')->first();;
+
+        $template = 'ventas.formulario';
+        /*$unidadMovimientos = $ventaPieza->unidadMovimientos()->get();*/
+
+
+        $data = [
+            //'remito' => str_pad($ventaPieza->id,8,'0',STR_PAD_LEFT),
+            'venta' => $venta,
+            'fecha' => $venta->fecha,
+            //'destino' => $destino,
+            'parametro' => $parametro,
             /*'piezaVentapiezas' => $ventaPieza->piezas,
             'descripcion' => $descripcion,*/
         ];
