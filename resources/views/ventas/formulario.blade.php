@@ -14,31 +14,31 @@
         }
 
         /* Convierte las posiciones FPDF a mm aproximadas */
-        .marca { position: absolute; left: 60mm; top: 44mm;}
-        .tipo { position: absolute; left: 60mm; top: 52mm;}
-        .modelo { position: absolute; left: 60mm; top: 60mm;}
-        .marca_motor { position: absolute; left: 60mm; top: 68mm;}
-        .nro_motor { position: absolute; left: 60mm; top: 76mm;}
-        .marca_cuadro { position: absolute; left: 60mm; top: 84mm;}
-        .nro_cuadro { position: absolute; left: 60mm; top: 92mm;}
-        .observaciones { position: absolute; left: 20mm; top: 100mm; width: 170mm; }
+        .marca { position: absolute; left: 60mm; top: 40mm;}
+        .tipo { position: absolute; left: 55mm; top: 46mm;}
+        .modelo { position: absolute; left: 65mm; top: 52mm;}
+        .marca_motor { position: absolute; left: 75mm; top: 58mm;}
+        .nro_motor { position: absolute; left: 70mm; top: 64mm;}
+        .marca_cuadro { position: absolute; left: 80mm; top: 70mm;}
+        .nro_cuadro { position: absolute; left: 72mm; top: 76mm;}
+        .observaciones { position: absolute; left: 50mm; top: 100mm; width: 170mm; }
 
-        .lugar { position: absolute; left: 20mm; top: 180mm;}
-        .fecha_dia { position: absolute; left: 75mm; top: 180mm; }
-        .fecha_mes { position: absolute; left: 90mm; top: 180mm; }
-        .fecha_anio { position: absolute; left: 105mm; top: 180mm; }
+        .lugar { position: absolute; left: 50mm; top: 186mm;}
+        .fecha_dia { position: absolute; left: 105mm; top: 186mm; }
+        .fecha_mes { position: absolute; left: 120mm; top: 186mm; }
+        .fecha_anio { position: absolute; left: 135mm; top: 186mm; }
 
-        .solicitante_nombre { position: absolute; left: 20mm; top: 200mm;  }
-        .solicitante_doc { position: absolute; left: 105mm; top: 200mm; }
-        .solicitante_domicilio { position: absolute; left: 20mm; top: 208mm;}
-        .solicitante_nro { position: absolute; left: 115mm; top: 208mm; width: }
-        .solicitante_localidad { position: absolute; left: 140mm; top: 208mm;  }
+        .solicitante_nombre { position: absolute; left: 95mm; top: 206mm;  }
+        .solicitante_doc { position: absolute; left: 100mm; top: 212mm; }
+        .solicitante_domicilio { position: absolute; left: 75mm; top: 218mm;}
+        .solicitante_nro { position: absolute; left: 115mm; top: 218mm; }
+        .solicitante_localidad { position: absolute; left: 150mm; top: 218mm;  }
 
         .sello {
             position: absolute;
-            left: 20mm;
-            top: 220mm;
-            width: 170mm;
+            left: 75mm;
+            top: 140mm;
+            width: 55mm;
             font-size: 7pt;
             color: #7B7B7B;
         }
@@ -55,7 +55,13 @@
 <div class="marca_cuadro">{{ $venta->unidad->producto->marca->nombre }}</div>
 <div class="nro_cuadro">{{ $venta->unidad->cuadro }}</div>
 <div class="observaciones">{!! $venta->observaciones ?? 'Observaciones?' !!}</div>
+<div class="sello">
+    He Verificado personalmente la autenticidad de los datos que figuran
+    en el presente formulario y me hago personalmente responsable civil y criminalmente
+    por los errores u omisiones en que pudiera incurrir sin perjuicio de las que a la empresa
+    le correspondan
 
+</div>
 <div class="lugar">La Plata</div>
 
 @php
@@ -73,13 +79,7 @@
 <div class="solicitante_nro">{{ $venta->cliente->nro }}</div>
 <div class="solicitante_localidad">{{ $venta->cliente->localidad->nombre }}</div>
 
-<div class="sello">
-    He Verificado personalmente la autenticidad de los datos que figuran
-    en el presente formulario y me hago personalmente responsable civil y criminalmente
-    por los errores u omisiones en que pudiera incurrir sin perjuicio de las que a la empresa
-    le correspondan
-    {{dd($parametro)}}
-</div>
+
 
 </body>
 </html>
