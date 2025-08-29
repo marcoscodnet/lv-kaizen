@@ -139,15 +139,18 @@
                         let totalAcreditado = Number(json.totales.totalAcreditado) || 0;
                         let totalVentasImporte = Number(json.totales.totalVentasImporte) || 0;
 
+                        let formatter = new Intl.NumberFormat('es-AR'); // o 'es-ES' según prefieras
+
                         $('#totales-ventas').html(`
-                            <div>
-                                <strong>Total de ventas realizadas:</strong> ${totalVentas} <br>
-                                <strong>Cantidad de ventas autorizadas:</strong> ${ventasAutorizadas} <br>
-                                <strong>Cantidad de ventas no autorizadas:</strong> ${ventasNoAutorizadas} <br>
-                                <strong>Importe total acreditado:</strong> $${totalAcreditado.toFixed(2)} <br>
-                                <strong>Importe total de ventas realizadas:</strong> $${totalVentasImporte.toFixed(2)}
-                            </div>
-                        `);
+                                                <div>
+                                                    <strong>Total de ventas realizadas:</strong> ${formatter.format(totalVentas)} <br>
+                                                    <strong>Cantidad de ventas autorizadas:</strong> ${formatter.format(ventasAutorizadas)} <br>
+                                                    <strong>Cantidad de ventas no autorizadas:</strong> ${formatter.format(ventasNoAutorizadas)} <br>
+                                                    <strong>Importe total acreditado:</strong> $${formatter.format(totalAcreditado)} <br>
+                                                    <strong>Importe total de ventas realizadas:</strong> $${formatter.format(totalVentasImporte)}
+                                                </div>
+                                            `);
+
 
                         return json.data;
                     }
