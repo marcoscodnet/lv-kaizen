@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 use Carbon\Carbon;
 use PDF;
-use Clegginabox\PDFMerger\PDFMerger;
+use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
@@ -579,21 +579,35 @@ class VentaController extends Controller
 
         //dd($docsPaths);
         if ($modo === 'junto') {
-            // Unir boleto + documentos en un solo PDF
-            $pdfMerger = new PDFMerger;
-            $pdfMerger->addPDF($pdfPath, 'all');
+            $outputPath = public_path('temp/Venta_' . $ventaId . '_completo.pdf');
 
+            $pdf = new Fpdi();
+
+            // Agregar boleto
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            for ($i = 1; $i <= $pageCount; $i++) {
+                $tpl = $pdf->importPage($i);
+                $size = $pdf->getTemplateSize($tpl);
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $pdf->useTemplate($tpl);
+            }
+
+            // Agregar documentos adicionales
             foreach ($docsPaths as $docPath) {
                 if (file_exists($docPath)) {
-                    $pdfMerger->addPDF($docPath, 'all');
+                    $pageCount = $pdf->setSourceFile($docPath);
+                    for ($i = 1; $i <= $pageCount; $i++) {
+                        $tpl = $pdf->importPage($i);
+                        $size = $pdf->getTemplateSize($tpl);
+                        $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                        $pdf->useTemplate($tpl);
+                    }
                 }
             }
 
-            $outputPath = public_path('temp/Venta_' . $ventaId . '_completo.pdf');
-            $pdfMerger->merge('file', $outputPath);
-
+            // Guardar y descargar
+            $pdf->Output('F', $outputPath);
             return response()->download($outputPath)->deleteFileAfterSend(true);
-
         } elseif ($modo === 'separado') {
             // Descargar boleto + documentos como zip
             $zip = new \ZipArchive;
