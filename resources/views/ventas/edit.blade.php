@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('ventas.update',$venta->id) }}" method="post" enctype="multipart/form-data">
+            <form id="formVenta" role="form" action="{{ route('ventas.update',$venta->id) }}" method="post" enctype="multipart/form-data">
                 {{ csrf_field() }}
                 {{ method_field('PUT') }}
 

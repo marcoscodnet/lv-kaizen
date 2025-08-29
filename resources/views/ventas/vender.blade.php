@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('ventas.store') }}" method="post">
+            <form id="formVenta" role="form" action="{{ route('ventas.store') }}" method="post">
                 {{ csrf_field() }}
                 @can('unidad-autorizar')
                     <input type="hidden" id="autorizada" name="autorizada" value="">
@@ -603,7 +603,7 @@
             $('body').on('click', '.removeItemPago', function () {
                 $(this).closest('.pago-item').remove();
             });
-            $("form").on("submit", function(e) {
+            $("#formVenta").on("submit", function(e) {
                 @can('unidad-autorizar')
                 // Preguntar solo si existe el input
                 let autorizadaInput = $("#autorizada");
