@@ -135,13 +135,14 @@ class VentaController extends Controller
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
             'totales' => [
-                'totalVentas' => $totalVentas,
-                'ventasAutorizadas' => $ventasAutorizadas,
-                'ventasNoAutorizadas' => $ventasNoAutorizadas,
-                'totalAcreditado' => $totalAcreditado,
-                'totalVentasImporte' => $totalVentasImporte
+                'totalVentas' => number_format($totalVentas, 0, ',', '.'),
+                'ventasAutorizadas' => number_format($ventasAutorizadas, 0, ',', '.'),
+                'ventasNoAutorizadas' => number_format($ventasNoAutorizadas, 0, ',', '.'),
+                'totalAcreditado' => number_format($totalAcreditado, 2, ',', '.'),
+                'totalVentasImporte' => number_format($totalVentasImporte, 2, ',', '.'),
             ]
         ]);
+
     }
 
 
