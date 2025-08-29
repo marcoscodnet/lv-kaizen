@@ -19,6 +19,7 @@ use App\Http\Controllers\UnidadController;
 use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\VentaPiezaController;
 use App\Http\Controllers\VentaController;
+use App\Http\Controllers\DocumentoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -98,6 +99,8 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('clientesearch', [ClienteController::class, 'search'])->name('cliente.search');
     Route::post('autorizar/{id}', [VentaController::class, 'autorizar'])->name('ventas.autorizar');
     Route::post('desautorizar/{id}', [VentaController::class, 'desautorizar'])->name('ventas.desautorizar');
+
+    Route::resource('documentos', DocumentoController::class);
 });
 
 

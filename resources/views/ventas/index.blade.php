@@ -53,6 +53,44 @@
                 <div id="totales-ventas" class="mt-3 fs-10"></div>
             </div>
         </div>
+        <!-- Modal -->
+        <div class="modal fade" id="modalArchivos" tabindex="-1" aria-labelledby="modalArchivosLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <form id="form-descargar" method="GET" action="{{ route('ventas.boleto') }}" target="_blank">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalArchivosLabel">Seleccionar Archivos</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="venta_id" id="venta_id">
+
+                            <div class="mb-3">
+                                <label class="form-label">Archivos adicionales:</label>
+                                @foreach($documentos as $doc)
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="archivos[]" value="{{ $doc->id }}" id="doc-{{ $doc->id }}" checked>
+                                        <label class="form-check-label" for="doc-{{ $doc->id }}">
+                                            {{ $doc->nombre }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Modo de descarga:</label><br>
+                                <input type="radio" name="modo" value="junto" checked> Juntar en un único PDF<br>
+                                <input type="radio" name="modo" value="separado"> Descargar separados
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Descargar</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
 
     </div>
@@ -151,7 +189,9 @@
                                 actionsHtml += '<a href="{{ route("ventas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-right: 5px;"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
 
-                            actionsHtml += '<a href="{{ route("ventas.boleto") }}?venta_id=' + row.id + '" alt="Descargar boleto" title="Descargar boleto" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';
+                            /*actionsHtml += '<a href="{{ route("ventas.boleto") }}?venta_id=' + row.id + '" alt="Descargar boleto" title="Descargar boleto" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';*/
+                            actionsHtml += '<a href="#" onclick="abrirModalArchivos(' + row.id + ')" alt="Descargar boleto" title="Descargar boleto" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';
+
 
 
                             if (row.autorizacion == 'No autorizada') {
@@ -203,6 +243,10 @@
                 }
             });
         });
+        function abrirModalArchivos(ventaId) {
+            $('#venta_id').val(ventaId);
+            $('#modalArchivos').modal('show');
+        }
 
     </script>
 @endsection

@@ -12,6 +12,7 @@ use App\Models\Sucursal;
 use App\Models\Unidad;
 use App\Models\Venta;
 use App\Models\Entidad;
+use App\Models\Documento;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 use Carbon\Carbon;
 use PDF;
+use Clegginabox\PDFMerger\PDFMerger;
+
 class VentaController extends Controller
 {
     use SanitizesInput;
@@ -45,7 +48,10 @@ class VentaController extends Controller
     {
 
         $ventas = Venta::all();
-        return view ('ventas.index',compact('ventas'));
+        $documentos = Documento::where('habilitado', 1)
+            ->orderBy('orden')
+            ->get();
+        return view ('ventas.index',compact('ventas','documentos'));
     }
 
 
@@ -534,7 +540,83 @@ class VentaController extends Controller
             ->with('success','Unidad desautorizada con éxito');
     }
 
-    public function generateBoleto(Request $request,$attach = false)
+    public function generateBoleto(Request $request)
+    {
+        $ventaId = $request->query('venta_id');
+        $modo = $request->query('modo', 'junto'); // 'junto' o 'separado'
+        $archivosSeleccionados = $request->query('archivos', []); // array de ids
+
+        $venta = Venta::findOrFail($ventaId);
+
+        $parametro = Parametro::where('nombre','boleto_compra_venta')->first();
+        $template = 'ventas.boleto';
+
+        $data = [
+            'venta' => $venta,
+            'fecha' => $venta->fecha,
+            'parametro' => $parametro,
+        ];
+
+        // Generar PDF del boleto
+        $pdf = PDF::loadView($template, $data);
+        $pdfPath = public_path('temp/Venta_' . $ventaId . '.pdf');
+        $pdf->save($pdfPath);
+
+        // Traer documentos seleccionados habilitados en orden
+        $docs = Documento::whereIn('id', $archivosSeleccionados)
+            ->where('habilitado', 1)
+            ->orderBy('orden')
+            ->get();
+
+        $docsPaths = $docs->map(function($d) {
+            return public_path($d->path); // ya incluye "files/"
+        })->toArray();
+
+        $docsUrls = $docs->map(function($d) {
+            return asset($d->path); // ya incluye "files/"
+        })->toArray();
+
+
+        //dd($docsPaths);
+        if ($modo === 'junto') {
+            // Unir boleto + documentos en un solo PDF
+            $pdfMerger = new PDFMerger;
+            $pdfMerger->addPDF($pdfPath, 'all');
+
+            foreach ($docsPaths as $docPath) {
+                if (file_exists($docPath)) {
+                    $pdfMerger->addPDF($docPath, 'all');
+                }
+            }
+
+            $outputPath = public_path('temp/Venta_' . $ventaId . '_completo.pdf');
+            $pdfMerger->merge('file', $outputPath);
+
+            return response()->download($outputPath)->deleteFileAfterSend(true);
+
+        } elseif ($modo === 'separado') {
+            // Descargar boleto + documentos como zip
+            $zip = new \ZipArchive;
+            $zipPath = public_path('temp/Venta_' . $ventaId . '.zip');
+
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                $zip->addFile($pdfPath, 'Boleto_Venta_' . $ventaId . '.pdf');
+
+                foreach ($docsPaths as $docPath) {
+                    if (file_exists($docPath)) {
+                        $zip->addFile($docPath, basename($docPath));
+                    }
+                }
+
+                $zip->close();
+            }
+
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+        }
+    }
+
+
+    public function generateBoleto_old(Request $request,$attach = false)
     {
         $ventaId = $request->query('venta_id');
         $venta = Venta::find($ventaId);

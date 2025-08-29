@@ -23,21 +23,21 @@
         .nro_cuadro { position: absolute; left: 72mm; top: 76mm;}
         .observaciones { position: absolute; left: 50mm; top: 100mm; width: 170mm; }
 
-        .lugar { position: absolute; left: 50mm; top: 186mm;}
-        .fecha_dia { position: absolute; left: 105mm; top: 186mm; }
-        .fecha_mes { position: absolute; left: 120mm; top: 186mm; }
-        .fecha_anio { position: absolute; left: 135mm; top: 186mm; }
+        .lugar { position: absolute; left: 50mm; top: 178mm;}
+        .fecha_dia { position: absolute; left: 102mm; top: 178mm; }
+        .fecha_mes { position: absolute; left: 117mm; top: 178mm; }
+        .fecha_anio { position: absolute; left: 132mm; top: 178mm; }
 
-        .solicitante_nombre { position: absolute; left: 95mm; top: 206mm;  }
-        .solicitante_doc { position: absolute; left: 100mm; top: 212mm; }
-        .solicitante_domicilio { position: absolute; left: 75mm; top: 218mm;}
-        .solicitante_nro { position: absolute; left: 115mm; top: 218mm; }
-        .solicitante_localidad { position: absolute; left: 150mm; top: 218mm;  }
+        .solicitante_nombre { position: absolute; left: 90mm; top: 201mm;  }
+        .solicitante_doc { position: absolute; left: 95mm; top: 207mm; }
+        .solicitante_domicilio { position: absolute; left: 65mm; top: 213mm;}
+        .solicitante_nro { position: absolute; left: 115mm; top: 213mm; }
+        .solicitante_localidad { position: absolute; left: 160mm; top: 213mm;  }
 
         .sello {
             position: absolute;
-            left: 75mm;
-            top: 140mm;
+            left: 83mm;
+            top: 120mm;
             width: 55mm;
             font-size: 7pt;
             color: #7B7B7B;
