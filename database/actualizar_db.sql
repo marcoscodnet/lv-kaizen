@@ -567,9 +567,9 @@ SELECT `cd_ventapieza` as venta_pieza_id, `cd_pieza` as pieza_id,`cd_sucursal` a
 FROM `ventapieza_unidad` WHERE 1
 
 ###############################################25/08/2025 me traigo las tablas enteras para sinitizarlas#################################################
-cliente hasta 18721
-venta hasta 20467
-servicio hasta 21219
+cliente hasta 18728
+venta hasta 20473
+servicio hasta 21234
 
     🔹 Paso 1: Identificar el cliente principal por nu_doc
 
@@ -643,6 +643,7 @@ INSERT INTO clientes (
     cuil,
     nacimiento,
     estado_civil,
+    conyuge,
     email,
     particular_area,
     particular,
@@ -685,7 +686,7 @@ SELECT
         WHEN 5 THEN 'Concubino/a'
         ELSE NULL
         END AS estado_civil,
-
+    ds_conyuge AS email,
     ds_email AS email,
 
     CASE
@@ -773,3 +774,41 @@ FROM (
 ALTER TABLE `clientes`
     ADD COLUMN `conyuge` VARCHAR(255) NULL DEFAULT NULL AFTER `estado_civil`;
 
+###############################################29/08/2025#################################################
+INSERT INTO ventas (
+    id,
+    total,
+    user_name,
+    sucursal_id,
+    cliente_id,
+    fecha,
+    unidad_id,
+    monto,
+    forma,
+    observacion,
+    created_at,
+    updated_at
+)
+SELECT `cd_venta` as id, `nu_total` as total, usuario.ds_nomusuario as user_name, venta.`cd_sucursal` as sucursal_id, `cd_cliente` as cliente_id, `dt_venta` as fecha,
+       `cd_unidad` as unidad_id,`nu_montosugerido` as monto,
+       CASE `cd_formapago`
+         WHEN '1' THEN 'Contado'
+        WHEN '2' THEN 'Crédito'
+    END AS forma, `ds_observacion` as observacion, NOW() AS created_at,
+       NOW() AS updated_at
+FROM `venta`
+         LEFT JOIN usuario on venta.cd_usuario = usuario.cd_usuario
+WHERE 1
+
+
+
+SELECT `cd_itempago` id, `cd_venta` as venta_id, `cd_entidad` as entidad_id, `nu_importe` as monto, `dt_pagado` as fecha, `nu_pagado` as pagado, `ds_detalle` as detalle,
+       `dt_contadora` as contadora, `ds_observacion` as observacion
+FROM `itempago` WHERE 1
+
+SELECT `cd_autorizacion` as id, usuario.ds_nomusuario as user_name, `dt_autorizacion` as fecha,
+       `cd_unidad` as unidad_id, NOW() AS created_at,
+       NOW() AS updated_at
+FROM `autorizacion`
+         LEFT JOIN usuario on autorizacion.cd_usuario = usuario.cd_usuario
+WHERE 1
