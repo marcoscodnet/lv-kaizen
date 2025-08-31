@@ -164,7 +164,7 @@
                             // Verificar si el dato es válido
                             if (data) {
 
-                                return moment(data).format('DD/MM/YYYY');
+                                return moment(data).format('DD/MM/YYYY HH:mm:ss');
                             }
                             // Si no hay datos, retornar un valor por defecto o una cadena vacía
                             return '';

@@ -81,6 +81,12 @@ Route::group(['middleware' => ['auth']], function() {
         return \App\Models\Localidad::where('provincia_id', $provincia_id)->get();
     });
 
+    Route::get('localidads/info/{id}', function($id){
+        return \App\Models\Localidad::with('provincia')->findOrFail($id);
+    });
+
+
+
     Route::resource('movimientos', MovimientoController::class);
     Route::post('movimiento-datatable', [MovimientoController::class, 'dataTable'])->name('movimientos.dataTable');
     Route::get('movimiento-pdf', [MovimientoController::class, 'generatePDF'])->name('movimientos.pdf');

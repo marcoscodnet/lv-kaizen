@@ -151,7 +151,7 @@
                             <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
                                 <div class="form-group">
                                     <label for="conyuge">Cónyuge</label>
-                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cònyuge" value="@if (old('conyuge')){{ old('conyuge') }}@else{{ $cliente->conyuge }}@endif" required>
+                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cónyuge" value="@if (old('conyuge')){{ old('conyuge') }}@else{{ $cliente->conyuge }}@endif" required>
                                 </div>
                             </div>
 

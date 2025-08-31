@@ -243,7 +243,7 @@ class VentaController extends Controller
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
             'forma' => 'required',
-            'fecha' => 'required|date',
+            'fecha' => 'required|date_format:d/m/Y H:i',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:1',
@@ -299,7 +299,9 @@ class VentaController extends Controller
             $venta->user_id = $this->sanitizeInput($request->user_id);
             $venta->cliente_id = $this->sanitizeInput($request->cliente_id);
             $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id);
-            $venta->fecha = $this->sanitizeInput($request->fecha);
+            $venta->fecha = $request->filled('fecha')
+                ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d H:i:s')
+                : null;
             $venta->monto = $this->sanitizeInput($request->precio);
             $venta->total = $this->sanitizeInput($request->precio);
             $venta->forma = $this->sanitizeInput($request->forma);
@@ -379,7 +381,7 @@ class VentaController extends Controller
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
             'forma' => 'required',
-            'fecha' => 'required|date',
+            'fecha' => 'required|date_format:d/m/Y H:i',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:1',

@@ -271,6 +271,13 @@ class ClienteController extends Controller
             ->with('success','Cliente eliminado con éxito');
     }
 
+    public function show($id)
+    {
+        $cliente = Cliente::findOrFail($id);
+
+        return response()->json($cliente);
+    }
+
     public function search(Request $request)
     {
         /*$cities = City::where('name', 'LIKE', '%'.$request->input('term', '').'%')
@@ -307,10 +314,12 @@ class ClienteController extends Controller
 
     public function quickStore(Request $request)
     {
+        //dd($request);
+        // Validación básica
         $rules = [
             'nombre' => 'required',
-            'documento' => 'required|unique:clientes,documento',
-            'cuil' => 'regex:/^\d{2}-\d{8}-\d{1}$/',
+            'documento' => 'required',
+            'cuil' => 'nullable|regex:/^\d{2}-\d{8}-\d{1}$/',
             'nacimiento' => 'required|date',
             'particular_area' => 'required',
             'particular' => 'required',
@@ -337,6 +346,13 @@ class ClienteController extends Controller
             'iva.required' => 'El campo Condición IVA es obligatorio.',
         ];
 
+        // Si se envía cliente_id, omitir unique en documento
+        if ($request->has('cliente_id')) {
+            $rules['documento'] = 'required';
+        } else {
+            $rules['documento'] = 'required|unique:clientes,documento';
+        }
+
         $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
@@ -344,13 +360,20 @@ class ClienteController extends Controller
         }
 
         $input = $this->sanitizeInput($request->all());
-        $cliente = Cliente::create($input);
+
+        // Crear o actualizar cliente
+        if ($request->has('cliente_id') && $cliente = Cliente::find($request->cliente_id)) {
+            $cliente->update($input);
+        } else {
+            $cliente = Cliente::create($input);
+        }
 
         return response()->json([
             'id' => $cliente->id,
             'text' => $cliente->nombre
         ]);
     }
+
 
 
 

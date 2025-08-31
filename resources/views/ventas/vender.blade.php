@@ -67,8 +67,8 @@
                             <div class="col-lg-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
-                                    <input type="date" class="form-control" id="fecha" name="fecha"
-                                           value="{{ now()->format('Y-m-d') }}" readonly required>
+                                    <input type="text" class="form-control" id="fecha" name="fecha"
+                                           value="{{ now()->format('d/m/Y H:i:s') }}" readonly required>
                                 </div>
                             </div>
                             <div class="col-lg-3">
@@ -106,18 +106,18 @@
                                         <label for="cliente_id">Cliente</label>
                                         <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single" required>
                                             @if(old('cliente_id'))
-                                                {{-- Agregamos una opción para que Select2 la muestre --}}
                                                 <option value="{{ old('cliente_id') }}" selected>
                                                     {{ old('cliente_nombre', '') }}
                                                 </option>
                                             @endif
                                         </select>
                                     </div>
-                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
-                                        <i class="fa fa-plus"></i>
+                                    <button type="button" class="btn btn-success" id="btnNuevoCliente" data-bs-toggle="modal" data-bs-target="#nuevoClienteModal">
+                                        <i class="fa fa-check"></i>
                                     </button>
                                 </div>
                             </div>
+
 
 
                         </div>
@@ -264,6 +264,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Nombre</label>
                                 <input type="text" name="nombre" id="nombre" class="form-control" required>
+                                <input type="hidden" name="cliente_id" id="cliente_id_hidden">
                             </div>
 
                             <!-- Documento -->
@@ -349,7 +350,7 @@
                             <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
                                 <div class="form-group">
                                     <label for="conyuge">Cónyuge</label>
-                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cònyuge" value="{{ old('conyuge') }}" required>
+                                    <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cónyuge" value="{{ old('conyuge') }}" required>
                                 </div>
                             </div>
                             <!-- Cómo llegó -->
@@ -473,7 +474,6 @@
                 $(this).select2({ width: '100%'});
             });
 
-            // Select2 para clientes con búsqueda AJAX
             $('#cliente_id').select2({
                 minimumInputLength: 3,
                 language: 'es',
@@ -486,13 +486,181 @@
                         return { search: params.term };
                     },
                     processResults: function (response) {
+                        // response viene en formato [{id:..., text:...}, ...]
+                        // Agregar opción "nuevo cliente" al final
+                        response.push({ id: 'nuevo', text: '✅ Nuevo cliente' });
                         return { results: response };
                     },
                     cache: true
                 }
             });
 
-            // Guardar nuevo cliente
+// Manejo de selección
+            $('#cliente_id').on('select2:select', function (e) {
+                var clienteId = e.params.data.id;
+
+                if (!clienteId || clienteId === 'nuevo') {
+                    $('#nuevoClienteLabel').text('Nuevo Cliente');
+                    $('#formNuevoCliente')[0].reset();
+                    // Nuevo cliente: abrir modal vacío
+                    $('#formNuevoCliente')[0].reset();
+                    $('#formNuevoCliente').data('confirmed', false);
+                    $('#nuevoClienteModal').modal({
+                        backdrop: 'static',
+                        keyboard: false
+                    }).modal('show');
+                    return;
+                }else {
+                    $('#nuevoClienteLabel').text('Verificar Cliente');
+                }
+
+                if (clienteId) {
+                    // Cliente existente: traer datos para verificar
+                    $.ajax({
+                        url: '{{ url("clientes") }}/' + clienteId,
+                        type: 'GET',
+                        success: function (cliente) {
+                            // Fecha de nacimiento en YYYY-MM-DD
+                            let nacimiento = cliente.nacimiento ? cliente.nacimiento.split(' ')[0] : '';
+                            $('#formNuevoCliente #nacimiento').val(nacimiento);
+
+                            // Datos del cliente
+                            $('#formNuevoCliente #cliente_id_hidden').val(cliente.id);
+
+                            $('#formNuevoCliente #nombre').val(cliente.nombre);
+                            $('#formNuevoCliente #documento').val(cliente.documento);
+                            $('#formNuevoCliente #cuil').val(cliente.cuil);
+                            $('#formNuevoCliente #particular_area').val(cliente.particular_area);
+                            $('#formNuevoCliente #particular').val(cliente.particular);
+                            $('#formNuevoCliente #celular_area').val(cliente.celular_area);
+                            $('#formNuevoCliente #celular').val(cliente.celular);
+                            $('#formNuevoCliente #email').val(cliente.email);
+                            $('#formNuevoCliente #calle').val(cliente.calle);
+                            $('#formNuevoCliente #nro').val(cliente.nro);
+                            $('#formNuevoCliente #cp').val(cliente.cp);
+                            $('#formNuevoCliente #nacionalidad').val(cliente.nacionalidad);
+                            $('#formNuevoCliente #estado_civil').val(cliente.estado_civil).trigger('change');
+                            $('#formNuevoCliente #llego').val(cliente.llego);
+                            $('#formNuevoCliente #iva').val(cliente.iva);
+                            $('#formNuevoCliente #conyuge').val(cliente.conyuge);
+
+                            // Inicializar select2 dentro del modal
+                            $('#provincia_id, #localidad').select2({
+                                theme: 'bootstrap-5',
+                                dropdownParent: $('#nuevoClienteModal')
+                            });
+
+                            // Traer provincia desde localidad_id
+                            $.ajax({
+                                url: '{{ url("localidads/info") }}/' + cliente.localidad_id, // endpoint que devuelve {id, nombre, provincia_id}
+                                type: 'GET',
+                                success: function(localidad) {
+                                    // Setear provincia y localidad usando tu JS de Select2
+                                    $('#provincia_id')
+                                        .val(localidad.provincia_id)
+                                        .data('old-localidad', localidad.id)
+                                        .trigger('change');
+
+                                    // Abrir modal
+                                    $('#formNuevoCliente').data('confirmed', false);
+                                    $('#nuevoClienteModal').modal({ backdrop: 'static', keyboard: false }).modal('show');
+                                },
+                                error: function() {
+                                    alert('No se pudo cargar la provincia de la localidad.');
+                                }
+                            });
+                        },
+                        error: function () {
+                            alert('No se pudieron cargar los datos del cliente.');
+                        }
+                    });
+
+                }
+            });
+
+
+
+
+
+
+
+            $('#btnNuevoCliente').on('click', function() {
+                var clienteId = $('#cliente_id').val();
+
+                if (!clienteId || clienteId === 'nuevo') {
+                    // Nuevo cliente
+                    $('#nuevoClienteLabel').text('Nuevo Cliente');
+                    $('#formNuevoCliente')[0].reset();
+                    $('#formNuevoCliente').data('confirmed', false);
+                    $('#nuevoClienteModal').modal({
+                        backdrop: 'static',
+                        keyboard: false
+                    }).modal('show');
+                    return;
+                }
+
+                // Cliente existente
+                $('#nuevoClienteLabel').text('Verificar Cliente');
+
+                $.ajax({
+                    url: '{{ url("clientes") }}/' + clienteId,
+                    type: 'GET',
+                    success: function (cliente) {
+                        // Fecha de nacimiento en YYYY-MM-DD
+                        let nacimiento = cliente.nacimiento ? cliente.nacimiento.split(' ')[0] : '';
+                        $('#formNuevoCliente #nacimiento').val(nacimiento);
+
+                        // Datos del cliente
+                        $('#formNuevoCliente #cliente_id_hidden').val(cliente.id);
+                        $('#formNuevoCliente #nombre').val(cliente.nombre);
+                        $('#formNuevoCliente #documento').val(cliente.documento);
+                        $('#formNuevoCliente #cuil').val(cliente.cuil);
+                        $('#formNuevoCliente #particular_area').val(cliente.particular_area);
+                        $('#formNuevoCliente #particular').val(cliente.particular);
+                        $('#formNuevoCliente #celular_area').val(cliente.celular_area);
+                        $('#formNuevoCliente #celular').val(cliente.celular);
+                        $('#formNuevoCliente #email').val(cliente.email);
+                        $('#formNuevoCliente #calle').val(cliente.calle);
+                        $('#formNuevoCliente #nro').val(cliente.nro);
+                        $('#formNuevoCliente #cp').val(cliente.cp);
+                        $('#formNuevoCliente #nacionalidad').val(cliente.nacionalidad);
+                        $('#formNuevoCliente #estado_civil').val(cliente.estado_civil).trigger('change');
+                        $('#formNuevoCliente #llego').val(cliente.llego);
+                        $('#formNuevoCliente #iva').val(cliente.iva);
+                        $('#formNuevoCliente #conyuge').val(cliente.conyuge);
+
+                        // Inicializar select2 dentro del modal
+                        $('#provincia_id, #localidad').select2({
+                            theme: 'bootstrap-5',
+                            dropdownParent: $('#nuevoClienteModal')
+                        });
+
+                        // Traer provincia desde localidad_id
+                        $.ajax({
+                            url: '{{ url("localidads/info") }}/' + cliente.localidad_id, // endpoint que devuelve {id, nombre, provincia_id}
+                            type: 'GET',
+                            success: function(localidad) {
+                                $('#provincia_id')
+                                    .val(localidad.provincia_id)
+                                    .data('old-localidad', localidad.id)
+                                    .trigger('change');
+
+                                $('#formNuevoCliente').data('confirmed', false);
+                                $('#nuevoClienteModal').modal({ backdrop: 'static', keyboard: false }).modal('show');
+                            },
+                            error: function() {
+                                alert('No se pudo cargar la provincia de la localidad.');
+                            }
+                        });
+                    },
+                    error: function () {
+                        alert('No se pudieron cargar los datos del cliente.');
+                    }
+                });
+            });
+
+
+            // Guardar cliente (existente o nuevo)
             $('#formNuevoCliente').submit(function (e) {
                 e.preventDefault();
                 $.ajax({
@@ -500,10 +668,12 @@
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function (cliente) {
+                        $('#formNuevoCliente').data('confirmed', true);
                         $('#nuevoClienteModal').modal('hide');
+
+                        // Agregar cliente al select2 si no existe
                         var newOption = new Option(cliente.text, cliente.id, true, true);
                         $('#cliente_id').append(newOption).trigger('change');
-                        $('#formNuevoCliente')[0].reset();
                     },
                     error: function (xhr) {
                         if (xhr.status === 422) {
@@ -514,6 +684,13 @@
                         }
                     }
                 });
+            });
+
+            // Si se cierra sin confirmar => limpiar select
+            $('#nuevoClienteModal').on('hidden.bs.modal', function () {
+                if (!$('#formNuevoCliente').data('confirmed')) {
+                    $('#cliente_id').val(null).trigger('change');
+                }
             });
 
             $('#nuevoClienteModal').on('shown.bs.modal', function () {
