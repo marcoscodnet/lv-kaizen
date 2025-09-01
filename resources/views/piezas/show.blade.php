@@ -1,35 +1,113 @@
 @extends('layouts.app')
+@section('headSection')
 
+    <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
+
+@endsection
 
 @section('content')
-    <div class="row">
-        <div class="col-lg-12 margin-tb">
-            <div class="pull-left">
-                <h2> Show Role</h2>
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="row flex-between-end">
+                <div class="col-auto align-self-center">
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-cogs" aria-hidden="true"></i><span class="ms-2">Ver pieza</span></h5>
+                </div>
+                <div class="col-auto ms-auto">
+
+                </div>
             </div>
-            <div class="pull-right">
-                <a class="btn btn-primary" href="{{ route('roles.index') }}"> Back</a>
-            </div>
+        </div>
+        <div class="card-body bg-body-tertiary">
+            <form role="form" action="{{ route('piezas.update',$pieza->id) }}" method="post" >
+                {{ csrf_field() }}
+                {{ method_field('PUT') }}
+                <div class="tab-content">
+                    <div class="box-body">
+
+                        @include('includes.messages')
+
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                                <div class="form-group">
+                                    <label for="codigo">Código</label>
+                                    <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Codigo" value="@if (old('codigo')){{ old('codigo') }}@else{{ $pieza->codigo }}@endif" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                                <div class="form-group">
+                                    <label for="descripcion">Descripción</label>
+                                    <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="@if (old('descripcion')){{ old('descripcion') }}@else{{ $pieza->descripcion }}@endif" disabled>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                                <div class="form-group">
+                                    <label for="stock_minimo">Stock mínimo</label>
+                                    <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" placeholder="Stock mínimo" value="@if (old('sctock_minimo')){{ old('sctock_minimo') }}@else{{ $pieza->sctock_minimo }}@endif" disabled>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                                <div class="form-group">
+                                    <label for="costo">Costo</label>
+                                    <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $pieza->costo }}@endif" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                                <div class="form-group">
+                                    <label for="precio_minimo">$ mínimo</label>
+                                    <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $pieza->precio_minimo }}@endif" disabled>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
+
+                                    <label for="observaciones" class="col-md-12">Observaciones</label>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                                <div class="form-group">
+
+
+                                    <!-- Fila 2: Área de texto -->
+
+                                    <textarea id="observaciones" name="observaciones" class="form-control" rows="3" disabled>@if (old('observaciones')){{ old('observaciones') }}@else{{ $pieza->observaciones }}@endif</textarea>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row" style="margin-top: 10px;">
+                            <div class="form-group">
+
+                                <a href='{{ route('piezas.index') }}' class="btn btn-warning">Volver</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </form>
         </div>
     </div>
 
 
-    <div class="row">
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Name:</strong>
-                {{ $role->name }}
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Permissions:</strong>
-                @if(!empty($rolePermissions))
-                    @foreach($rolePermissions as $v)
-                        <label class="label label-success">{{ $v->name }},</label>
-                    @endforeach
-                @endif
-            </div>
-        </div>
-    </div>
+@endsection
+@section('footerSection')
+
+
 @endsection

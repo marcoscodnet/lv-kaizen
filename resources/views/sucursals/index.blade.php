@@ -52,7 +52,20 @@
                             <td>{{ $sucursal->email }}</td>
                             <td>{{ $sucursal->telefono }}</td>
                             <td>{{ $sucursal->localidad->nombre }}</td>
-                            <td class="text-end"><div>@can('sucursal-editar')<a href="{{ route('sucursals.edit',$sucursal->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td class="text-end"><div>
+                                    {{-- Botón Ver (lupa) --}}
+                                    @can('sucursal-ver')
+                                        <a class="btn btn-link p-0"
+                                           href="{{ route('sucursals.show', $sucursal->id) }}"
+                                           alt="Ver"
+                                           title="Ver"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
+                                            <span class="text-500 fas fa-search"></span>
+                                        </a>
+                                    @endcan
+
+                                    @can('sucursal-editar')<a href="{{ route('sucursals.edit',$sucursal->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('rol-eliminar')
                                     <form id="delete-form-{{ $sucursal->id }}" method="post" action="{{ route('sucursals.destroy',$sucursal->id) }}" style="display: none">
@@ -68,7 +81,7 @@
                         }
                         else{
                         event.preventDefault();
-                        }" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" alt="Eliminar" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                        }" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top" alt="Eliminar" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
                                 </div></td>
 
                         </tr>

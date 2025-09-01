@@ -273,9 +273,10 @@ class ClienteController extends Controller
 
     public function show($id)
     {
-        $cliente = Cliente::findOrFail($id);
+        $cliente = Cliente::find($id);
 
-        return response()->json($cliente);
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('clientes.show',compact('cliente','provincias'));
     }
 
     public function search(Request $request)

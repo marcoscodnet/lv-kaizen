@@ -33,19 +33,26 @@
                         <div class="mb-3">
                             <strong>Permisos:</strong>
                             <div class="row">
-                                @foreach($permission as $value)
-                                    <div class="col-md-4">
-                                        <div class="form-check">
-                                            <label><input class="name" type="checkbox" name="permission[]" value="{{ $value->id }}"
-                                                          @foreach ($role->permissions as $role_permit)
-                                                              @if ($role_permit->id == $value->id)
-                                                                  checked
-                                                    @endif
-                                                    @endforeach
-                                                >{{ $value->name }}</label>
-                                        </div>
+                                @foreach($permissions as $group => $perms)
+                                    <h6 class="mt-3"><strong>{{ ucfirst($group) }}</strong></h6>
+                                    <div class="row">
+                                        @foreach($perms as $value)
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    <label>
+                                                        <input class="name" type="checkbox" name="permission[]" value="{{ $value->id }}"
+                                                               @foreach ($role->permissions as $role_permit)
+                                                                   @if ($role_permit->id == $value->id) checked @endif
+                                                            @endforeach
+                                                        >
+                                                        {{ ucfirst(str_replace('-', ' ', $value->name)) }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 @endforeach
+
                             </div>
                             <div class="mb-3">
                                 <button type="submit" class="btn btn-primary">Guardar</button>

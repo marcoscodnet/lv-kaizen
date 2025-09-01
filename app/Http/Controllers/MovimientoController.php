@@ -277,4 +277,18 @@ class MovimientoController extends Controller
         //return view('integrantes.alta', $data);
     }
 
+    public function show($id)
+    {
+        $movimiento = Movimiento::find($id);
+
+        $users = \App\Models\User::orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('', '');
+
+        $origens = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $destinos = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+
+        return view('movimientos.show', compact('movimiento','origens','destinos','users'));
+    }
+
 }

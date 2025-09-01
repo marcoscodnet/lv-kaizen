@@ -54,7 +54,19 @@
                             <td>{{ $documento->nombre }}</td>
                             <td>{{ $documento->habilitado?'SI':'NO' }}</td>
                             <td>{{ $documento->orden }}</td>
-                            <td class="text-end"><div>@can('documento-editar')<a class="btn btn-link p-0" href="{{ route('documentos.edit',$documento->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td class="text-end"><div>
+                                    {{-- Botón Ver (lupa) --}}
+                                    @can('documento-ver')
+                                        <a class="btn btn-link p-0"
+                                           href="{{ route('documentos.show', $documento->id) }}"
+                                           alt="Ver"
+                                           title="Ver"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
+                                            <span class="text-500 fas fa-search"></span>
+                                        </a>
+                                    @endcan
+                                    @can('documento-editar')<a class="btn btn-link p-0" href="{{ route('documentos.edit',$documento->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('documento-eliminar')
                                     <form id="delete-form-{{ $documento->id }}" method="post" action="{{ route('documentos.destroy',$documento->id) }}" style="display: none">
@@ -70,7 +82,7 @@
                         }
                         else{
                         event.preventDefault();
-                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
 
 
 

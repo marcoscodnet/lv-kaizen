@@ -83,7 +83,8 @@ class MarcaController extends Controller
     public function show($id)
     {
         $marca = Marca::find($id);
-        return view('marcas.show',compact('marca'));
+        $tipoUnidads = TipoUnidad::all();
+        return view('marcas.show',compact('marca','tipoUnidads'));
     }
 
     /**

@@ -1,35 +1,55 @@
 @extends('layouts.app')
+@section('headSection')
 
+
+
+@endsection
 
 @section('content')
-    <div class="row">
-        <div class="col-lg-12 margin-tb">
-            <div class="pull-left">
-                <h2> Show Role</h2>
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="row flex-between-end">
+                <div class="col-auto align-self-center">
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-tools" aria-hidden="true"></i><span class="ms-2">Ver Tipo de Servicio</span></h5>
+                </div>
+                <div class="col-auto ms-auto">
+
+                </div>
             </div>
-            <div class="pull-right">
-                <a class="btn btn-primary" href="{{ route('roles.index') }}"> Back</a>
-            </div>
+        </div>
+        <div class="card-body bg-body-tertiary">
+            <form role="form" action="{{ route('tipoServicios.update',$tipoServicio->id) }}" method="post" >
+                {{ csrf_field() }}
+                {{ method_field('PUT') }}
+                <div class="tab-content">
+                    <div class="box-body">
+
+                        @include('includes.messages')
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                                <div class="form-group">
+                                    <label for="nombre">Nombre</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="@if (old('nombre')){{ old('nombre') }}@else{{ $tipoServicio->nombre }}@endif" disabled>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row" style="margin-top: 10px;">
+                            <div class="form-group">
+
+                                <a href='{{ route('tipoServicios.index') }}' class="btn btn-warning">Volver</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
         </div>
     </div>
 
 
-    <div class="row">
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Name:</strong>
-                {{ $role->name }}
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>Permissions:</strong>
-                @if(!empty($rolePermissions))
-                    @foreach($rolePermissions as $v)
-                        <label class="label label-success">{{ $v->name }},</label>
-                    @endforeach
-                @endif
-            </div>
-        </div>
-    </div>
+@endsection
+@section('footerSection')
+
+
 @endsection

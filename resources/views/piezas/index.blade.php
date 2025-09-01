@@ -110,6 +110,10 @@
                             // Construir HTML para las acciones
                             var actionsHtml = '<div>';
 
+                            @can('pieza-ver')
+
+                                actionsHtml += '<a href="{{ route("piezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
+                            @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('pieza-editar')
                                 actionsHtml += '<a href="{{ route("piezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
@@ -122,7 +126,7 @@
                             actionsHtml += '{{ csrf_field() }}';
                             actionsHtml += '{{ method_field('DELETE') }}';
                             actionsHtml += '</form>';
-                            actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'delete-form-' + row.id + '\').submit();} else {event.preventDefault();}" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>';
+                            actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'delete-form-' + row.id + '\').submit();} else {event.preventDefault();}" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>';
                             @endcan
                                 actionsHtml += '</div>';
                                 return actionsHtml;

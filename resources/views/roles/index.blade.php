@@ -62,7 +62,7 @@
                         }
                         else{
                         event.preventDefault();
-                        }" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                        }" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
                                 </div></td>
 
                         </tr>

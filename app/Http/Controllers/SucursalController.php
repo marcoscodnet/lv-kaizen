@@ -82,7 +82,8 @@ class SucursalController extends Controller
     public function show($id)
     {
         $sucursal = Sucursal::find($id);
-        return view('sucursals.show',compact('sucursal'));
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('sucursals.show',compact('sucursal','provincias'));
     }
 
     /**

@@ -236,6 +236,24 @@ class ProductoController extends Controller
             ->with('success','Producto modificado con éxito');
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $producto = Producto::find($id);
+
+        $tipoUnidads = TipoUnidad::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $colors = Color::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('productos.show', compact('producto','tipoUnidads','modelos','marcas','colors'));
+
+    }
+
 
     /**
      * Remove the specified resource from storage.

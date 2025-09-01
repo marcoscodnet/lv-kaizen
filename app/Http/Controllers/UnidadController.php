@@ -259,6 +259,33 @@ class UnidadController extends Controller
 
 
     /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $unidad = Unidad::find($id);
+
+        $productos = Producto::with(['tipoUnidad', 'marca', 'modelo', 'color'])
+            ->get()
+            ->mapWithKeys(function ($producto) {
+                $texto = ($producto->tipoUnidad->nombre ?? '') . ' - '
+                    . ($producto->marca->nombre ?? '') . ' - '
+                    . ($producto->modelo->nombre ?? '') . ' - '
+                    . ($producto->color->nombre ?? '');
+
+                return [$producto->id => $texto];
+            })
+            ->prepend('', ''); // si necesitas un vacío al principio
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('unidads.show', compact('unidad','productos','sucursals'));
+
+    }
+
+
+    /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id

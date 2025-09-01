@@ -398,6 +398,40 @@ class VentaPiezaController extends Controller
     }
 
 
+    public function show($id)
+    {
+        $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal'])->findOrFail($id);
+
+        $stockPiezas = StockPieza::with(['pieza', 'sucursal'])
+            ->get()
+            ->map(function ($sp) {
+                return [
+                    'id' => $sp->pieza_id,
+                    'codigo' => $sp->pieza->codigo,
+                    'descripcion' => $sp->pieza->descripcion,
+                    'sucursal_id' => $sp->sucursal_id,
+                    'sucursal_nombre' => $sp->sucursal->nombre,
+                    'costo' => $sp->pieza->costo,
+                    'precio_minimo' => $sp->pieza->precio_minimo,
+                ];
+            })
+            ->unique(function ($item) {
+                return $item['id'] . '-' . $item['sucursal_id'];
+            })
+            ->values();
+
+        $stockPiezasJson = $stockPiezas->groupBy('id');
+
+        $users = \App\Models\User::where('activo', 1)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('', '');
+
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+
+        return view('ventaPiezas.show', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals'));
+    }
+
     /**
      * Remove the specified resource from storage.
      *

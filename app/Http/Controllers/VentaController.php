@@ -466,6 +466,19 @@ class VentaController extends Controller
         }
     }
 
+    public function show($id) {
+        $venta = Venta::with('pagos', 'unidad', 'cliente')->findOrFail($id);
+        $users = \App\Models\User::orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('', '');
+
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+
+        $entidads = Entidad::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+
+        return view('ventas.show', compact('venta', 'users', 'sucursals', 'entidads'));
+    }
+
     /**
      * Remove the specified resource from storage.
      *

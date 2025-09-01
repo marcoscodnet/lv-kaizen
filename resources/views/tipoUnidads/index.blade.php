@@ -48,7 +48,20 @@
 
                             <td>{{ $tipoUnidad->nombre }}</td>
 
-                            <td class="text-end"><div>@can('tipo-unidad-editar')<a href="{{ route('tipoUnidads.edit',$tipoUnidad->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td class="text-end"><div>
+                                    {{-- Botón Ver (lupa) --}}
+                                    @can('tipo-unidad-ver')
+                                        <a class="btn btn-link p-0"
+                                           href="{{ route('tipoUnidads.show', $tipoUnidad->id) }}"
+                                           alt="Ver"
+                                           title="Ver"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
+                                            <span class="text-500 fas fa-search"></span>
+                                        </a>
+                                    @endcan
+
+                                    @can('tipo-unidad-editar')<a href="{{ route('tipoUnidads.edit',$tipoUnidad->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('tipo-unidad-eliminar')
                                     <form id="delete-form-{{ $tipoUnidad->id }}" method="post" action="{{ route('tipoUnidads.destroy',$tipoUnidad->id) }}" style="display: none">
@@ -64,7 +77,7 @@
                         }
                         else{
                         event.preventDefault();
-                        }" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                        }" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
                                 </div></td>
 
                         </tr>

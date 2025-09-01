@@ -52,7 +52,20 @@
 
                             <td>{{ $marca->nombre }}</td>
 
-                            <td class="text-end"><div>@can('marca-editar')<a class="btn btn-link p-0" href="{{ route('marcas.edit',$marca->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td class="text-end"><div>
+                                    {{-- Botón Ver (lupa) --}}
+                                    @can('marca-ver')
+                                        <a class="btn btn-link p-0"
+                                           href="{{ route('marcas.show', $marca->id) }}"
+                                           alt="Ver"
+                                           title="Ver"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
+                                            <span class="text-500 fas fa-search"></span>
+                                        </a>
+                                    @endcan
+
+                                    @can('marca-editar')<a class="btn btn-link p-0" href="{{ route('marcas.edit',$marca->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('marca-eliminar')
                                     <form id="delete-form-{{ $marca->id }}" method="post" action="{{ route('marcas.destroy',$marca->id) }}" style="display: none">
@@ -68,7 +81,7 @@
                         }
                         else{
                         event.preventDefault();
-                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
 
 
 

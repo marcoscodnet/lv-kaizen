@@ -127,7 +127,8 @@ class ModeloController extends Controller
     public function show($id)
     {
         $modelo = Modelo::find($id);
-        return view('modelos.show',compact('modelo'));
+        $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('modelos.show',compact('modelo','marcas'));
     }
 
     /**

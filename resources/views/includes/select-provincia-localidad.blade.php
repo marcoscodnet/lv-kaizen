@@ -6,9 +6,9 @@
 @endphp
 <div class="col-lg-offset-3 col-lg-5 col-md-2">
     <div class="form-group">
-        <label for="email">Provincia</label>
+        <label for="provincia">Provincia</label>
         <select name="provincia_id" id="provincia_id" class="form-control provincia-select js-example-basic-single"
-                data-old-localidad="{{ $localidadSeleccionada }}" required>
+                data-old-localidad="{{ $localidadSeleccionada }}" required {{ !empty($disabled) ? 'disabled' : '' }}>
             <option value=""></option>
             @foreach($provincias as $provinciaId => $provincia)
                 <option value="{{ $provinciaId }}" {{ $provinciaSeleccionada == $provinciaId ? 'selected' : '' }}>
@@ -21,7 +21,7 @@
 <div class="col-lg-offset-3 col-lg-5 col-md-2">
     <div class="form-group">
         <label for="localidad">Localidad</label>
-        <select id="localidad" name="localidad_id" class="form-control localidad-select js-example-basic-single" required>
+        <select id="localidad" name="localidad_id" class="form-control localidad-select js-example-basic-single" required {{ !empty($disabled) ? 'disabled' : '' }}>
             <option value=""></option>
             @if($localidadSeleccionada)
                 <option value="{{ $localidadSeleccionada }}" selected>{{ $nombreLocalidad ?? 'Localidad seleccionada' }}</option>

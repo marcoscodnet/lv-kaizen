@@ -48,7 +48,20 @@
 
                             <td>{{ $color->nombre }}</td>
 
-                            <td class="text-end"><div>@can('color-editar')<a class="btn btn-link p-0" href="{{ route('colors.edit',$color->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td class="text-end"><div>
+                                    {{-- Botón Ver (lupa) --}}
+                                    @can('color-ver')
+                                        <a class="btn btn-link p-0"
+                                           href="{{ route('colors.show', $color->id) }}"
+                                           alt="Ver"
+                                           title="Ver"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
+                                            <span class="text-500 fas fa-search"></span>
+                                        </a>
+                                    @endcan
+
+                                    @can('color-editar')<a class="btn btn-link p-0" href="{{ route('colors.edit',$color->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('color-eliminar')
                                     <form id="delete-form-{{ $color->id }}" method="post" action="{{ route('colors.destroy',$color->id) }}" style="display: none">

@@ -303,6 +303,29 @@ class StockPiezaController extends Controller
             ->with($respuestaID,$respuestaMSJ);
     }
 
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        $stockPieza = StockPieza::find($id);
+
+        $piezas = Pieza::get()
+            ->mapWithKeys(function ($pieza) {
+                $texto = ($pieza->codigo ?? '') . ' - '
+                    . ($pieza->descripcion ?? '') ;
+
+                return [$pieza->id => $texto];
+            })
+            ->prepend('', ''); // si necesitas un vacío al principio
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('stockPiezas.show', compact('stockPieza','piezas','sucursals'));
+
+    }
+
 
     /**
      * Remove the specified resource from storage.
