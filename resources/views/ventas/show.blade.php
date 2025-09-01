@@ -249,7 +249,30 @@
 @endsection
 
 @section('footerSection')
+<script>
+    function actualizarTotales() {
+        let totalMonto = 0;
+        let totalAcreditado = 0;
 
+        $('input[name="monto[]"]').each(function() {
+            let val = parseFloat($(this).val());
+            if (!isNaN(val)) totalMonto += val;
+        });
+
+        $('input[name="pagado[]"]').each(function() {
+            let val = parseFloat($(this).val());
+            if (!isNaN(val)) totalAcreditado += val;
+        });
+
+        $('#totalMonto').val(totalMonto.toFixed(2));
+        $('#totalAcreditado').val(totalAcreditado.toFixed(2));
+    }
+
+    $(document).ready(function () {
+        actualizarTotales();
+    })
+
+</script>
 
 
 @endsection
