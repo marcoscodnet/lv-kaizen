@@ -28,6 +28,36 @@
             @include('includes.messages')
         </div>
         <div class="card-body pt-0">
+            <div class="row">
+
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroDiscontinuo">Discontinuos:</label>
+                        <select id="filtroDiscontinuo" class="form-control">
+                            <option value="-1">Todos</option>
+                            <option value="2">No</option>
+                            <option value="1">Si</option>
+                        </select>
+
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroStockMinimo">Debajo del mínimo:</label>
+                        <select id="filtroStockMinimo" class="form-control">
+                            <option value="0">Todos</option>
+                            <option value="1">Sí</option>
+                        </select>
+                    </div>
+                </div>
+
+
+
+            </div>
+            <!-- /.form-group -->
+        </div>
+        <div class="card-body pt-0">
             <div class="tab-content">
                 <table id="example1" class="table table-bordered table-striped fs-10 mb-0">
                     <thead class="bg-200">
@@ -40,7 +70,7 @@
                         <th scope="col">Color</th>
                         <th scope="col">$ Sugerido</th>
                         <th scope="col">Stock mín.</th>
-                        <!--<th scope="col">Stock Actual</th>-->
+                        <th scope="col">Stock Actual</th>
                         <th scope="col">Discontinuo</th>
 
 
@@ -80,7 +110,7 @@
     <!-- page script -->
     <script>
         $(document).ready(function() {
-            $('#example1').DataTable({
+            var table = $('#example1').DataTable({
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
                 "autoWidth": false, // Desactiva el ajuste automático del anchos
@@ -92,6 +122,8 @@
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
+                        d.discontinuo = $('#filtroDiscontinuo').val();
+                        d.filtroStockMinimo = $('#filtroStockMinimo').val();
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
                     }
@@ -114,7 +146,7 @@
                     },
 
                     { data: 'minimo', name: 'minimo' },
-
+                    { data: 'stock_actual', name: 'stock_actual' }, // <-- Nueva columna
                     { data: 'discontinuo', name: 'discontinuo' },
                     // Actions column
                     {
@@ -160,6 +192,13 @@
                     $('input[type="search"]').css('width', '70%');
                 }
             });
+            $('#filtroDiscontinuo').change(function() {
+                table.ajax.reload(); // Recargar la tabla cuando cambie el filtro de período
+            });
+            $('#filtroStockMinimo').change(function() {
+                table.ajax.reload();
+            });
+
         });
 
     </script>

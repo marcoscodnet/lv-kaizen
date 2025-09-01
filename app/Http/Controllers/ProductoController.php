@@ -44,17 +44,73 @@ class ProductoController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','productos.precio','productos.minimo',DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")]; // Define las columnas disponibles
+       $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','productos.precio','productos.minimo',
+           DB::raw('COUNT(CASE WHEN v.id IS NULL THEN 1 END)'),DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")]; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
+        $discontinuo = $request->input('discontinuo');
+        $filtroStockMinimo = $request->input('filtroStockMinimo');
 
-        $query = Producto::select('productos.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','productos.precio','productos.minimo', DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END AS discontinuo"))
 
+
+        $query = Producto::select(
+            'productos.id as id',
+            'tipo_unidads.nombre as tipo_unidad_nombre',
+            'marcas.nombre as marca_nombre',
+            'modelos.nombre as modelo_nombre',
+            'colors.nombre as color_nombre',
+            'productos.precio',
+            'productos.minimo',
+            DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END AS discontinuo"),
+            DB::raw("COUNT(CASE WHEN v.id IS NULL THEN 1 END) as stock_actual")
+        )
             ->leftJoin('tipo_unidads', 'productos.tipo_unidad_id', '=', 'tipo_unidads.id')
             ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id')
+            ->leftJoin('unidads as u', 'u.producto_id', '=', 'productos.id')
+            ->leftJoin('ventas as v', 'u.id', '=', 'v.unidad_id')
+            ->groupBy(
+                'productos.id',
+                'tipo_unidads.nombre',
+                'marcas.nombre',
+                'modelos.nombre',
+                'colors.nombre',
+                'productos.precio',
+                'productos.minimo',
+                'productos.discontinuo'
+            );
+
+
+
+        if (!empty($discontinuo)) {
+
+            $request->session()->put('discontinuo_filtro_producto', $discontinuo);
+
+        }
+        else{
+            $discontinuo = $request->session()->get('discontinuo_filtro_producto');
+
+        }
+        if ($discontinuo=='-1'){
+            $request->session()->forget('discontinuo_filtro_producto');
+            $discontinuo='';
+        }
+        if (!empty($discontinuo)) {
+            if ($discontinuo==2){
+                $query->where('productos.discontinuo', 0);
+            }
+            else{
+                $query->where('productos.discontinuo', 1);
+            }
+
+        }
+
+        if ($filtroStockMinimo == 1) {
+            $query->havingRaw('COUNT(CASE WHEN v.id IS NULL THEN 1 END) < productos.minimo');
+        }
+
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
