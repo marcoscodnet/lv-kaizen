@@ -138,39 +138,7 @@
     <!-- /.content-wrapper -->
 @endsection
 @section('footerSection')
-    <!-- jQuery 3 -->
-    <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
-    <!-- Bootstrap 3.3.7 -->
-    <script src="{{ asset('bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
-    <!-- SlimScroll -->
-    <script src="{{ asset('bower_components/jquery-slimscroll/jquery.slimscroll.min.js') }}"></script>
-    <!-- FastClick -->
-    <script src="{{ asset('bower_components/fastclick/lib/fastclick.js') }}"></script>
-    <!-- FastClick -->
-    <script src="{{ asset('bower_components/fastclick/lib/fastclick.js') }}"></script>
 
-    <!-- Select2 -->
-    <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
-
-    <!-- Inputmask -->
-    <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
-
-
-    <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
-
-
-    <!-- page script -->
-    <script>
-        $(document).ready(function () {
-
-            $('.js-example-basic-single').select2();
-
-
-
-
-        });
-
-    </script>
 
 
 @endsection
