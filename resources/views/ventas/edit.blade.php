@@ -247,7 +247,7 @@
                         <div class="row mt-3">
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">Guardar</button>
-                                <a href='{{ route('ventas.unidads') }}' class="btn btn-warning">Volver</a>
+                                <a href='{{ route('ventas.index') }}' class="btn btn-warning">Volver</a>
                             </div>
                         </div>
                     </div>
