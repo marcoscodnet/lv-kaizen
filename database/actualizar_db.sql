@@ -92,6 +92,24 @@ FROM tipo_unidad c
                          nombre = VALUES(nombre),
                          updated_at = NOW();
 
+INSERT INTO marca_tipo_unidads (
+    marca_id, tipo_unidad_id, created_at, updated_at
+)
+SELECT
+    um.cd_marca,
+    um.cd_tipo_unidad,
+    NOW(),
+    NOW()
+FROM marca_tipo_unidad um
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM marca_tipo_unidads umn
+    WHERE umn.marca_id = um.cd_marca
+      AND umn.tipo_unidad_id = um.cd_tipo_unidad
+);
+
+
+
 
 INSERT INTO productos (
     id, tipo_unidad_id, marca_id, modelo_id, color_id,
@@ -314,6 +332,8 @@ WHERE NOT EXISTS (
     WHERE umn.unidad_id = um.cd_unidad
       AND umn.movimiento_id = um.cd_movimiento
 );
+
+
 
 
 

@@ -12,6 +12,6 @@ class TipoUnidad extends Model
 
     public function marcas()
     {
-        return $this->belongsToMany(Marca::class, 'marca_tipo_unidad');
+        return $this->belongsToMany(Marca::class, 'marca_tipo_unidads');
     }
 }

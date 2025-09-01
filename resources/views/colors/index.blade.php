@@ -64,7 +64,7 @@
                         }
                         else{
                         event.preventDefault();
-                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0 ms-2" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
 
 
 
