@@ -191,7 +191,8 @@
 
                     '</tr>';
                 $('#cuerpoProducto').append(tr);
-                $('.js-example-basic-single').select2();
+                $('.js-example-basic-single').select2({
+                language: 'es'});
             };
             $('body').on('click', '.removeProducto', function(e){
 

@@ -114,6 +114,7 @@
 
     <!-- Select2 -->
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
     <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
@@ -121,7 +122,8 @@
     <script>
         $(document).ready(function () {
 
-            $('.js-example-basic-single').select2();
+            $('.js-example-basic-single').select2({
+                language: 'es'});
             if ($('.provincia-select').val()) {
                 $('.provincia-select').trigger('change');
             }

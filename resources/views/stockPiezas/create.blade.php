@@ -144,6 +144,7 @@
 
     <!-- Select2 -->
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
     <!-- page script -->
@@ -151,7 +152,8 @@
         const piezaUrlTemplate = @json(route('api.piezas.getDatos', ['id' => 'PIEZA_ID']));
         $(document).ready(function () {
 
-            $('.js-example-basic-single').select2();
+            $('.js-example-basic-single').select2({
+                language: 'es'});
             $('#pieza_id').on('change', function () {
                 var piezaId = $(this).val();
 

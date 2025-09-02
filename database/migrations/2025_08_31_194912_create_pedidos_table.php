@@ -15,7 +15,15 @@ class CreatePedidosTable extends Migration
     {
         Schema::create('pedidos', function (Blueprint $table) {
             $table->id();
-
+            $table->unsignedBigInteger('pieza_id')->nullable();
+            $table->foreign('pieza_id')->references('id')->on('piezas');
+            $table->string('nombre')->nullable();
+            $table->integer('cantidad')->nullable();
+            $table->decimal('senia', 10, 2)->nullable();
+            $table->decimal('minimo', 10, 2)->nullable();
+            $table->datetime('fecha')->nullable();
+            $table->enum('estado', ['A pedir','Pedido'])->nullable();
+            $table->text('observacion')->nullable();
             $table->timestamps();
         });
     }

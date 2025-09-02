@@ -20,6 +20,7 @@ use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\VentaPiezaController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\PedidoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -62,6 +63,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::resource('productos', ProductoController::class);
     Route::post('producto-datatable', [ProductoController::class, 'dataTable'])->name('productos.dataTable');
+    Route::post('/productos/update-precio', [App\Http\Controllers\ProductoController::class, 'updatePrecio'])
+        ->name('productos.updatePrecio');
 
     Route::resource('unidads', UnidadController::class);
     Route::post('unidad-datatable', [UnidadController::class, 'dataTable'])->name('unidads.dataTable');
@@ -107,6 +110,10 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('desautorizar/{id}', [VentaController::class, 'desautorizar'])->name('ventas.desautorizar');
 
     Route::resource('documentos', DocumentoController::class);
+
+    Route::resource('pedidos', PedidoController::class);
+    Route::post('pedido-datatable', [PedidoController::class, 'dataTable'])->name('pedidos.dataTable');
+
 });
 
 

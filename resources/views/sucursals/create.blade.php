@@ -107,7 +107,8 @@
     <script>
         $(document).ready(function () {
 
-            $('.js-example-basic-single').select2();
+            $('.js-example-basic-single').select2({
+                language: 'es'});
             if ($('.provincia-select').val()) {
                 $('.provincia-select').trigger('change');
             }

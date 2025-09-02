@@ -292,6 +292,22 @@ class ProductoController extends Controller
             ->with('success','Producto modificado con éxito');
     }
 
+
+    public function updatePrecio(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:productos,id',
+            'precio' => 'nullable|numeric'
+        ]);
+
+        $producto = Producto::findOrFail($request->id);
+        $producto->precio = $request->precio;
+        $producto->save();
+
+        return response()->json(['success' => true]);
+    }
+
+
     /**
      * Show the form for editing the specified resource.
      *

@@ -128,6 +128,7 @@
 
     <!-- Select2 -->
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
     <!-- Inputmask -->
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
@@ -140,7 +141,8 @@
     <script>
         $(document).ready(function () {
             $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
-            $('.js-example-basic-single').select2();
+            $('.js-example-basic-single').select2({
+                language: 'es'});
 
 
 

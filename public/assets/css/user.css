@@ -3,3 +3,9 @@
 /* -------------------------------------------------------------------------- */
 /* prettier-ignore */
 /*# sourceMappingURL=user.css.map */
+
+select.form-control {
+    -webkit-appearance: menulist; /* Chrome, Safari */
+    -moz-appearance: menulist;    /* Firefox */
+    appearance: menulist;
+}

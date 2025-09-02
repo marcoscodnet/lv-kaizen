@@ -140,10 +140,24 @@
                         data: 'precio',
                         name: 'precio',
                         render: function (data, type, row) {
-                            if (data === null || data === '') return '';
-                            return '$ ' + parseFloat(data).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            if (type === 'display') {
+                                let valor = (data === null || data === '') ? '' :
+                                    parseFloat(data).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                                // Si el usuario tiene permiso se genera el input
+                                @can('producto-editar')
+                                    return '<input type="text" class="form-control form-control-sm input-precio" ' +
+                                    'data-id="' + row.id + '" ' +
+                                    'value="' + valor + '">';
+                                @else
+                                    return valor;
+                                @endcan
+                            }
+                            return data;
                         }
                     },
+
+
 
                     { data: 'minimo', name: 'minimo' },
                     { data: 'stock_actual', name: 'stock_actual' }, // <-- Nueva columna
@@ -199,6 +213,34 @@
                 table.ajax.reload();
             });
 
+        });
+        // Evento blur para guardar automáticamente
+        $(document).on('blur', '.input-precio', function() {
+            let input = $(this);
+            let id = input.data('id');
+            let valor = input.val().replace(/\./g, '').replace(',', '.'); // convertir formato a float
+
+            $.ajax({
+                url: "{{ route('productos.updatePrecio') }}", // ruta en Laravel
+                type: "POST",
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    id: id,
+                    precio: valor
+                },
+                success: function(response) {
+                    if (response.success) {
+                        input.css('border-color', 'green');
+                    } else {
+                        input.css('border-color', 'red');
+                        alert(response.message || "Error al guardar.");
+                    }
+                },
+                error: function() {
+                    input.css('border-color', 'red');
+                    alert("Error en la comunicación con el servidor.");
+                }
+            });
         });
 
     </script>

@@ -162,6 +162,13 @@
                             </a>
                         @endcan
 
+                        @can('pedido-listar')
+                            <a class="nav-link" href="{{ route('pedidos.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-truck"></span></span><span class="nav-link-text ps-1">Pedidos</span>
+                                </div>
+                            </a>
+                        @endcan
+
                         @can('stock-pieza-listar')
                             <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
                                 <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
