@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'A Pedir' => 'A Pedir',
+    'A pedir' => 'A pedir',
     'Pedido' => 'Pedido',
 ];

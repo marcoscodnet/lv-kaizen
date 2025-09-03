@@ -44,7 +44,7 @@ class PedidoController extends Controller
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Pedido::select('pedidos.fecha','piezas.codigo as pieza_codigo','pedidos.nombre as nueva','pedidos.observacion','pedidos.estado')
+        $query = Pedido::select('pedidos.id as id','pedidos.fecha','piezas.codigo as pieza_codigo','pedidos.nombre as nueva','pedidos.observacion','pedidos.estado')
 
             ->leftJoin('piezas', 'pedidos.pieza_id', '=', 'piezas.id')
         ;
@@ -131,7 +131,8 @@ class PedidoController extends Controller
     public function show($id)
     {
         $pedido = Pedido::find($id);
-        return view('pedidos.show',compact('pedido'));
+		$piezas = Pieza::orderBy('codigo')->pluck('codigo', 'id')->prepend('', '');
+        return view('pedidos.show',compact('pedido','piezas'));
     }
 
     /**
