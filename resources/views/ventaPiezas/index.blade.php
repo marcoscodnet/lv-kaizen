@@ -3,7 +3,7 @@
     <!-- DataTables -->
     <link rel="stylesheet" href="{{ asset('bower_components/datatables.net-bs/css/dataTables.bootstrap.css') }}">
 
-
+    <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
 @endsection
 
 @section('content')
@@ -26,6 +26,43 @@
                 </div>
             </div>
             @include('includes.messages')
+        </div>
+        <div class="card-body pt-0">
+            <div class="row">
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="fechaDesde">Desde:</label>
+                        <input type="date" id="fechaDesde" class="form-control">
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="fechaHasta">Hasta:</label>
+                        <input type="date" id="fechaHasta" class="form-control">
+                    </div>
+                </div>
+
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroUsuario">Vendedores:</label>
+                        <select name="filtroUsuario" id="filtroUsuario" class="form-control js-example-basic-single" required>
+
+                            @foreach($users as $userId => $user)
+                                <option value="{{ $userId }}">
+                                    {{ $user }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                </div>
+
+
+            </div>
+            <!-- /.form-group -->
         </div>
         <div class="card-body pt-0">
             <div class="tab-content">
@@ -74,11 +111,17 @@
     <!-- daterangepicker -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
 
+    <!-- Select2 -->
+    <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
+
     <!-- page script -->
     <!-- page script -->
     <script>
         $(document).ready(function() {
-            $('#example1').DataTable({
+            $('.js-example-basic-single').select2({
+                language: 'es'});
+            var table = $('#example1').DataTable({
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
                 "autoWidth": false, // Desactiva el ajuste automático del anchos
@@ -90,8 +133,17 @@
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
-                        // Agrega otros parámetros si es necesario
-                        // d.otroParametro = valor;
+                        d.user_id = $('#filtroUsuario').val();
+                        d.fecha_desde = $('#fechaDesde').val();
+                        d.fecha_hasta = $('#fechaHasta').val();
+                    },
+                    "error": function(xhr, error, thrown) {
+                        if (xhr.status === 401) {
+                            // Usuario no autenticado, redirigir al login
+                            window.location.href = "{{ route('login') }}";
+                        } else {
+                            console.error("Error al cargar los datos:", error);
+                        }
                     }
                 },
                 columns: [
@@ -161,6 +213,9 @@
                     $('input[type="search"]').removeClass('form-control');
                     $('input[type="search"]').css('width', '70%');
                 }
+            });
+            $('#filtroUsuario,#fechaDesde, #fechaHasta').change(function() {
+                table.ajax.reload();
             });
         });
 

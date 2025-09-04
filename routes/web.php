@@ -21,6 +21,7 @@ use App\Http\Controllers\VentaPiezaController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\ServicioController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -114,6 +115,11 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('pedidos', PedidoController::class);
     Route::post('pedido-datatable', [PedidoController::class, 'dataTable'])->name('pedidos.dataTable');
 
+    Route::get('/servicios/unidads', [ServicioController::class, 'unidads'])->name('servicios.unidads');
+    Route::resource('servicios', ServicioController::class);
+    Route::post('servicio-datatable', [ServicioController::class, 'dataTable'])->name('servicios.dataTable');
+    Route::get('servicio-pdf', [ServicioController::class, 'generatePDF'])->name('servicios.pdf');
+    Route::post('unidadsvendidas-datatable', [ServicioController::class, 'unidadDataTable'])->name('unidadsvendidas.dataTable');
 });
 
 

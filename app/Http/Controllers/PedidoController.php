@@ -39,7 +39,7 @@ class PedidoController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [   'pedidos.fecha','piezas.codigo as pieza_codigo','pedidos.nombre as nueva','pedidos.observacion','pedidos.estado']; // Define las columnas disponibles
+        $columnas = [   'pedidos.fecha','piezas.codigo','pedidos.nombre','pedidos.observacion','pedidos.estado']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');

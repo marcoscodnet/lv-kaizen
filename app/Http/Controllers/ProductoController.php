@@ -52,7 +52,15 @@ class ProductoController extends Controller
         $discontinuo = $request->input('discontinuo');
         $filtroStockMinimo = $request->input('filtroStockMinimo');
 
-
+        $columnasBusqueda = [
+            'tipo_unidads.nombre',
+            'marcas.nombre',
+            'modelos.nombre',
+            'colors.nombre',
+            'productos.precio',
+            'productos.minimo',
+            DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")
+        ];
 
         $query = Producto::select(
             'productos.id as id',
@@ -114,12 +122,11 @@ class ProductoController extends Controller
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
-            $query->where(function ($query) use ($columnas, $busqueda) {
-                foreach ($columnas as $columna) {
-                    if ($columna){
+            $query->where(function ($query) use ($columnasBusqueda, $busqueda) {
+                foreach ($columnasBusqueda as $columna) {
+                    if ($columna) {
                         $query->orWhere($columna, 'like', "%$busqueda%");
                     }
-
                 }
             });
         }

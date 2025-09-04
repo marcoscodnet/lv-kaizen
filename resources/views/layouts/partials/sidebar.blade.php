@@ -169,6 +169,13 @@
                             </a>
                         @endcan
 
+                        @can('servicio-listar')
+                            <a class="nav-link" href="{{ route('servicios.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-wrench"></span></span><span class="nav-link-text ps-1">Servicios</span>
+                                </div>
+                            </a>
+                        @endcan
+
                         @can('stock-pieza-listar')
                             <a class="nav-link" href="{{ route('stockPiezas.index') }}" role="button">
                                 <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>

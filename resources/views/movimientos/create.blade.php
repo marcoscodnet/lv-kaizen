@@ -32,7 +32,7 @@
                                     <select name="sucursal_origen_id" class="form-control js-example-basic-single" required>
 
                                         @foreach($origens as $sucursalId => $sucursal)
-                                            <option value="{{ $sucursalId }}" {{ old('sucursal_origen_id') == $sucursalId ? 'selected' : '' }}>{{ $sucursal }}</option>
+                                            <option value="{{ $sucursalId }}" {{ old('sucursal_origen_id', auth()->user()->sucursal_id) == $sucursalId ? 'selected' : '' }}>{{ $sucursal }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -136,6 +136,7 @@
 
     <!-- Select2 -->
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
     <!-- Inputmask -->
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>

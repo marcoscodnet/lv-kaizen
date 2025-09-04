@@ -40,7 +40,10 @@ class VentaPiezaController extends Controller
     {
 
         $ventaPiezas = VentaPieza::all();
-        return view ('ventaPiezas.index',compact('ventaPiezas'));
+        $users = \App\Models\User::orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('Todos', '-1');
+        return view ('ventaPiezas.index',compact('ventaPiezas','users'));
     }
 
 
@@ -62,7 +65,9 @@ class VentaPiezaController extends Controller
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
-
+        $user_id = $request->input('user_id');
+        $fechaDesde = $request->input('fecha_desde');
+        $fechaHasta = $request->input('fecha_hasta');
         $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio)
             FROM pieza_venta_piezas pvp
@@ -80,6 +85,39 @@ class VentaPiezaController extends Controller
 
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
         ;
+
+        if (!empty($user_id)) {
+
+            $request->session()->put('user_filtro_venta_pieza', $user_id);
+
+        }
+        else{
+            $user_id = $request->session()->get('user_filtro_venta_pieza');
+
+        }
+        if ($user_id=='-1'){
+            $request->session()->forget('user_filtro_venta_pieza');
+            $user_id='';
+        }
+        if (!empty($user_id)) {
+
+            $query->where('venta_piezas.user_id', $user_id);
+
+
+        }
+
+
+
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('venta_piezas.fecha', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('venta_piezas.fecha', '<=', $fechaHasta);
+        }
+
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {

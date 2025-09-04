@@ -17,11 +17,11 @@ class PermissionsSeeder extends Seeder
         SqlLogger::startLogging();
 
         $permissions = [
-            'pedido-listar',
-            'pedido-crear',
-            'pedido-editar',
-            'pedido-eliminar',
-            'pedido-ver',
+            'servicio-listar',
+            'servicio-crear',
+            'servicio-editar',
+            'servicio-eliminar',
+            'servicio-ver',
         ];
 
         foreach ($permissions as $permission) {

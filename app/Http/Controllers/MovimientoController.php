@@ -37,24 +37,48 @@ class MovimientoController extends Controller
      */
     public function index(Request $request)
     {
-
+        $users = \App\Models\User::orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('Todos', '-1');
         $movimientos = Movimiento::all();
-        return view ('movimientos.index',compact('movimientos'));
+        return view ('movimientos.index',compact('movimientos','users'));
     }
 
 
     public function dataTable(Request $request)
     {
-        $columnas = [   DB::raw("IFNULL(users.name, movimientos.user_name)"),'origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha']; // Define las columnas disponibles
+        $columnas = [   DB::raw("IFNULL(users.name, movimientos.user_name)"),'origen.nombre','destino.nombre','movimientos.fecha']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
-
+        $user_id = $request->input('user_id');
         $query = Movimiento::select('movimientos.id as id', DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),'origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha')
             ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
             ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
             ;
+
+        if (!empty($user_id)) {
+
+            $request->session()->put('user_filtro_movimiento', $user_id);
+
+        }
+        else{
+            $user_id = $request->session()->get('user_filtro_movimiento');
+
+        }
+        if ($user_id=='-1'){
+            $request->session()->forget('user_filtro_movimiento');
+            $user_id='';
+        }
+        if (!empty($user_id)) {
+
+                $query->where('movimientos.user_id', $user_id);
+
+
+        }
+
+
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {

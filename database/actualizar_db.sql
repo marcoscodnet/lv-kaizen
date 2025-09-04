@@ -333,6 +333,32 @@ WHERE NOT EXISTS (
       AND umn.movimiento_id = um.cd_movimiento
 );
 
+INSERT INTO pedidos (
+    id, pieza_id, nombre, cantidad, senia, minimo, fecha,
+    estado, observacion, created_at, updated_at
+)
+SELECT
+    p.cd_pedido,
+    p.cd_pieza,
+    p.ds_pieza,
+    p.nu_cantidad,
+    p.qt_sena,
+    p.qt_minimo,
+    p.dt_pedido,
+    CASE p.cd_estado
+        WHEN 1 THEN 'A pedir'
+        WHEN 2 THEN 'Pedido'
+        ELSE NULL
+        END,
+    p.ds_observacion,
+    NOW(),
+    NOW()
+FROM pedido p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM pedidos pe
+    WHERE pe.id = p.cd_pedido
+);
 
 
 

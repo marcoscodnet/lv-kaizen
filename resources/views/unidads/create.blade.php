@@ -42,7 +42,7 @@
                                     <select name="sucursal_id" class="form-control js-example-basic-single" required>
 
                                         @foreach($sucursals as $sucursalId => $sucursal)
-                                            <option value="{{ $sucursalId }}" {{ old('sucursal_id') == $sucursalId ? 'selected' : '' }}>{{ $sucursal }}</option>
+                                            <option value="{{ $sucursalId }}" {{ old('sucursal_id', auth()->user()->sucursal_id) == $sucursalId ? 'selected' : '' }}>{{ $sucursal }}</option>
                                         @endforeach
                                     </select>
                                 </div>

@@ -46,12 +46,15 @@ class VentaController extends Controller
      */
     public function index(Request $request)
     {
-
+        $users = \App\Models\User::orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('Todos', '-1');
         $ventas = Venta::all();
         $documentos = Documento::where('habilitado', 1)
             ->orderBy('orden')
             ->get();
-        return view ('ventas.index',compact('ventas','documentos'));
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        return view ('ventas.index',compact('ventas','documentos','users','sucursals'));
     }
 
 
@@ -59,19 +62,22 @@ class VentaController extends Controller
     {
         $columnas = [
             'ventas.fecha',
-            'clientes.nombre as cliente',
+            'clientes.nombre',
             'unidads.motor',
-            'modelos.nombre as modelo',
+            'modelos.nombre',
             DB::raw("IFNULL(users.name, ventas.user_name)"),
-            'sucursals.nombre as sucursal_nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+            'sucursals.nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
             'ventas.forma'
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
-
+        $user_id = $request->input('user_id');
+        $sucursal_id = $request->input('sucursal_id');
+        $fechaDesde = $request->input('fecha_desde');
+        $fechaHasta = $request->input('fecha_hasta');
         // Query base
         $query = Venta::select(
             'ventas.id as id',
@@ -91,6 +97,56 @@ class VentaController extends Controller
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
             ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+
+        if (!empty($sucursal_id)) {
+
+            $request->session()->put('sucursal_filtro_venta', $sucursal_id);
+
+        }
+        else{
+            $sucursal_id = $request->session()->get('sucursal_filtro_venta');
+
+        }
+        if ($sucursal_id=='-1'){
+            $request->session()->forget('sucursal_filtro_venta');
+            $sucursal_id='';
+        }
+        if (!empty($sucursal_id)) {
+
+            $query->where('ventas.sucursal_id', $sucursal_id);
+
+
+        }
+
+
+        if (!empty($user_id)) {
+
+            $request->session()->put('user_filtro_venta', $user_id);
+
+        }
+        else{
+            $user_id = $request->session()->get('user_filtro_venta');
+
+        }
+        if ($user_id=='-1'){
+            $request->session()->forget('user_filtro_venta');
+            $user_id='';
+        }
+        if (!empty($user_id)) {
+
+            $query->where('ventas.user_id', $user_id);
+
+
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('ventas.fecha', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('ventas.fecha', '<=', $fechaHasta);
+        }
 
         // Aplicar búsqueda
         if (!empty($busqueda)) {
