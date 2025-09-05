@@ -4,12 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 
+
+use App\Models\Cliente;
 use App\Models\Sucursal;
 use App\Models\Servicio;
+use App\Models\Provincia;
+use App\Models\TipoServicio;
 use App\Models\Venta;
 use App\Traits\SanitizesInput;
+use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ServicioController extends Controller
 {
@@ -49,7 +56,7 @@ class ServicioController extends Controller
         $columnas = [
             'servicios.id',
             'servicios.id',
-            'servicios.carga',
+            'servicios.ingreso',
             'servicios.motor',
             'servicios.modelo',
             'servicios.chasis',
@@ -73,7 +80,7 @@ class ServicioController extends Controller
         $query = Servicio::select(
             'servicios.id as id',
             'servicios.id as nro',
-            'servicios.carga',
+            'servicios.ingreso',
             'servicios.motor',
             'servicios.modelo',
             'servicios.chasis',
@@ -135,11 +142,11 @@ class ServicioController extends Controller
 
 
         if (!empty($fechaDesde)) {
-            $query->whereDate('servicios.carga', '>=', $fechaDesde);
+            $query->whereDate('servicios.ingreso', '>=', $fechaDesde);
         }
 
         if (!empty($fechaHasta)) {
-            $query->whereDate('servicios.carga', '<=', $fechaHasta);
+            $query->whereDate('servicios.ingreso', '<=', $fechaHasta);
         }
 
         // Aplicar búsqueda
@@ -328,7 +335,109 @@ class ServicioController extends Controller
         ]);
     }
 
-    public function show($id) {
+    public function registrar($id=null)
+    {
+        $venta = Venta::find($id);
+        /*$users = \App\Models\User::where('activo', 1)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->prepend('', '');*/
+
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('servicios.registrar', compact('sucursals', 'venta','provincias','tipos'));
+    }
+
+    public function store(Request $request)
+    {
+        //dd($request->all());
+
+        $precioSugerido = $request->input('precio', 0);
+
+// Sumamos los montos ingresados
+        $totalMonto = $request->input('totalMonto', 0);
+        $totalAcreditado = $request->input('totalAcreditado', 0);
+
+
+        $rules = [
+            'venta' => 'nullable|date',
+            'modelo' => 'required',
+            'motor' => 'required',
+            'chasis' => 'required',
+            'year' => 'required',
+            'cliente_id' => 'required',
+            'sucursal_id' => 'required',
+            'kilometros' => 'required',
+            'tipo_servicio_id' => 'required',
+            'ingreso' => 'required|date_format:d/m/Y H:i:s',
+            'entrega' => 'required|date',
+        ];
+
+
+        // Definir los mensajes de error personalizados
+        $messages = [
+
+            'year.required' => 'El año es obligatorio.',
+            'sucursal_id.required' => 'Debe seleccionar una sucursal.',
+            'cliente_id.required' => 'Debe seleccionar un cliente.',
+            'tipo_servicio_id.required' => 'Debe seleccionar un tipo.',
+            'ingreso.required' => 'La fecha de ingreso es obligatoria.',
+            'ingreso.date_format' => 'La fecha de ingreso no coincide con el formato d/m/Y H:i:s.',
+            'entrega.required' => 'La fecha de compromiso entrega es obligatoria.',
+        ];
+
+
+
+        // Crear el validador con las reglas y mensajes
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+
+        // Validar y verificar si hay errores
+        if ($validator->fails()) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->all() + [
+                        'cliente_nombre' => optional($cliente)->full_name_phone, // 👈 tu accessor
+                    ]);
+        }
+
+
+        $input = $this->sanitizeInput($request->all());
+
+
+        DB::beginTransaction();
+        $ok=1;
+        try {
+            $input['ingreso']=$request->filled('ingreso')
+                ? Carbon::createFromFormat('d/m/Y H:i:s', $request->ingreso)->format('Y-m-d H:i:s')
+                : null;
+            // Asignar el usuario logueado
+            $input['user_id'] = auth()->id(); // o auth()->user()->id
+            $servicio = Servicio::create($input);
+
+        }catch(QueryException $ex){
+            $error = $ex->getMessage();
+            $ok=0;
+
+        }
+        if ($ok){
+            DB::commit();
+            $respuestaID='success';
+            $respuestaMSJ='Registro creado satisfactoriamente';
+        }
+        else{
+            DB::rollback();
+            $respuestaID='error';
+            $respuestaMSJ=$error;
+        }
+
+        return redirect()->route('servicios.index')->with($respuestaID,$respuestaMSJ);
+
+
 
     }
+
+
 }

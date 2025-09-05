@@ -9,18 +9,16 @@
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
                     <h5 class="mb-0" data-anchor="data-anchor">
-                        <i class="fa fa-shopping-cart" aria-hidden="true"></i>
-                        <span class="ms-2">Vender unidad</span>
+                        <i class="fa fa-wrench" aria-hidden="true"></i>
+                        <span class="ms-2">Registrar servicio</span>
                     </h5>
                 </div>
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form id="formVenta" role="form" action="{{ route('ventas.store') }}" method="post">
+            <form id="formVenta" role="form" action="{{ route('servicios.store') }}" method="post">
                 {{ csrf_field() }}
-                @can('unidad-autorizar')
-                    <input type="hidden" id="autorizada" name="autorizada" value="">
-                @endcan
+
                 <div class="tab-content">
                     <div class="box-body">
                         @include('includes.messages')
@@ -29,10 +27,10 @@
                         <div class="row">
                             <div class="col-lg-9">
                                 <div class="form-group">
-                                    <label for="producto">Producto</label>
-                                    <input type="hidden" id="unidad_id" name="unidad_id" value="{{ $unidad->id }}">
-                                    <input type="text" class="form-control" id="producto" name="producto"
-                                           value="{{ isset($unidad->producto) ? $unidad->producto->tipounidad->nombre : '' }} {{ isset($unidad->producto) ? $unidad->producto->marca->nombre : '' }} {{ isset($unidad->producto) ? $unidad->producto->modelo->nombre : '' }} {{ isset($unidad->producto) ? $unidad->producto->color->nombre : '' }}"
+                                    <label for="unidad">Unidad</label>
+
+                                    <input type="text" class="form-control" id="unidad" name="unidad"
+                                           value="{{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->tipounidad->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->marca->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->modelo->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->color->nombre : '' }}"
                                            readonly>
                                 </div>
                             </div>
@@ -40,60 +38,39 @@
                         </div>
 
                         <div class="row">
+                            <div class="col-lg-3">
+                                <div class="form-group">
+                                    <label for="venta">F. Venta</label>
+                                    <input type="date" class="form-control" id="fecha" name="fecha"  value="@if (old('fecha')){{ old('fecha') }}@else{{ (optional($venta)->fecha)?date('Y-m-d', strtotime($venta->fecha)):'' }}@endif">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="modelo">Modelo</label>
+                                    <input type="text" class="form-control" id="modelo" name="modelo"
+                                           value="{{ old('modelo', optional(optional($venta)->unidad)->producto->modelo->nombre ?? '') }}" required>
 
-                            <div class="col-lg-3">
-                                <div class="form-group">
-                                    <label for="motor">Motor</label>
-                                    <input type="text" class="form-control" id="motor" name="motor" value="{{ $unidad->motor }}" readonly>
-                                </div>
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="form-group">
-                                    <label for="cuadro">Cuadro</label>
-                                    <input type="text" class="form-control" id="cuadro" name="cuadro" value="{{ $unidad->cuadro }}" readonly>
-                                </div>
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="form-group">
-                                    <label for="precio">Importe sugerido</label>
-                                    <input type="text" class="form-control" id="precio" name="precio"
-                                           value="{{ isset($unidad->producto) ? $unidad->producto->precio : '' }}" readonly>
                                 </div>
                             </div>
                         </div>
-
-                        {{-- Fecha, vendedor y sucursal --}}
                         <div class="row">
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label for="fecha">Fecha</label>
-                                    <input type="text" class="form-control" id="fecha" name="fecha"
-                                           value="{{ now()->format('d/m/Y H:i:s') }}" readonly required>
+                                    <label for="motor">Motor</label>
+                                    <input type="text" class="form-control" id="motor" name="motor" value="@if (old('motor')){{ old('motor') }}@else{{ optional(optional($venta)->unidad)->motor }}@endif" required>
                                 </div>
                             </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label for="user_id">Vendedor</label>
-                                    <select name="user_id" id="user_id" class="form-control js-example-basic-single" required>
-                                        @foreach($users as $userId => $user)
-                                            <option value="{{ $userId }}" {{ old('user_id', auth()->id()) == $userId ? 'selected' : '' }}>
-                                                {{ $user }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <label for="chasis">Chasis</label>
+                                    <input type="text" class="form-control" id="chasis" name="chasis" value="@if (old('chasis')){{ old('chasis') }}@else{{ optional(optional($venta)->unidad)->cuadro }}@endif" required>
                                 </div>
                             </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-1">
                                 <div class="form-group">
-                                    <label for="sucursal_id">Sucursal</label>
-                                    <select id="sucursal_id" name="sucursal_id" class="form-control js-example-basic-single" required>
-                                        <option value="">Seleccione...</option>
-                                        @foreach($sucursals as $sucursalId => $sucursal)
-                                            <option value="{{ $sucursalId }}" {{ old('sucursal_id', auth()->user()->sucursal_id) == $sucursalId ? 'selected' : '' }}>
-                                                {{ $sucursal }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <label for="year">Año</label>
+                                    <input type="text" class="form-control" id="year" name="year"
+                                           value="@if (old('year')){{ old('year') }}@else{{ optional(optional($venta)->unidad)->year }}@endif" required>
                                 </div>
                             </div>
                         </div>
@@ -106,8 +83,14 @@
                                         <label for="cliente_id">Cliente</label>
                                         <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single" required>
                                             @if(old('cliente_id'))
+                                                {{-- Mostrar cliente seleccionado por old() --}}
                                                 <option value="{{ old('cliente_id') }}" selected>
                                                     {{ old('cliente_nombre', '') }}
+                                                </option>
+                                            @elseif(isset($venta) && $venta->cliente)
+                                                {{-- Mostrar cliente existente en la venta --}}
+                                                <option value="{{ $venta->cliente_id }}" selected>
+                                                    {{ $venta->cliente->full_name_phone }}
                                                 </option>
                                             @endif
                                         </select>
@@ -116,129 +99,162 @@
                                         <i class="fa fa-check"></i>
                                     </button>
                                 </div>
-                            </div>
 
+                            </div>
 
 
                         </div>
 
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <div class="form-group d-flex align-items-end gap-2">
-                                    <div class="flex-grow-1">
-                                        <label for="forma">Forma de pago</label>
-                                        <select name="forma" id="forma" class="form-control" required>
-                                        <option value="">
-                                            Seleccionar...
-                                        </option>
-                                        @foreach (config('formas') as $key => $label)
-                                            <option value="{{ $key }}" {{ old('forma', $venta->forma ?? '') == $key ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
-                                        @endforeach
+
+                        {{-- =================================== --}}
+                        {{-- Sección: Estado General del Vehículo --}}
+                        {{-- =================================== --}}
+                        <div class="card mt-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Estado General del Vehículo</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="kilometros">Kilómetros</label>
+                                            <input type="text" class="form-control" id="kilometros" name="kilometros"
+                                                   value="{{ old('kilometros')}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-7">
+                                        <div class="form-group">
+                                            <label for="observacion">Observaciones</label>
+                                            <textarea class="form-control" id="observacion" name="observacion" rows="3">{{ old('observacion') }}</textarea>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+
+                        {{-- =================================== --}}
+                        {{-- Sección:servicio --}}
+                        {{-- =================================== --}}
+                        <div class="card mt-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Servicio</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <label for="sucursal_id">Sucursal</label>
+                                        <select id="sucursal_id" name="sucursal_id" class="form-control js-example-basic-single" required>
+                                            <option value="">Seleccione...</option>
+                                            @foreach($sucursals as $sucursalId => $sucursal)
+                                                <option value="{{ $sucursalId }}" {{ old('sucursal_id', auth()->user()->sucursal_id) == $sucursalId ? 'selected' : '' }}>
+                                                    {{ $sucursal }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
-
-                                </div>
-                            </div>
-
-
-                        </div>
-<p></p>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div id="cuerpoVenta">
-                                    <div class="row">
-                                        <div class="col text-start" style="margin-bottom: 1%">
-                                            <button type="button" id="addItemPago" class="btn btn-success btn-sm mt-2">
-                                                <i class="fa fa-plus"></i> Agregar pago
-                                            </button>
+                                    <div class="col-lg-3">
+                                        <label for="tipo_servicio_id">Tipo</label>
+                                        <select id="tipo_servicio_id" name="tipo_servicio_id" class="form-control js-example-basic-single" required>
+                                            <option value="">Seleccione...</option>
+                                            @foreach($tipos as $tipoId => $tipo)
+                                                <option value="{{ $tipoId }}" {{ old('tipo_servicio_id') == $tipoId ? 'selected' : '' }}>
+                                                    {{ $tipo }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-3">
+                                        <div class="form-group">
+                                            <label for="ingreso">F. Ingreso</label>
+                                            <input type="text" class="form-control" id="ingreso" name="ingreso"
+                                                   value="{{ now()->format('d/m/Y H:i:s') }}" required>
                                         </div>
                                     </div>
 
-                                    @php
-                                        $oldPagos = old('entidad_id') ? collect(old('entidad_id'))->keys() : [0];
-                                    @endphp
+                                </div>
+                                <div class="row">
 
-                                    @foreach($oldPagos as $i)
-                                        <div class="card p-3 mb-3 pago-item">
-                                            <div class="row">
-                                                <div class="col-md-3">
-                                                    <label>Entidad</label>
-                                                    <select name="entidad_id[]" class="form-control js-example-basic-single" required>
-                                                        <option value="">Seleccione...</option>
-                                                        @foreach($entidads as $entidadId => $entidad)
-                                                            <option value="{{ $entidadId }}"
-                                                                {{ old('entidad_id.'.$i) == $entidadId ? 'selected' : '' }}>
-                                                                {{ $entidad }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label>Importe</label>
-                                                    <input type="number" name="monto[]" class="form-control"
-                                                           value="{{ old('monto.'.$i) }}" required>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label id="fechaPago">Fecha Pago</label>
-                                                    <input type="date" name="fecha_pago[]" class="form-control"
-                                                           value="{{ old('fecha_pago.'.$i) }}" required>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label>Acreditado</label>
-                                                    <input type="number" name="pagado[]" class="form-control"
-                                                           value="{{ old('pagado.'.$i) }}">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label>Fecha Contadora</label>
-                                                    <input type="date" name="contadora[]" class="form-control"
-                                                           value="{{ old('contadora.'.$i) }}">
-                                                </div>
-                                            </div>
-
-                                            <div class="row mt-2">
-                                                <div class="col-5">
-                                                    <label>Observaciones vendedor</label>
-                                                    <textarea name="detalle[]" class="form-control" rows="2">{{ old('detalle.'.$i) }}</textarea>
-                                                </div>
-                                                <div class="col-5">
-                                                    <label>Observaciones</label>
-                                                    <textarea name="observaciones[]" class="form-control" rows="2">{{ old('observaciones.'.$i) }}</textarea>
-                                                </div>
-                                                <div class="col-md-1 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-danger btn-sm removeItemPago">
-                                                        <i class="fa fa-times"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
+                                    <div class="col-lg-5">
+                                        <div class="form-group">
+                                            <label for="descripcion">Descripciones y pedidos del cliente</label>
+                                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ old('descripcion') }}</textarea>
                                         </div>
-                                    @endforeach
+                                    </div>
 
+                                    <div class="col-lg-4">
+                                        <div class="form-group">
+                                            <label for="diagnostico">Diagnóstico y reparación realizada</label>
+                                            <textarea class="form-control" id="diagnostico" name="diagnostico" rows="3">{{ old('diagnostico') }}</textarea>
+                                        </div>
+                                    </div>
 
                                 </div>
 
+                                <div class="row">
 
+                                    <div class="col-lg-5">
+                                        <div class="form-group">
+                                            <label for="repuestos">Repuestos utilizados</label>
+                                            <textarea class="form-control" id="repuestos" name="repuestos" rows="3">{{ old('repuestos') }}</textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4">
+                                        <div class="form-group">
+                                            <label for="instrumentos">Instrumentos de medición utilizados</label>
+                                            <textarea class="form-control" id="instrumentos" name="instrumentos" rows="3">{{ old('instrumentos') }}</textarea>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-3">
+                                        <label for="mecanicos">Mecánicos</label>
+                                        <input type="text" class="form-control" id="mecanicos" name="mecanicos"
+                                               value="{{ old('mecanicos') }}" required>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <label for="tiempo">Tiempo de mano de obra</label>
+                                        <input type="text" class="form-control" id="tiempo" name="tiempo"
+                                               value="{{ old('tiempo') }}" required>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="entrega">F. compromiso entrega</label>
+                                            <input type="date" class="form-control" id="entrega" name="entrega"
+                                                   value="{{ old('entrega') }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="monto">Precio</label>
+                                            <input type="number" class="form-control" id="monto" name="monto"
+                                                   value="{{ old('monto') }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-check mt-4">
+                                            <input type="hidden" name="pagado" value="0">
+                                            <input class="form-check-input" type="checkbox" id="pagado" name="pagado" value="1"
+                                                {{ old('pagado', $obj->pagado ?? false) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="pagado">
+                                                Pagado
+                                            </label>
+                                        </div>
+                                </div>
+                                </div>
                             </div>
-
-
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <label>Importe total</label>
-                                <input type="text" id="totalMonto" name="totalMonto" class="form-control" value="0" readonly>
-                            </div>
-                            <div class="col-md-3">
-                                <label>Importe Acreditado</label>
-                                <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control" value="0" readonly>
-                            </div>
-                        </div>
+
 
                         {{-- Botones --}}
                         <div class="row mt-3">
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">Guardar</button>
-                                <a href='{{ route('ventas.unidads') }}' class="btn btn-warning">Volver</a>
+                                <a href='{{ route('servicios.unidads') }}' class="btn btn-warning">Volver</a>
                             </div>
                         </div>
                     </div>
@@ -410,63 +426,14 @@
     <script src="{{ asset('assets/js/combo-provincia-localidad-modal.js') }}"></script>
 
     <script>
-        function actualizarTotales() {
-            let totalMonto = 0;
-            let totalAcreditado = 0;
 
-            $('input[name="monto[]"]').each(function() {
-                let val = parseFloat($(this).val());
-                if (!isNaN(val)) totalMonto += val;
-            });
-
-            $('input[name="pagado[]"]').each(function() {
-                let val = parseFloat($(this).val());
-                if (!isNaN(val)) totalAcreditado += val;
-            });
-
-            $('#totalMonto').val(totalMonto.toFixed(2));
-            $('#totalAcreditado').val(totalAcreditado.toFixed(2));
-        }
 
 
         var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-            actualizarTotales();
 
-            // Ejecutar al cambiar monto o pagado
-            $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotales);
-
-            // Ejecutar al agregar o eliminar pagos
-            $('body').on('click', '#addItemPago, .removeItemPago', function() {
-                setTimeout(actualizarTotales, 100); // pequeño delay para que el DOM se actualice
-            });
-
-            function toggleDivs() {
-                const valor = $('#forma').val();
-
-                // Ocultar todos
-                $('#cuerpoVenta').hide();
-
-                // Mostrar el que corresponde
-                if (valor !== '') {
-                    if (valor === 'Contado') {
-
-                        $('#fechaPago').html('Fecha de pago');
-                    }
-                    else{
-                        $('#fechaPago').html('Aprobación Crédito');
-                    }
-                    $('#cuerpoVenta').show();
-                }
-            }
-
-            // Ejecutar al cargar por si hay uno preseleccionado
-            toggleDivs();
-
-            // Ejecutar al cambiar
-            $('#forma').on('change', toggleDivs);
             // Inicializar Select2 básico
             $('.js-example-basic-single').each(function () {
                 if ($(this).hasClass("select2-hidden-accessible")) {
@@ -518,7 +485,7 @@
                 if (clienteId) {
                     // Cliente existente: traer datos para verificar
                     $.ajax({
-                        url: '{{ url("clientes") }}/' + clienteId,
+                        url: '{{ url("clientes") }}/' + clienteId + '/json',
                         type: 'GET',
                         success: function (cliente) {
                             // Fecha de nacimiento en YYYY-MM-DD
@@ -604,7 +571,7 @@
                 $('#nuevoClienteLabel').text('Verificar Cliente');
 
                 $.ajax({
-                    url: '{{ url("clientes") }}/' + clienteId,
+                    url: '{{ url("clientes") }}/' + clienteId + '/json',
                     type: 'GET',
                     success: function (cliente) {
                         // Fecha de nacimiento en YYYY-MM-DD
@@ -704,60 +671,7 @@
 
             });
 
-            // función que devuelve el bloque de pago
-            function getPagoHtml() {
-                return `
-        <div class="card p-3 mb-3 pago-item">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label>Entidad</label>
-                                                <select name="entidad_id[]" class="form-control js-example-basic-single" required>
-                                                    <option value="">Seleccione...</option>
-                                                    @foreach($entidads as $entidadId => $entidad)
-                <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
-                                                            {{ $entidad }}
-                </option>
-@endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                                                <label>Importe</label>
-                                                <input type="number" name="monto[]" class="form-control" required>
-                                            </div>
-            <div class="col-md-2">
-                <label id="fechaPago"></label>
-                <input type="date" name="fecha_pago[]" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-                <label>Acreditado</label>
-                <input type="number" name="pagado[]" class="form-control">
-            </div>
-            <div class="col-md-2">
-                <label>Fecha</label>
-                <input type="date" name="contadora[]" class="form-control">
-            </div>
 
-        </div>
-        <div class="row mt-2">
-            <div class="col-5">
-                <label>Observaciones vendedor</label>
-                <textarea name="detalle[]" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="col-5">
-                <label>Observaciones</label>
-                <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="button" class="btn btn-danger btn-sm removeItemPago"><i class="fa fa-times"></i></button>
-            </div>
-        </div>
-    </div>`;
-            }
-
-            // Agregar pago
-            $('#addItemPago').on('click', function () {
-                $('#cuerpoVenta').append(getPagoHtml());
-            });
 
             // Mostrar/ocultar cónyuge
             function toggleConyuge() {
@@ -777,31 +691,7 @@
             toggleConyuge();
 
 
-            // Eliminar pago
-            $('body').on('click', '.removeItemPago', function () {
-                $(this).closest('.pago-item').remove();
-            });
-            $("#formVenta").on("submit", function(e) {
-                @can('unidad-autorizar')
-                // Preguntar solo si existe el input
-                let autorizadaInput = $("#autorizada");
-                if (autorizadaInput.length && autorizadaInput.val() === "") {
-                    //e.preventDefault(); // primero detenemos el submit
 
-                    // Primera confirmación
-                    if (confirm("¿Desea autorizar la unidad a vender?")) {
-                        // Segunda confirmación
-                        if (confirm("Confirma que desea autorizar la unidad a vender")) {
-                            autorizadaInput.val("1"); // marcar como autorizada
-                        } else {
-                            autorizadaInput.val(""); // no autorizada
-                        }
-                    } else {
-                        autorizadaInput.val(""); // no autorizada
-                    }
-                }
-                @endcan
-            });
         });
     </script>
 

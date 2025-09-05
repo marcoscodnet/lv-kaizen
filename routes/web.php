@@ -58,6 +58,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('clientes', ClienteController::class);
     Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');
     Route::post('/clientes/quickstore', [ClienteController::class, 'quickStore'])->name('clientes.quickstore');
+    Route::get('/clientes/{id}/json', [ClienteController::class, 'showJson'])->name('clientes.showJson');
 
 
     Route::resource('parametros', ParametroController::class);
@@ -116,10 +117,13 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('pedido-datatable', [PedidoController::class, 'dataTable'])->name('pedidos.dataTable');
 
     Route::get('/servicios/unidads', [ServicioController::class, 'unidads'])->name('servicios.unidads');
+    Route::get('servicios/registrar/{venta?}', [ServicioController::class, 'registrar'])->name('servicios.registrar');
     Route::resource('servicios', ServicioController::class);
     Route::post('servicio-datatable', [ServicioController::class, 'dataTable'])->name('servicios.dataTable');
     Route::get('servicio-pdf', [ServicioController::class, 'generatePDF'])->name('servicios.pdf');
     Route::post('unidadsvendidas-datatable', [ServicioController::class, 'unidadDataTable'])->name('unidadsvendidas.dataTable');
+
+
 });
 
 

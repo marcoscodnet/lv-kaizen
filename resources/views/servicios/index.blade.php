@@ -186,8 +186,8 @@
                     { data: 'nro', name: 'nro' },
                     {
 
-                        data: 'fecha',
-                        name: 'fecha',
+                        data: 'ingreso',
+                        name: 'ingreso',
                         render: function(data) {
                             // Verificar si el dato es válido
                             if (data) {

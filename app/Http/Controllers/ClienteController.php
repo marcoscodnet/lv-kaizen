@@ -375,7 +375,16 @@ class ClienteController extends Controller
         ]);
     }
 
+    public function showJson($id)
+    {
+        $cliente = Cliente::find($id);
 
+        if (!$cliente) {
+            return response()->json(['error' => 'Cliente no encontrado'], 404);
+        }
+
+        return response()->json($cliente);
+    }
 
 
 }

@@ -517,10 +517,12 @@
 
                 if (clienteId) {
                     // Cliente existente: traer datos para verificar
+
                     $.ajax({
-                        url: '{{ url("clientes") }}/' + clienteId,
+                        url: '{{ url("clientes") }}/' + clienteId + '/json',
                         type: 'GET',
                         success: function (cliente) {
+
                             // Fecha de nacimiento en YYYY-MM-DD
                             let nacimiento = cliente.nacimiento ? cliente.nacimiento.split(' ')[0] : '';
                             $('#formNuevoCliente #nacimiento').val(nacimiento);
@@ -604,7 +606,7 @@
                 $('#nuevoClienteLabel').text('Verificar Cliente');
 
                 $.ajax({
-                    url: '{{ url("clientes") }}/' + clienteId,
+                    url: '{{ url("clientes") }}/' + clienteId + '/json',
                     type: 'GET',
                     success: function (cliente) {
                         // Fecha de nacimiento en YYYY-MM-DD

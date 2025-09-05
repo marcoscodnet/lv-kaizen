@@ -16,6 +16,16 @@
                 </div>
 
             </div>
+            <div class="col-8 col-sm-auto text-end ps-2">
+
+                <div id="table-customers-replace-element">
+                    <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('servicios.registrar') }}">
+                        <span class="fas fa-plus"></span>
+                        <span class="d-none d-sm-inline-block ms-2">Registrar</span>
+                    </a>
+
+                </div>
+            </div>
             @include('includes.messages')
         </div>
         <div class="card-body pt-0">
@@ -185,7 +195,7 @@
 
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('servicio-crear')
-                                actionsHtml += '<a href="{{ route("servicios.create", ":id") }}" class="btn btn-link p-0" alt="Registrar" title="Registrar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-plus-circle"></span></a>'.replace(':id', row.id);
+                                actionsHtml += '<a href="{{ route("servicios.registrar", ":id") }}" class="btn btn-link p-0" alt="Registrar" title="Registrar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-plus-circle"></span></a>'.replace(':id', row.id);
                             @endcan
 
 
