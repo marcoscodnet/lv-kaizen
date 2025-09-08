@@ -23,25 +23,27 @@
                     <div class="box-body">
                         @include('includes.messages')
 
-                        {{-- Datos de la unidad --}}
-                        <div class="row">
-                            <div class="col-lg-9">
-                                <div class="form-group">
-                                    <label for="unidad">Unidad</label>
+                        @if($venta)
+                            {{-- Datos de la unidad --}}
+                            <div class="row">
+                                <div class="col-lg-9">
+                                    <div class="form-group">
+                                        <label for="unidad">Unidad</label>
 
-                                    <input type="text" class="form-control" id="unidad" name="unidad"
-                                           value="{{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->tipounidad->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->marca->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->modelo->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->color->nombre : '' }}"
-                                           readonly>
+                                        <input type="text" class="form-control" id="unidad" name="unidad"
+                                               value="{{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->tipounidad->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->marca->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->modelo->nombre : '' }} {{ isset(optional(optional($venta)->unidad)->producto) ? optional(optional($venta)->unidad)->producto->color->nombre : '' }}"
+                                               readonly>
+                                    </div>
                                 </div>
-                            </div>
 
-                        </div>
+                            </div>
+                        @endif
 
                         <div class="row">
                             <div class="col-lg-3">
                                 <div class="form-group">
                                     <label for="venta">F. Venta</label>
-                                    <input type="date" class="form-control" id="fecha" name="fecha"  value="@if (old('fecha')){{ old('fecha') }}@else{{ (optional($venta)->fecha)?date('Y-m-d', strtotime($venta->fecha)):'' }}@endif">
+                                    <input type="date" class="form-control" id="venta" name="venta"  value="@if (old('venta')){{ old('venta') }}@else{{ (optional($venta)->fecha)?date('Y-m-d', strtotime($venta->fecha)):'' }}@endif">
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -119,7 +121,7 @@
                                         <div class="form-group">
                                             <label for="kilometros">Kilómetros</label>
                                             <input type="text" class="form-control" id="kilometros" name="kilometros"
-                                                   value="{{ old('kilometros')}}">
+                                                   value="{{ old('kilometros')}}" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-7">

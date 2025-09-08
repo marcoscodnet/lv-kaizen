@@ -42,7 +42,7 @@
 
 
 
-                        <th class="text-end" scope="col">Acciones</th>
+                        <th scope="col">Acciones</th>
 
                     </tr>
                     </thead>

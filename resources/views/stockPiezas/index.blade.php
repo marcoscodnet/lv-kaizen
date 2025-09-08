@@ -42,7 +42,7 @@
                         <th scope="col">Sucursal</th>
                         <th scope="col">Proveedor</th>
                         <th scope="col">Ingreso</th>
-                        <th class="text-end" scope="col">Acciones</th>
+                        <th scope="col">Acciones</th>
 
                     </tr>
                     </thead>
@@ -158,8 +158,7 @@
                                 return actionsHtml;
 
                         },
-                        // Aquí agregamos la clase al <td> de la columna de acciones
-                        "class": "text-end"
+
                     }
                 ],
                 "language": {

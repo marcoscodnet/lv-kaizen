@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use App\Models\Sucursal;
 use App\Models\Servicio;
+use App\Models\Unidad;
 use App\Models\Provincia;
 use App\Models\TipoServicio;
 use App\Models\Venta;
@@ -17,7 +18,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-
+use PDF;
+use App\Constants;
 class ServicioController extends Controller
 {
     use SanitizesInput;
@@ -353,12 +355,6 @@ class ServicioController extends Controller
     {
         //dd($request->all());
 
-        $precioSugerido = $request->input('precio', 0);
-
-// Sumamos los montos ingresados
-        $totalMonto = $request->input('totalMonto', 0);
-        $totalAcreditado = $request->input('totalAcreditado', 0);
-
 
         $rules = [
             'venta' => 'nullable|date',
@@ -439,5 +435,163 @@ class ServicioController extends Controller
 
     }
 
+    public function edit($id=null)
+    {
+        $servicio = Servicio::find($id);
 
+
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos'));
+    }
+
+    public function update(Request $request, $id)
+    {
+
+        $servicio = Servicio::find($id);
+
+        $rules = [
+            'venta' => 'nullable|date',
+            'modelo' => 'required',
+            'motor' => 'required',
+            'chasis' => 'required',
+            'year' => 'required',
+            'cliente_id' => 'required',
+            'sucursal_id' => 'required',
+            'kilometros' => 'required',
+            'tipo_servicio_id' => 'required',
+            'ingreso' => 'required|date_format:d/m/Y H:i:s',
+            'entrega' => 'required|date',
+        ];
+
+
+        // Definir los mensajes de error personalizados
+        $messages = [
+
+            'year.required' => 'El año es obligatorio.',
+            'sucursal_id.required' => 'Debe seleccionar una sucursal.',
+            'cliente_id.required' => 'Debe seleccionar un cliente.',
+            'tipo_servicio_id.required' => 'Debe seleccionar un tipo.',
+            'ingreso.required' => 'La fecha de ingreso es obligatoria.',
+            'ingreso.date_format' => 'La fecha de ingreso no coincide con el formato d/m/Y H:i:s.',
+            'entrega.required' => 'La fecha de compromiso entrega es obligatoria.',
+        ];
+
+
+
+        // Crear el validador con las reglas y mensajes
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+
+        // Validar y verificar si hay errores
+        if ($validator->fails()) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->all() + [
+                        'cliente_nombre' => optional($cliente)->full_name_phone, // 👈 tu accessor
+                    ]);
+        }
+
+
+        $input = $this->sanitizeInput($request->all());
+
+
+        DB::beginTransaction();
+        $ok=1;
+        try {
+            $input['ingreso']=$request->filled('ingreso')
+                ? Carbon::createFromFormat('d/m/Y H:i:s', $request->ingreso)->format('Y-m-d H:i:s')
+                : null;
+            // Asignar el usuario logueado
+            //$input['user_id'] = auth()->id(); // o auth()->user()->id
+            $servicio->update($input);
+
+        }catch(QueryException $ex){
+            $error = $ex->getMessage();
+            $ok=0;
+
+        }
+        if ($ok){
+            DB::commit();
+            $respuestaID='success';
+            $respuestaMSJ='Registro modificado satisfactoriamente';
+        }
+        else{
+            DB::rollback();
+            $respuestaID='error';
+            $respuestaMSJ=$error;
+        }
+
+        return redirect()->route('servicios.index')->with($respuestaID,$respuestaMSJ);
+
+
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+
+
+        Servicio::find($id)->delete();
+
+        return redirect()->route('servicios.index')
+            ->with('success','Servicio eliminado con éxito');
+    }
+
+    public function show($id=null)
+    {
+        $servicio = Servicio::find($id);
+
+
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+
+        $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('servicios.show', compact('sucursals', 'servicio','tipos'));
+    }
+
+    public function generatePDF(Request $request,$attach = false)
+    {
+        $servicioId = $request->query('servicio_id');
+        $servicio = Servicio::find($servicioId);
+
+        $template = 'servicios.pdf';
+
+        $motor = $servicio->motor;
+
+        $marcaId = Unidad::where('motor', $motor)
+            ->join('productos', 'unidads.producto_id', '=', 'productos.id')
+            ->value('productos.marca_id');
+        $esHonda=0;
+        if ($marcaId == Constants::ID_HONDA) {
+            $esHonda=1;
+        }
+        $data = [
+            'servicio' => $servicio,
+            'esHonda' => $esHonda
+        ];
+        //dd($data);
+        $pdf = PDF::loadView($template, $data);
+
+        $pdfPath = 'R 270 Orden de servicio ' . $servicioId . '.pdf';
+
+        if ($attach) {
+            $fullPath = public_path('/temp/' . $pdfPath);
+            $pdf->save($fullPath);
+            return $fullPath; // Devuelve la ruta del archivo para su uso posterior
+        } else {
+
+            return $pdf->download($pdfPath);
+        }
+
+        // Renderiza la vista de previsualización para HTML
+        //return view('integrantes.alta', $data);
+    }
 }

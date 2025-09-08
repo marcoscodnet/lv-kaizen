@@ -42,7 +42,7 @@
                         <th scope="col">Activa</th>
 
 
-                        <th class="text-end" scope="col">Acciones</th>
+                        <th scope="col">Acciones</th>
 
                     </tr>
                     </thead>

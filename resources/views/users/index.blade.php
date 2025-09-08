@@ -44,7 +44,7 @@
 
                     <th scope="col">E-mail</th>
                     <th scope="col">Roles</th>
-                    <th class="text-end" scope="col">Acciones</th>
+                    <th scope="col">Acciones</th>
 
                 </tr>
                 </thead>

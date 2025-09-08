@@ -437,10 +437,10 @@ class VentaController extends Controller
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
             'forma' => 'required',
-            'fecha' => 'required|date_format:d/m/Y H:i',
+            'fecha' => 'required|date_format:d/m/Y H:i:s',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
-            'monto.*' => 'required|numeric|min:1',
+            'monto.*' => 'required|numeric|min:0',
             'fecha_pago.*' => 'required|date',
             'pagado.*' => 'nullable|numeric|min:0',
             'contadora.*' => 'nullable|date',
@@ -454,6 +454,7 @@ class VentaController extends Controller
             'entidad_id.*.required' => 'Debe seleccionar una entidad.',
             'monto.*.required' => 'El importe es obligatorio.',
             'fecha_pago.*.required' => 'La fecha de pago es obligatoria.',
+            'monto.*.min' => 'El importe es obligatorio.',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -483,7 +484,9 @@ class VentaController extends Controller
             $venta->user_id = $input['user_id'];
             $venta->cliente_id = $input['cliente_id'];
             $venta->sucursal_id = $input['sucursal_id'];
-            $venta->fecha = $input['fecha'];
+            $venta->fecha = $request->filled('fecha')
+                ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d H:i:s')
+                : null;
             $venta->monto = $input['precio'];
             $venta->total = $input['precio'];
             $venta->forma = $input['forma'];
