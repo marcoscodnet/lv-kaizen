@@ -172,7 +172,7 @@
 
                         $('#totales-servicios').html(`
                                                 <div>
-                                                    <strong>Total de servicios realizadas:</strong> ${formatter.format(totalServicios)} <br>
+                                                    <strong>Total de servicios realizados:</strong> ${formatter.format(totalServicios)} <br>
 
                                                     <strong>Importe total:</strong> $${formatter.format(totalServiciosImporte)}
                                                 </div>
