@@ -58,7 +58,7 @@ class ServicioController extends Controller
         $columnas = [
             'servicios.id',
             'servicios.id',
-            'servicios.ingreso',
+            'servicios.carga',
             'servicios.motor',
             'servicios.modelo',
             'servicios.chasis',
@@ -82,7 +82,7 @@ class ServicioController extends Controller
         $query = Servicio::select(
             'servicios.id as id',
             'servicios.id as nro',
-            'servicios.ingreso',
+            'servicios.carga',
             'servicios.motor',
             'servicios.modelo',
             'servicios.chasis',
@@ -144,11 +144,11 @@ class ServicioController extends Controller
 
 
         if (!empty($fechaDesde)) {
-            $query->whereDate('servicios.ingreso', '>=', $fechaDesde);
+            $query->whereDate('servicios.carga', '>=', $fechaDesde);
         }
 
         if (!empty($fechaHasta)) {
-            $query->whereDate('servicios.ingreso', '<=', $fechaHasta);
+            $query->whereDate('servicios.carga', '<=', $fechaHasta);
         }
 
         // Aplicar búsqueda
@@ -409,6 +409,7 @@ class ServicioController extends Controller
             $input['ingreso']=$request->filled('ingreso')
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $request->ingreso)->format('Y-m-d H:i:s')
                 : null;
+            $input['carga'] = now();
             // Asignar el usuario logueado
             $input['user_id'] = auth()->id(); // o auth()->user()->id
             $servicio = Servicio::create($input);

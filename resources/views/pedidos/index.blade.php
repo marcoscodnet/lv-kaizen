@@ -103,6 +103,7 @@
                     }
                 },
                 columns: [
+
                     {
                         data: 'fecha',
                         name: 'fecha',
@@ -153,10 +154,13 @@
                                 actionsHtml += '</div>';
                                 return actionsHtml;
 
-                        },
+                        }
 
-                    }
+                    },
+                    { data: 'id', name: 'id', visible: false } // columna oculta para ordenar
                 ],
+                order: [[5, 'desc']], // índice de la columna oculta (la última)
+
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

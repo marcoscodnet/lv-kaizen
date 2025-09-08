@@ -505,6 +505,58 @@ WHERE NOT EXISTS (
     WHERE p.id = i.cd_itempago
 );
 
+INSERT INTO servicios (
+    id,
+    carga,
+    tipo_servicio_id,
+    cliente_id,
+    sucursal_id,
+    kilometros,
+    ingreso,
+    observacion,
+    descripcion,
+    diagnostico,
+    repuestos,
+    mecanicos,
+    instrumentos,
+    tiempo,
+    entrega,
+    monto,
+    pagado,
+    user_id,
+    modelo,
+    year,
+    chasis,
+    motor,
+    venta
+)
+SELECT
+    s.cd_servicio,
+    s.dt_carga,
+    s.cd_tipo_servicio,
+    s.cd_cliente,
+    s.cd_sucursal,
+    s.ds_kmshoras,
+    s.dt_ingresovehiculo,
+    s.ds_obsgral,
+    s.ds_descpedidocte,
+    s.ds_diagyreprealizada,
+    s.ds_repuestosusados,
+    s.ds_mecanicos,
+    s.ds_instmedusados,
+    s.ds_tiempomanoobra,
+    s.dt_compromisoentrega,
+    s.nu_monto,
+    CAST(s.bl_pagado AS UNSIGNED),
+    s.cd_usuario,
+    v.ds_modelo,
+    v.nu_anio,
+    v.nu_chasis,
+    v.nu_motor,
+    v.dt_venta
+FROM servicio s
+         LEFT JOIN vehiculo_servicio v
+                   ON s.cd_vehiculo_servicio = v.cd_vehiculo_servicio;
 
 
 

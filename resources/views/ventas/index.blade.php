@@ -303,6 +303,7 @@
 
                     }
                 ],
+                order: [[0, 'desc']], // Ordenar por la columna oculta 'id' descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

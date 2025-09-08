@@ -47,7 +47,7 @@ class MovimientoController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [   DB::raw("IFNULL(users.name, movimientos.user_name)"),'origen.nombre','destino.nombre','movimientos.fecha']; // Define las columnas disponibles
+        $columnas = [   DB::raw("IFNULL(users.name, movimientos.user_name)"),'origen.nombre','destino.nombre','movimientos.fecha','movimientos.id']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');

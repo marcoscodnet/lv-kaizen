@@ -186,8 +186,8 @@
                     { data: 'nro', name: 'nro' },
                     {
 
-                        data: 'ingreso',
-                        name: 'ingreso',
+                        data: 'carga',
+                        name: 'carga',
                         render: function(data) {
                             // Verificar si el dato es válido
                             if (data) {
@@ -246,6 +246,7 @@
 
                     }
                 ],
+                order: [[0, 'desc']],
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

@@ -157,10 +157,12 @@
                                 actionsHtml += '</div>';
                                 return actionsHtml;
 
-                        },
+                        }
 
-                    }
+                    },
+                    { data: 'id', name: 'id', visible: false }, // Columna oculta para ordenar
                 ],
+                order: [[9, 'desc']], // Ordenar por la columna oculta 'id' descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
