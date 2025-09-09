@@ -87,7 +87,6 @@
                                 <div class="form-group">
                                     <label for="sucursal_id">Sucursal</label>
                                     <select id="sucursal_id" name="sucursal_id" class="form-control js-example-basic-single" required>
-                                        <option value="">Seleccione...</option>
                                         @foreach($sucursals as $sucursalId => $sucursal)
                                             <option value="{{ $sucursalId }}" {{ old('sucursal_id', auth()->user()->sucursal_id) == $sucursalId ? 'selected' : '' }}>
                                                 {{ $sucursal }}
@@ -166,7 +165,7 @@
                                                 <div class="col-md-3">
                                                     <label>Entidad</label>
                                                     <select name="entidad_id[]" class="form-control js-example-basic-single" required>
-                                                        <option value="">Seleccione...</option>
+
                                                         @foreach($entidads as $entidadId => $entidad)
                                                             <option value="{{ $entidadId }}"
                                                                 {{ old('entidad_id.'.$i) == $entidadId ? 'selected' : '' }}>
@@ -714,7 +713,7 @@
                                             <div class="col-md-3">
                                                 <label>Entidad</label>
                                                 <select name="entidad_id[]" class="form-control js-example-basic-single" required>
-                                                    <option value="">Seleccione...</option>
+
                                                     @foreach($entidads as $entidadId => $entidad)
                 <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
                                                             {{ $entidad }}

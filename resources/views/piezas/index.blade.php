@@ -36,6 +36,7 @@
 
                         <th scope="col">Código</th>
                         <th scope="col">Descripción</th>
+                        <th scope="col">Tipo</th>
                         <th scope="col">Stock mín.</th>
                         <th scope="col">Stock actual</th>
                         <th scope="col">Costo</th>
@@ -104,6 +105,7 @@
 
                     { data: 'codigo', name: 'codigo' },
                     { data: 'descripcion', name: 'descripcion' },
+                    { data: 'tipo_pieza', name: 'tipo_pieza' },
                     { data: 'stock_minimo', name: 'stock_minimo' },
                     { data: 'stock_actual', name: 'stock_actual' },
                     { data: 'costo', name: 'costo' },

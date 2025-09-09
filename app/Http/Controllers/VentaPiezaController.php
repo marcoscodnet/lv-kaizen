@@ -194,19 +194,14 @@ class VentaPiezaController extends Controller
 
     public function store(Request $request)
     {
-        //dd($request);
         $rules = [
             'user_id' => 'required',
-
             'fecha' => 'required|date',
             'pieza_id' => 'required|array|min:1',
             'pieza_id.*' => 'required|distinct',
         ];
 
-
-        // Definir los mensajes de error personalizados
         $messages = [
-
             'fecha.required' => 'La fecha es obligatoria.',
             'pieza_id.required' => 'Debe agregar al menos una pieza.',
             'pieza_id.min' => 'Debe agregar al menos una pieza.',
@@ -215,7 +210,7 @@ class VentaPiezaController extends Controller
             'sucursal_id.*.required' => 'Debe seleccionar una sucursal.',
         ];
 
-        // Agregar validaciones condicionales según el destino
+        // Validaciones condicionales según destino
         switch ($request->input('destino')) {
             case 'Salón':
                 $rules['cliente'] = 'required';
@@ -231,108 +226,98 @@ class VentaPiezaController extends Controller
 
             case 'Sucursal':
                 $rules['sucursal_id'] = 'required';
-                /*$rules['pedido'] = 'required';*/
-
                 $messages['sucursal_id.required'] = 'Debe seleccionar una sucursal.';
-                /*$messages['pedido.required'] = 'Debe ingresar el Nro. de Pedido de Reparación.';*/
-                break;
-
-            case 'Taller':
-                /*$rules['pedido'] = 'required';
-
-                $messages['pedido.required'] = 'Debe ingresar el Nro. de Pedido de Reparación.';*/
                 break;
         }
-        // Crear el validador con las reglas y mensajes
+
         $validator = Validator::make($request->all(), $rules, $messages);
 
-        // Validar y verificar si hay errores
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
         }
 
-
         $input = $this->sanitizeInput($request->all());
 
-
         DB::beginTransaction();
-        $ok=1;
         try {
-            // Guardar la venta principal
+            // Validar stock antes de guardar
+            foreach ($request->pieza_id as $i => $piezaId) {
+                $sucursalId = $request->sucursal_id_item[$i];
+                $cantidadSolicitada = $request->cantidad[$i];
+
+                $stockDisponible = StockPieza::where('pieza_id', $piezaId)
+                    ->where('sucursal_id', $sucursalId)
+                    ->sum('cantidad');
+
+                if ($stockDisponible < $cantidadSolicitada) {
+                    return redirect()->back()
+                        ->withErrors(['cantidad' => "No hay suficiente stock de la pieza {$piezaId} en la sucursal seleccionada."])
+                        ->withInput();
+                }
+            }
+
+            // Guardar venta principal
             $venta = new VentaPieza();
-            $venta->user_id = $this->sanitizeInput($request->user_id);
-            $venta->fecha = $this->sanitizeInput($request->fecha);
-            $venta->destino = $this->sanitizeInput($request->destino);
-            $venta->cliente = $this->sanitizeInput($request->cliente);
-            $venta->documento = $this->sanitizeInput($request->documento);
-            $venta->telefono = $this->sanitizeInput($request->telefono);
-            $venta->moto = $this->sanitizeInput($request->moto);
-            $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id); // solo si aplica
-            $venta->pedido = $this->sanitizeInput($request->pedido); // solo si aplica
+            $venta->user_id = $input['user_id'];
+            $venta->fecha = $input['fecha'];
+            $venta->destino = $input['destino'];
+            $venta->cliente = $input['cliente'] ?? null;
+            $venta->documento = $input['documento'] ?? null;
+            $venta->telefono = $input['telefono'] ?? null;
+            $venta->moto = $input['moto'] ?? null;
+            $venta->sucursal_id = $input['sucursal_id'] ?? null;
+            $venta->pedido = $input['pedido'] ?? null;
             $venta->save();
 
-            // Guardar piezas relacionadas
+            // Guardar detalles y descontar stock
             foreach ($request->pieza_id as $i => $piezaId) {
                 $detalle = new PiezaVentaPieza();
                 $detalle->venta_pieza_id = $venta->id;
                 $detalle->pieza_id = $piezaId;
-                $detalle->sucursal_id = $this->sanitizeInput($request->sucursal_id_item[$i]);
-                /*$detalle->costo = $request->costo[$i];
-                $detalle->precio_minimo = $request->precio_minimo[$i];*/
-                $detalle->cantidad = $this->sanitizeInput($request->cantidad[$i]);
-                $detalle->precio = $this->sanitizeInput($request->precio[$i]);
+                $detalle->sucursal_id = $request->sucursal_id_item[$i];
+                $detalle->cantidad = $request->cantidad[$i];
+                $detalle->precio = $request->precio[$i];
                 $detalle->save();
-                $stockPiezas = StockPieza::where('pieza_id',$piezaId)->where('sucursal_id',$request->sucursal_id_item[$i])->get();
+
+                $stockPiezas = StockPieza::where('pieza_id', $piezaId)
+                    ->where('sucursal_id', $request->sucursal_id_item[$i])
+                    ->orderBy('id') // opcional, para controlar el orden
+                    ->get();
+
                 $cantidadRestante = $request->cantidad[$i];
 
                 foreach ($stockPiezas as $stockPieza) {
                     if ($stockPieza->cantidad >= $cantidadRestante) {
-                        // Descontar y guardar
                         $stockPieza->cantidad -= $cantidadRestante;
                         $cantidadRestante = 0;
                     } else {
-                        // Descontar todo lo que tenga y continuar
                         $cantidadRestante -= $stockPieza->cantidad;
                         $stockPieza->cantidad = 0;
                     }
 
-                    // Si después del descuento, la cantidad es 0, eliminamos el stock
-                    if ($stockPieza->cantidad == 0) {
-                        $stockPieza->delete(); // o $stockPieza->forceDelete() si es soft deletes
+                    /*if ($stockPieza->cantidad == 0) {
+                        $stockPieza->delete();
                     } else {
-                        // Guardar el stock actualizado
                         $stockPieza->save();
-                    }
-
+                    }*/
+                    $stockPieza->save();
                     if ($cantidadRestante <= 0) {
-                        break; // Ya se descontó todo lo necesario
+                        break;
                     }
                 }
             }
 
-        }catch(QueryException $ex){
-            $error = $ex->getMessage();
-            $ok=0;
-
-        }
-        if ($ok){
             DB::commit();
-            $respuestaID='success';
-            $respuestaMSJ='Registro creado satisfactoriamente';
-        }
-        else{
+            return redirect()->route('ventaPiezas.index')->with('success', 'Registro creado satisfactoriamente');
+
+        } catch (\Exception $ex) {
             DB::rollback();
-            $respuestaID='error';
-            $respuestaMSJ=$error;
+            return redirect()->back()->withErrors(['error' => $ex->getMessage()])->withInput();
         }
-
-        return redirect()->route('ventaPiezas.index')->with($respuestaID,$respuestaMSJ);
-
-
-
     }
+
 
 
     public function update(Request $request, $id)

@@ -13,6 +13,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\EntidadController;
 use App\Http\Controllers\TipoServicioController;
+use App\Http\Controllers\TipoPiezaController;
 use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\UnidadController;
@@ -54,6 +55,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('colors', ColorController::class);
     Route::resource('entidads', EntidadController::class);
     Route::resource('tipoServicios', TipoServicioController::class);
+    Route::resource('tipoPiezas', TipoPiezaController::class);
 
     Route::resource('clientes', ClienteController::class);
     Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');

@@ -25,16 +25,27 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-lg-2">
+                                <label for="tipo_pieza_id">Tipo</label>
+                                <select id="tipo_pieza_id" name="tipo_pieza_id" class="form-control js-example-basic-single" required>
+                                    <option value="">Seleccione...</option>
+                                    @foreach($tipos as $tipoId => $tipo)
+                                        <option value="{{ $tipoId }}" {{ old('tipo_pieza_id') == $tipoId ? 'selected' : '' }}>
+                                            {{ $tipo }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
                                 <div class="form-group">
                                     <label for="codigo">Código</label>
-                                    <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Codigo" value="{{ old('codigo') }}">
+                                    <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Codigo" value="{{ old('codigo') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-5 col-md-3">
                                 <div class="form-group">
                                     <label for="descripcion">Descripción</label>
-                                    <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="{{ old('descripcion') }}">
+                                    <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="{{ old('descripcion') }}" required>
                                 </div>
                             </div>
                         </div>

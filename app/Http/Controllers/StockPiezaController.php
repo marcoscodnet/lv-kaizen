@@ -41,12 +41,12 @@ class StockPiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+        $columnas = ['stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
+        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
             ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
             ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
             ;
@@ -148,8 +148,9 @@ class StockPiezaController extends Controller
 
 
         try {
-
-            $stockPieza = StockPieza::create($this->sanitizeInput($request->all()));
+            $input = $this->sanitizeInput($request->all());
+            $input['inicial'] = $input['cantidad'];
+            $stockPieza = StockPieza::create($input);
 
             // 2. Obtener la suma total de cantidad para esa pieza
             $stockTotal = StockPieza::where('pieza_id', $request->pieza_id)

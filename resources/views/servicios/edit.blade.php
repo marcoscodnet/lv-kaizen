@@ -137,7 +137,7 @@
                                     <div class="col-lg-3">
                                         <label for="sucursal_id">Sucursal</label>
                                         <select id="sucursal_id" name="sucursal_id" class="form-control js-example-basic-single" required>
-                                            <option value="">Seleccione...</option>
+
                                             @foreach($sucursals as $sucursalId => $sucursal)
                                                 <option value="{{ $sucursalId }}" {{ old('sucursal_id', $servicio->sucursal_id) == $sucursalId ? 'selected' : '' }}>
                                                     {{ $sucursal }}
@@ -148,7 +148,7 @@
                                     <div class="col-lg-3">
                                         <label for="tipo_servicio_id">Tipo</label>
                                         <select id="tipo_servicio_id" name="tipo_servicio_id" class="form-control js-example-basic-single" required>
-                                            <option value="">Seleccione...</option>
+
                                             @foreach($tipos as $tipoId => $tipo)
                                                 <option value="{{ $tipoId }}" {{ old('tipo_servicio_id',$servicio->tipo_servicio_id) == $tipoId ? 'selected' : '' }}>
                                                     {{ $tipo }}

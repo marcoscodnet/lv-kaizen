@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TipoPieza;
+use App\Models\StockPieza;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Pieza;
@@ -31,14 +33,14 @@ class PiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['piezas.codigo', 'piezas.descripcion','piezas.stock_minimo','piezas.stock_actual','piezas.costo','piezas.precio_minimo','piezas.observaciones']; // Define las columnas disponibles
+        $columnas = ['piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre','piezas.stock_minimo','piezas.stock_actual','piezas.costo','piezas.precio_minimo','piezas.observaciones']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Pieza::select('piezas.id as id', 'piezas.codigo', 'piezas.descripcion','piezas.stock_minimo','piezas.stock_actual','piezas.costo','piezas.precio_minimo','piezas.observaciones')
+        $query = Pieza::select('piezas.id as id', 'piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre as tipo_pieza','piezas.stock_minimo','piezas.stock_actual','piezas.costo','piezas.precio_minimo','piezas.observaciones')
 
-
+            ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
         ;
 
         // Aplicar la búsqueda
@@ -84,8 +86,8 @@ class PiezaController extends Controller
     public function create()
     {
 
-
-        return view('piezas.create');
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
+        return view('piezas.create',compact('tipos'));
     }
 
     /**
@@ -98,8 +100,8 @@ class PiezaController extends Controller
     {
         $this->validate($request, [
             'codigo' => 'required',
-            'descripcion' => 'required'
-
+            'descripcion' => 'required',
+            'tipo_pieza_id' => 'required',
         ]);
 
 
@@ -122,7 +124,14 @@ class PiezaController extends Controller
     public function show($id)
     {
         $pieza = Pieza::find($id);
-        return view('piezas.show',compact('pieza'));
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
+        // Agrupar stocks por sucursal y sumar la cantidad
+        $stocksPorSucursal = StockPieza::where('pieza_id', $id)
+            ->selectRaw('sucursal_id, SUM(cantidad) as total_cantidad')
+            ->groupBy('sucursal_id')
+            ->with('sucursal') // para poder acceder al nombre de la sucursal
+            ->get();
+        return view('piezas.show',compact('pieza','tipos','stocksPorSucursal'));
     }
 
     /**
@@ -135,8 +144,8 @@ class PiezaController extends Controller
     {
         $pieza = Pieza::find($id);
 
-
-        return view('piezas.edit',compact('pieza'));
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
+        return view('piezas.edit',compact('pieza','tipos'));
     }
 
     /**
@@ -150,8 +159,8 @@ class PiezaController extends Controller
     {
         $this->validate($request, [
             'codigo' => 'required',
-            'descripcion' => 'required'
-
+            'descripcion' => 'required',
+            'tipo_pieza_id' => 'required',
         ]);
 
 

@@ -823,3 +823,9 @@ SELECT `cd_autorizacion` as id, usuario.ds_nomusuario as user_name, `dt_autoriza
 FROM `autorizacion`
          LEFT JOIN usuario on autorizacion.cd_usuario = usuario.cd_usuario
 WHERE 1
+
+###############################################09/09/2025#################################################
+-- Si el campo cantidad_inicial existe pero está nulo
+UPDATE stock_piezas
+SET inicial = cantidad
+WHERE inicial IS NULL;

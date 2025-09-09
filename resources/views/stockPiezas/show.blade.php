@@ -45,20 +45,26 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
-                                    <label for="cantidad">Cantidad</label>
+                                    <label for="inicial">Cant. Inicial</label>
+                                    <input type="number" class="form-control" id="inicial" name="inicial" placeholder="Inicial" value="@if (old('inicial')){{ old('inicial') }}@else{{ $stockPieza->inicial }}@endif" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                                <div class="form-group">
+                                    <label for="cantidad">Cant. Actual</label>
                                     <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Cantidad" value="@if (old('cantidad')){{ old('cantidad') }}@else{{ $stockPieza->cantidad }}@endif" disabled>
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
                                     <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $stockPieza->costo }}@endif" disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
                                     <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $stockPieza->precio_minimo }}@endif" disabled>

@@ -9,7 +9,7 @@ class StockPieza extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['pieza_id','sucursal_id','remito','cantidad','costo','precio_minimo','proveedor','ingreso'];
+    protected $fillable = ['pieza_id','sucursal_id','remito','cantidad','costo','precio_minimo','proveedor','ingreso','inicial'];
 
 
     public function pieza() {

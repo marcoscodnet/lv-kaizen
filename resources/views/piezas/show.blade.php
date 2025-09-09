@@ -28,41 +28,29 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-lg-2">
+                                <label for="tipo_pieza_id">Tipo</label>
+                                <select id="tipo_pieza_id" name="tipo_pieza_id" class="form-control js-example-basic-single" disabled>
+                                    <option value="">Seleccione...</option>
+                                    @foreach($tipos as $tipoId => $tipo)
+                                        <option value="{{ $tipoId }}" {{ old('tipo_pieza_id',$pieza->tipo_pieza_id) == $tipoId ? 'selected' : '' }}>
+                                            {{ $tipo }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
                                 <div class="form-group">
                                     <label for="codigo">Código</label>
                                     <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Codigo" value="@if (old('codigo')){{ old('codigo') }}@else{{ $pieza->codigo }}@endif" disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-lg-offset-3 col-lg-5 col-md-3">
                                 <div class="form-group">
                                     <label for="descripcion">Descripción</label>
                                     <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="@if (old('descripcion')){{ old('descripcion') }}@else{{ $pieza->descripcion }}@endif" disabled>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
-                                <div class="form-group">
-                                    <label for="stock_minimo">Stock mínimo</label>
-                                    <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" placeholder="Stock mínimo" value="@if (old('sctock_minimo')){{ old('sctock_minimo') }}@else{{ $pieza->sctock_minimo }}@endif" disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
-                                <div class="form-group">
-                                    <label for="costo">Costo</label>
-                                    <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $pieza->costo }}@endif" disabled>
-                                </div>
-                            </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
-                                <div class="form-group">
-                                    <label for="precio_minimo">$ mínimo</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $pieza->precio_minimo }}@endif" disabled>
-                                </div>
-                            </div>
-
-
                         </div>
 
 
@@ -89,7 +77,75 @@
                             </div>
 
                         </div>
+                        <div class="card mt-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Stock</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                                        <div class="form-group">
+                                            <label for="costo">Costo</label>
+                                            <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $pieza->costo }}@endif" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                                        <div class="form-group">
+                                            <label for="precio_minimo">$ mínimo</label>
+                                            <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $pieza->precio_minimo }}@endif" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                                        <div class="form-group">
+                                            <label for="stock_minimo">Stock mínimo</label>
+                                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" placeholder="Stock mínimo" value="@if (old('sctock_minimo')){{ old('sctock_minimo') }}@else{{ $pieza->sctock_minimo }}@endif" disabled>
+                                        </div>
+                                    </div>
 
+
+                                    <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                                        <div class="form-group">
+                                            <label for="stock_actual">Stock actual</label>
+                                            <input type="number" class="form-control" id="stock_actual" name="stock_actual" placeholder="Stock actual" value="@if (old('stock_actual')){{ old('stock_actual') }}@else{{ $pieza->stock_actual }}@endif" disabled>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group col-md-9">
+
+
+                                    <table class="table">
+                                        <thead>
+
+                                        <th>Sucursal</th>
+                                        <th>Stock</th>
+
+
+
+
+                                        </thead>
+
+                                        <tbody id="cuerpoProducto">
+
+
+
+                                        @foreach($stocksPorSucursal as $stock)
+                                            <tr>
+                                                <td>{{ $stock->sucursal->nombre }}</td>
+                                                <td>{{ $stock->total_cantidad }}</td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+
+
+
+
+                                    </table>
+                                </div>
+
+
+                            </div>
+                        </div>
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
 

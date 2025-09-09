@@ -36,7 +36,8 @@
                         <th scope="col">Remito</th>
                         <th scope="col">Código</th>
                         <th scope="col">Descripción</th>
-                        <th scope="col">Cantidad</th>
+                        <th scope="col">Cant. Inicial</th>
+                        <th scope="col">Cant. Actual</th>
                         <th scope="col">Costo</th>
                         <th scope="col">Precio mín.</th>
                         <th scope="col">Sucursal</th>
@@ -107,6 +108,7 @@
                     { data: 'remito', name: 'remito' },
                     { data: 'codigo', name: 'codigo' },
                     { data: 'descripcion', name: 'descripcion' },
+                    { data: 'inicial', name: 'inicial' },
                     { data: 'cantidad', name: 'cantidad' },
                     { data: 'costo', name: 'costo' },
                     { data: 'precio_minimo', name: 'precio_minimo' },
@@ -162,7 +164,7 @@
                     },
                     { data: 'id', name: 'id', visible: false }, // Columna oculta para ordenar
                 ],
-                order: [[9, 'desc']], // Ordenar por la columna oculta 'id' descendente
+                order: [[10, 'desc']], // Ordenar por la columna oculta 'id' descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

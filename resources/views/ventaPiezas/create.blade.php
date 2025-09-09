@@ -29,7 +29,7 @@
                             <div class="col-lg-offset-3 col-lg-5 col-md-2">
                                 <div class="form-group">
                                     <label for="user_id">Vendedor</label>
-                                    <select name="user_id" class="form-control js-example-basic-single" required>
+                                    <select name="user_id" class="form-control js-example-basic-single" disabled>
 
                                         @foreach($users as $userId => $user)
                                             <option value="{{ $userId }}"
@@ -38,6 +38,7 @@
                                             </option>
                                         @endforeach
                                     </select>
+                                    <input type="hidden" name="user_id" value="{{ auth()->id() }}">
                                 </div>
                             </div>
 
@@ -366,17 +367,18 @@
                 if (piezaId && stockPiezas[piezaId]) {
                     const opciones = stockPiezas[piezaId];
 
-                    sucursalSelect.append('<option value="">Seleccionar...</option>');
-                    opciones.forEach(op => {
-                        sucursalSelect.append('<option value="' + op.sucursal_id + '">' + op.sucursal_nombre + '</option>');
-                    });
+                    // Filtrar solo la sucursal del usuario logueado
+                    const sucursalUsuarioId = {{ auth()->user()->sucursal_id }};
+                    const opcion = opciones.find(op => op.sucursal_id == sucursalUsuarioId);
 
-                    // Mostramos los datos de la primera sucursal por defecto
-                    const first = opciones[0];
-                    costoInput.val(first.costo);
-                    precioMinimoInput.val(first.precio_minimo);
+                    if (opcion) {
+                        sucursalSelect.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
+                        costoInput.val(opcion.costo);
+                        precioMinimoInput.val(opcion.precio_minimo);
+                    }
                 }
             });
+
 
             // Si querés cambiar los valores de costo y precio mínimo según la sucursal seleccionada:
             $('body').on('change', '.sucursalSelect', function () {

@@ -94,6 +94,12 @@
                             </div>
                         </a>
                     @endcan
+                    @can('tipo-pieza-listar')
+                        <a class="nav-link" href="{{ route('tipoPiezas.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Tipos de Piezas</span>
+                            </div>
+                        </a>
+                    @endcan
                     @can('tipo-servicio-listar')
                         <a class="nav-link" href="{{ route('tipoServicios.index') }}" role="button">
                             <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-tools"></span></span><span class="nav-link-text ps-1">Tipos de Servicios</span>
