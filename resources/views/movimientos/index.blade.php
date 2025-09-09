@@ -64,7 +64,8 @@
                         <th scope="col">Destino</th>
 
                         <th scope="col">Envío</th>
-
+                        <th>Cuadros</th>
+                        <th>Motores</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -138,6 +139,7 @@
 
                     { data: 'origen_nombre', name: 'origen_nombre' },
                     { data: 'destino_nombre', name: 'destino_nombre' },
+
                     {
                         data: 'fecha',
                         name: 'fecha',
@@ -152,7 +154,8 @@
                         }
                     },
 
-
+                    { data: 'cuadros', name: 'cuadros' , orderable: false},
+                    { data: 'motores', name: 'motores' , orderable: false},
                     // Actions column
                     {
                         "data": "id",
@@ -184,7 +187,7 @@
                     },
                     { data: 'id', name: 'id', visible: false }, // Columna oculta para ordenar
                 ],
-                order: [[4, 'desc']], // Ordenar por la columna oculta 'id' descendente
+                order: [[7, 'desc']], // Ordenar por la columna oculta 'id' descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

@@ -47,72 +47,104 @@ class MovimientoController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [   DB::raw("IFNULL(users.name, movimientos.user_name)"),'origen.nombre','destino.nombre','movimientos.fecha','movimientos.id']; // Define las columnas disponibles
-        $columnaOrden = $columnas[$request->input('order.0.column')];
-        $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $user_id = $request->input('user_id');
-        $query = Movimiento::select('movimientos.id as id', DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),'origen.nombre as origen_nombre','destino.nombre as destino_nombre','movimientos.fecha')
+
+        // Columnas que se pueden ordenar (en el mismo orden que DataTables)
+        $columnsMap = [
+            'usuario_nombre',
+            'origen_nombre',
+            'destino_nombre',
+            'fecha',
+            'id',
+            'cuadros',
+            'motores',
+            'id'
+        ];
+
+        $colIndex = $request->input('order.0.column', 0);
+        $dir = $request->input('order.0.dir', 'asc');
+        $sortColumn = $columnsMap[$colIndex] ?? 'id';
+
+        // Traer movimientos con sus unidades
+        $movimientosQuery = Movimiento::with(['unidadMovimientos.unidad'])
             ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
             ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
-            ;
+            ->select(
+                'movimientos.id as id',
+                DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
+                'origen.nombre as origen_nombre',
+                'destino.nombre as destino_nombre',
+                'movimientos.fecha'
+            );
 
-        if (!empty($user_id)) {
-
+        // Filtrar por usuario
+        if (!empty($user_id) && $user_id != '-1') {
             $request->session()->put('user_filtro_movimiento', $user_id);
-
-        }
-        else{
+            $movimientosQuery->where('movimientos.user_id', $user_id);
+        } else {
             $user_id = $request->session()->get('user_filtro_movimiento');
-
-        }
-        if ($user_id=='-1'){
-            $request->session()->forget('user_filtro_movimiento');
-            $user_id='';
-        }
-        if (!empty($user_id)) {
-
-                $query->where('movimientos.user_id', $user_id);
-
-
+            if (!empty($user_id)) {
+                $movimientosQuery->where('movimientos.user_id', $user_id);
+            }
+            if ($user_id == '-1') {
+                $request->session()->forget('user_filtro_movimiento');
+            }
         }
 
+        // Traer todos los movimientos filtrados
+        $movimientos = $movimientosQuery->get();
 
+        // Mapear movimientos y concatenar cuadros/motores
+        $datos = $movimientos->map(function($movimiento) {
+            $cuadros = $movimiento->unidadMovimientos->pluck('unidad.cuadro')->filter()->implode(', ');
+            $motores = $movimiento->unidadMovimientos->pluck('unidad.motor')->filter()->implode(', ');
 
-        // Aplicar la búsqueda
+            return [
+                'id' => $movimiento->id,
+                'usuario_nombre' => $movimiento->usuario_nombre,
+                'origen_nombre' => $movimiento->origen_nombre,
+                'destino_nombre' => $movimiento->destino_nombre,
+                'fecha' => $movimiento->fecha,
+                'cuadros' => $cuadros,
+                'motores' => $motores
+            ];
+        });
+
+        // Filtrar búsqueda en PHP, incluyendo cuadros y motores
         if (!empty($busqueda)) {
-            $query->where(function ($query) use ($columnas, $busqueda) {
-                foreach ($columnas as $columna) {
-                    if ($columna){
-                        $query->orWhere($columna, 'like', "%$busqueda%");
-                    }
-
-                }
+            $busqueda = mb_strtolower($busqueda);
+            $datos = $datos->filter(function($item) use ($busqueda) {
+                return str_contains(mb_strtolower($item['usuario_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['fecha']), $busqueda)
+                    || str_contains(mb_strtolower($item['cuadros']), $busqueda)
+                    || str_contains(mb_strtolower($item['motores']), $busqueda);
             });
         }
 
+        // Ordenamiento en PHP
+        $datos = $dir === 'asc'
+            ? $datos->sortBy($sortColumn)
+            : $datos->sortByDesc($sortColumn);
 
-
-
-        // Obtener la cantidad total de registros después de aplicar el filtro de búsqueda
-        $recordsFiltered = $query->count();
-
-
-        $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
-
-        // Obtener la cantidad total de registros sin filtrar
+        $recordsFiltered = $datos->count();
         $recordsTotal = Movimiento::count();
 
-
+        // Paginación
+        $datos = $datos->slice($request->input('start'))->take($request->input('length'))->values();
 
         return response()->json([
-            'data' => $datos, // Obtener solo los elementos paginados
+            'data' => $datos,
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
         ]);
     }
+
+
 
     /**
      * Show the form for creating a new resource.
@@ -134,8 +166,8 @@ class MovimientoController extends Controller
                 return [$producto->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $origens = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $destinos = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $destinos = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('movimientos.create', compact('productos','origens','destinos'));
     }
@@ -309,8 +341,8 @@ class MovimientoController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $origens = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $destinos = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $destinos = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('movimientos.show', compact('movimiento','origens','destinos','users'));
     }

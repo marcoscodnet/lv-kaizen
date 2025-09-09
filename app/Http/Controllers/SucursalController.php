@@ -64,7 +64,7 @@ class SucursalController extends Controller
 
 
         $input = $this->sanitizeInput($request->all());
-
+        $input['activa'] = isset($request->activa) ? 1 : 0;
 
         $sucursal = Sucursal::create($input);
 
@@ -117,7 +117,7 @@ class SucursalController extends Controller
         ]);
 
         $input = $this->sanitizeInput($request->all());
-
+        $input['activa'] = isset($request->activa) ? 1 : 0;
 
 
 

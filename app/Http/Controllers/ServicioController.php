@@ -48,7 +48,7 @@ class ServicioController extends Controller
             ->prepend('Todos', '-1');
         $servicios = Servicio::all();
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
         return view ('servicios.index',compact('servicios','users','sucursals'));
     }
 
@@ -209,7 +209,7 @@ class ServicioController extends Controller
             ->prepend('Todos', '-1');
         $ventas = Venta::all();
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
         return view ('servicios.unidads',compact('ventas','users','sucursals'));
     }
 
@@ -345,7 +345,7 @@ class ServicioController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');*/
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('servicios.registrar', compact('sucursals', 'venta','provincias','tipos'));
@@ -441,7 +441,7 @@ class ServicioController extends Controller
         $servicio = Servicio::find($id);
 
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos'));
@@ -552,7 +552,7 @@ class ServicioController extends Controller
         $servicio = Servicio::find($id);
 
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('servicios.show', compact('sucursals', 'servicio','tipos'));

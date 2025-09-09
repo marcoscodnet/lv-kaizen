@@ -113,7 +113,7 @@ class UnidadController extends Controller
                 return [$producto->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('unidads.create', compact('productos','sucursals'));
     }
@@ -181,7 +181,7 @@ class UnidadController extends Controller
                 return [$producto->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('unidads.edit', compact('unidad','productos','sucursals'));
 
     }
@@ -279,7 +279,7 @@ class UnidadController extends Controller
                 return [$producto->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('unidads.show', compact('unidad','productos','sucursals'));
 
     }

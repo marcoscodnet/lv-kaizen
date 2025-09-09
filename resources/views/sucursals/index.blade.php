@@ -38,7 +38,7 @@
                         <th scope="col">E-mail</th>
                         <th scope="col">Teléfono</th>
                         <th scope="col">Localidad</th>
-
+                        <th scope="col">Activa</th>
 
                         <th scope="col">Acciones</th>
 
@@ -52,6 +52,7 @@
                             <td>{{ $sucursal->email }}</td>
                             <td>{{ $sucursal->telefono }}</td>
                             <td>{{ $sucursal->localidad->nombre }}</td>
+                            <td>{{ $sucursal->activa?'SI':'NO' }}</td>
                             <td class="text-end"><div>
                                     {{-- Botón Ver (lupa) --}}
                                     @can('sucursal-ver')

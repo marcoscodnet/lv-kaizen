@@ -102,7 +102,7 @@ class StockPiezaController extends Controller
                 return [$pieza->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('stockPiezas.create', compact('piezas','sucursals'));
     }
@@ -206,7 +206,7 @@ class StockPiezaController extends Controller
                 return [$pieza->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('stockPiezas.edit', compact('stockPieza','piezas','sucursals'));
 
     }
@@ -321,7 +321,7 @@ class StockPiezaController extends Controller
                 return [$pieza->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('stockPiezas.show', compact('stockPieza','piezas','sucursals'));
 
     }

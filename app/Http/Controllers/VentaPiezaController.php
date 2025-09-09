@@ -188,7 +188,7 @@ class VentaPiezaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('ventaPiezas.create', compact('users','stockPiezasJson','sucursals'));
     }
 
@@ -430,7 +430,7 @@ class VentaPiezaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('ventaPiezas.edit', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals'));
     }
@@ -465,7 +465,7 @@ class VentaPiezaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('ventaPiezas.show', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals'));
     }

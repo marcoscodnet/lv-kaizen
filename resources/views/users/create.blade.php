@@ -68,7 +68,7 @@
                             <div class="col-lg-offset-3 col-lg-6 col-md-5">
                                 <div class="form-group">
                                     <label for="activo">Activo</label><br>
-                                    <input type="checkbox"  id="activo" name="activo" value="true"  checked>
+                                    <input type="checkbox"  id="activo" name="activo" value="true"  {{ old('activa', $obj->activa ?? true) ? 'checked' : '' }}>
                                 </div>
                             </div>
                         </div>

@@ -53,7 +53,7 @@ class VentaController extends Controller
         $documentos = Documento::where('habilitado', 1)
             ->orderBy('orden')
             ->get();
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
         return view ('ventas.index',compact('ventas','documentos','users','sucursals'));
     }
 
@@ -276,7 +276,7 @@ class VentaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $entidads = Entidad::orderBy('nombre')->where('activa',1)->pluck('nombre', 'id')->prepend('', '');
         return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
@@ -416,7 +416,7 @@ class VentaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $entidads = Entidad::orderBy('nombre')->where('activa',1)->pluck('nombre', 'id')->prepend('', '');
 
@@ -531,7 +531,7 @@ class VentaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         $entidads = Entidad::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
