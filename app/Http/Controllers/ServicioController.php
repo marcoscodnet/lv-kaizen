@@ -552,7 +552,7 @@ class ServicioController extends Controller
         $servicio = Servicio::find($id);
 
 
-        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('servicios.show', compact('sucursals', 'servicio','tipos'));

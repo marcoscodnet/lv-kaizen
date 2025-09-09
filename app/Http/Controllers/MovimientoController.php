@@ -342,7 +342,7 @@ class MovimientoController extends Controller
             ->prepend('', '');
 
         $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $destinos = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $destinos = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('movimientos.show', compact('movimiento','origens','destinos','users'));
     }

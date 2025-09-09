@@ -531,7 +531,7 @@ class VentaController extends Controller
             ->pluck('name', 'id')
             ->prepend('', '');
 
-        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         $entidads = Entidad::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 

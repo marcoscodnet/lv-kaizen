@@ -100,7 +100,7 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name','name')->all();
-        $sucursales = DB::table('sucursals')->pluck('nombre', 'id'); // Obtener todas las sucursales directamente desde la tabla
+        $sucursales = DB::table('sucursals')->where('activa',1)->pluck('nombre', 'id'); // Obtener todas las sucursales directamente desde la tabla
         return view('users.create', compact('roles', 'sucursales'));
     }
 
@@ -185,7 +185,7 @@ class UserController extends Controller
 
         $userRole = $user->roles->pluck('name','name')->all();
 
-        $sucursales = DB::table('sucursals')->pluck('nombre', 'id');
+        $sucursales = DB::table('sucursals')->where('activa',1)->pluck('nombre', 'id');
         $userSucursal = $user->sucursal_id; // Sucursal asignada al usuario
         return view('users.edit', compact('user', 'roles', 'userRole', 'sucursales', 'userSucursal'));
     }
