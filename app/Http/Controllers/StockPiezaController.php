@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pieza;
 use App\Models\Sucursal;
 use App\Models\StockPieza;
+use App\Models\TipoPieza;
 use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -35,7 +36,8 @@ class StockPiezaController extends Controller
     {
 
         $stockPiezas = StockPieza::all();
-        return view ('stockPiezas.index',compact('stockPiezas'));
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        return view ('stockPiezas.index',compact('stockPiezas','sucursals'));
     }
 
 
@@ -45,11 +47,32 @@ class StockPiezaController extends Controller
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
-
+        $sucursal_id = $request->input('sucursal_id');
         $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
             ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
             ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
             ;
+
+        if (!empty($sucursal_id)) {
+
+            $request->session()->put('sucursal_filtro_pieza', $sucursal_id);
+
+        }
+        else{
+            $sucursal_id = $request->session()->get('sucursal_filtro_pieza');
+
+        }
+        if ($sucursal_id=='-1'){
+            $request->session()->forget('sucursal_filtro_pieza');
+            $sucursal_id='';
+        }
+        if (!empty($sucursal_id)) {
+
+            $query->where('stock_piezas.sucursal_id', $sucursal_id);
+
+
+        }
+
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
@@ -66,12 +89,24 @@ class StockPiezaController extends Controller
 
 
 
-        // Obtener la cantidad total de registros después de aplicar el filtro de búsqueda
-        $recordsFiltered = $query->count();
+        // Clonar para evitar pisar el query
+        $baseQuery = clone $query;
 
+        // Totales
+        //$totalPiezas = (clone $baseQuery)->count();
 
-        $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
+        // Suma del monto directamente desde la tabla servicios
+        $totalPiezas = (clone $baseQuery)->sum('stock_piezas.cantidad');
 
+        // Cantidad filtrada
+        $recordsFiltered = (clone $baseQuery)->count();
+
+        // Datos paginados
+        $datos = (clone $baseQuery)
+            ->orderBy($columnaOrden, $orden)
+            ->skip($request->input('start'))
+            ->take($request->input('length'))
+            ->get();
         // Obtener la cantidad total de registros sin filtrar
         $recordsTotal = StockPieza::count();
 
@@ -82,6 +117,9 @@ class StockPiezaController extends Controller
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
+            'totales' => [
+                'totalPiezas' => $totalPiezas
+            ]
         ]);
     }
 
@@ -103,8 +141,8 @@ class StockPiezaController extends Controller
             })
             ->prepend('', ''); // si necesitas un vacío al principio
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-
-        return view('stockPiezas.create', compact('piezas','sucursals'));
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
+        return view('stockPiezas.create', compact('piezas','sucursals','tipos'));
     }
 
     public function store(Request $request)

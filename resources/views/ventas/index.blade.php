@@ -262,7 +262,9 @@
                             @endcan
 
                             /*actionsHtml += '<a href="{{ route("ventas.boleto") }}?venta_id=' + row.id + '" alt="Descargar boleto" title="Descargar boleto" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';*/
+                            @can('imprimir-boleto')
                             actionsHtml += '<a href="#" onclick="abrirModalArchivos(' + row.id + ')" alt="Descargar boleto" title="Descargar boleto" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';
+                            @endcan
 
 
 
@@ -283,7 +285,10 @@
 
                                 actionsHtml += '</form>';
                                 actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'noadmit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Desautorizar" title="Desautorizar"><i class="fa fa-times-circle text-500"></i></a>';
-                                actionsHtml += '<a href="{{ route("ventas.formulario") }}?venta_id=' + row.id + '" alt="Descargar formulario" title="Descargar formulario" target="_blank" class="btn btn-link p-0"><span class="fas fa-scroll text-500"></span></a>';
+
+                                @endcan
+                                    @can('imprimir-formulario-12')
+                                    actionsHtml += '<a href="{{ route("ventas.formulario") }}?venta_id=' + row.id + '" alt="Descargar formulario" title="Descargar formulario" target="_blank" class="btn btn-link p-0"><span class="fas fa-scroll text-500"></span></a>';
                                 @endcan
 
                             }

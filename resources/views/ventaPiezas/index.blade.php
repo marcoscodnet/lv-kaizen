@@ -185,8 +185,9 @@
                             @can('venta-pieza-editar')
                                 actionsHtml += '<a href="{{ route("ventaPiezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-right: 5px;"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
-
-                            actionsHtml += '<a href="{{ route("ventaPiezas.pdf") }}?venta_pieza_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
+                                @can('imprimir-venta-pieza')
+                                actionsHtml += '<a href="{{ route("ventaPiezas.pdf") }}?venta_pieza_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
+                            @endcan
 
                             // Agregar formulario de eliminación si el venta_pieza tiene permiso
                             @can('venta-pieza-eliminar')

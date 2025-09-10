@@ -78,6 +78,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('pieza-datatable', [PiezaController::class, 'dataTable'])->name('piezas.dataTable');
 
     Route::get('/api/piezas/{id}', [PiezaController::class, 'getDatos'])->name('api.piezas.getDatos');
+    Route::post('/piezas/ajax-store', [PiezaController::class, 'ajaxStore'])->name('piezas.ajaxStore');
 
 
 

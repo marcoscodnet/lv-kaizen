@@ -53,7 +53,7 @@ class VentaController extends Controller
         $documentos = Documento::where('habilitado', 1)
             ->orderBy('orden')
             ->get();
-        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
         return view ('ventas.index',compact('ventas','documentos','users','sucursals'));
     }
 

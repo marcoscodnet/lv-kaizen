@@ -3,7 +3,7 @@
     <!-- DataTables -->
     <link rel="stylesheet" href="{{ asset('bower_components/datatables.net-bs/css/dataTables.bootstrap.css') }}">
 
-
+    <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
 @endsection
 
 @section('content')
@@ -26,6 +26,31 @@
                 </div>
             </div>
             @include('includes.messages')
+        </div>
+        <div class="card-body pt-0">
+            <div class="row">
+
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroSucursal">Sucursales:</label>
+                        <select name="filtroSucursal" id="filtroSucursal" class="form-control js-example-basic-single">
+
+                            @foreach($sucursals as $sucursalId => $sucursal)
+                                <option value="{{ $sucursalId }}">
+                                    {{ $sucursal }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                </div>
+
+
+
+
+            </div>
+            <!-- /.form-group -->
         </div>
         <div class="card-body pt-0">
             <div class="tab-content">
@@ -52,6 +77,7 @@
                     </tbody>
 
                 </table>
+                <div id="totales-piezas" class="mt-3 fs-10"></div>
             </div>
         </div>
 
@@ -75,12 +101,17 @@
     <!-- daterangepicker -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
 
+    <!-- Select2 -->
+    <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
+    <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
     <!-- page script -->
     <!-- page script -->
     <script>
         $(document).ready(function() {
-            $('#example1').DataTable({
+            $('.js-example-basic-single').select2({
+                language: 'es'});
+            var table =  $('#example1').DataTable({
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
                 "autoWidth": false, // Desactiva el ajuste automático del anchos
@@ -92,8 +123,7 @@
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
-                        // Agrega otros parámetros si es necesario
-                        // d.otroParametro = valor;
+                        d.sucursal_id = $('#filtroSucursal').val();
                     },
                     "error": function(xhr, error, thrown) {
                         if (xhr.status === 401) {
@@ -102,6 +132,22 @@
                         } else {
                             console.error("Error al cargar los datos:", error);
                         }
+                    },
+                    "dataSrc": function(json) {
+                        // Forzar que los totales sean números
+                        let totalPiezas = Number(json.totales.totalPiezas) || 0;
+
+
+                        let formatter = new Intl.NumberFormat('es-AR'); // o 'es-ES' según prefieras
+
+                        $('#totales-piezas').html(`
+                                                <div>
+                                                    <strong>Total de piezas:</strong> ${formatter.format(totalPiezas)}
+                                                </div>
+                                            `);
+
+
+                        return json.data;
                     }
                 },
                 columns: [
@@ -174,6 +220,9 @@
                     $('input[type="search"]').removeClass('form-control');
                     $('input[type="search"]').css('width', '70%');
                 }
+            });
+            $('#filtroSucursal').change(function() {
+                table.ajax.reload();
             });
         });
 

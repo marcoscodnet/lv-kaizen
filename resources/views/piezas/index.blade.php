@@ -128,7 +128,9 @@
                             @can('pieza-editar')
                                 actionsHtml += '<a href="{{ route("piezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
-
+                                @can('pieza-modificar-descripcion')
+                                actionsHtml += '<a href="{{ route("piezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                            @endcan
 
                             // Agregar formulario de eliminación si el pieza tiene permiso
                             @can('pieza-eliminar')

@@ -17,11 +17,8 @@ class PermissionsSeeder extends Seeder
         SqlLogger::startLogging();
 
         $permissions = [
-            'tipo-pieza-listar',
-            'tipo-pieza-crear',
-            'tipo-pieza-editar',
-            'tipo-pieza-eliminar',
-            'tipo-pieza-ver',
+            'pieza-modificar-descripcion',
+
         ];
 
         foreach ($permissions as $permission) {

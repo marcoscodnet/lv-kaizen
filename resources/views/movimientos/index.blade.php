@@ -169,8 +169,10 @@
 
                                 actionsHtml += '<a href="{{ route("movimientos.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
                             @endcan
-                            actionsHtml += '<a href="{{ route("movimientos.pdf") }}?movimiento_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
+                                @can('imprimir-remito')
+                                actionsHtml += '<a href="{{ route("movimientos.pdf") }}?movimiento_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 
+                            @endcan
                             // Agregar formulario de eliminación si el movimiento tiene permiso
                             @can('movimiento-eliminar')
                                 actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('movimientos.destroy', '') }}/' + row.id + '" style="display: none">';

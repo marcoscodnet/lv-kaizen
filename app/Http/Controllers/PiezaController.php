@@ -13,9 +13,13 @@ class PiezaController extends Controller
     use SanitizesInput;
     function __construct()
     {
-        $this->middleware('permission:pieza-listar|pieza-crear|pieza-editar|pieza-eliminar', ['only' => ['index','store']]);
+        $this->middleware('permission:pieza-listar|pieza-crear|pieza-editar|pieza-eliminar|pieza-modificar-descripcion', ['only' => ['index','store']]);
+
         $this->middleware('permission:pieza-crear', ['only' => ['create','store']]);
-        $this->middleware('permission:pieza-editar', ['only' => ['edit','update']]);
+
+        // Ahora ambos permisos pueden entrar a edit/update
+        $this->middleware('permission:pieza-editar|pieza-modificar-descripcion', ['only' => ['edit','update']]);
+
         $this->middleware('permission:pieza-eliminar', ['only' => ['destroy']]);
     }
 
@@ -115,6 +119,28 @@ class PiezaController extends Controller
             ->with('success','Pieza creada con éxito');
     }
 
+    public function ajaxStore(Request $request)
+    {
+        $this->validate($request, [
+            'codigo' => 'required',
+            'descripcion' => 'required',
+            'tipo_pieza_id' => 'required',
+        ]);
+
+        $input = $this->sanitizeInput($request->all());
+
+        $pieza = Pieza::create($input);
+
+        // Devolver JSON
+        return response()->json([
+            'id' => $pieza->id,
+            'codigo' => $pieza->codigo,
+            'descripcion' => $pieza->descripcion
+        ]);
+    }
+
+
+
     /**
      * Display the specified resource.
      *
@@ -157,26 +183,37 @@ class PiezaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->validate($request, [
-            'codigo' => 'required',
-            'descripcion' => 'required',
-            'tipo_pieza_id' => 'required',
-        ]);
+        $pieza = Pieza::findOrFail($id);
 
+        // Si tiene permiso para editar todo
+        if ($request->user()->can('pieza-editar')) {
+            $this->validate($request, [
+                'codigo' => 'required|string|max:100',
+                'descripcion' => 'required|string|max:500',
+                'tipo_pieza_id' => 'required|integer|exists:tipo_piezas,id',
+            ]);
 
-        $input = $this->sanitizeInput($request->all());
+            $input = $this->sanitizeInput($request->all());
+            $pieza->update($input);
+        }
+        // Si solo puede modificar descripción
+        elseif ($request->user()->can('pieza-modificar-descripcion')) {
+            $this->validate($request, [
+                'descripcion' => 'required|string|max:500',
+            ]);
 
-
-
-
-        $pieza = Pieza::find($id);
-        $pieza->update($input);
-
-
+            $pieza->descripcion = $request->input('descripcion');
+            $pieza->save();
+        }
+        // Si no tiene permisos, prohibir
+        else {
+            abort(403, 'No tienes permisos para editar esta pieza.');
+        }
 
         return redirect()->route('piezas.index')
             ->with('success','Pieza modificada con éxito');
     }
+
 
     /**
      * Remove the specified resource from storage.

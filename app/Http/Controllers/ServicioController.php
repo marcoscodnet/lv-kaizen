@@ -48,7 +48,7 @@ class ServicioController extends Controller
             ->prepend('Todos', '-1');
         $servicios = Servicio::all();
 
-        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
         return view ('servicios.index',compact('servicios','users','sucursals'));
     }
 
@@ -209,7 +209,7 @@ class ServicioController extends Controller
             ->prepend('Todos', '-1');
         $ventas = Venta::all();
 
-        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
         return view ('servicios.unidads',compact('ventas','users','sucursals'));
     }
 

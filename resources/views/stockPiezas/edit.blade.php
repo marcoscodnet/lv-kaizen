@@ -84,7 +84,7 @@
                             <div class="col-lg-offset-3 col-lg-4 col-md-2">
                                 <div class="form-group">
                                     <label for="proveedor">Proveedor</label>
-                                    <select name="proveedor" id="proveedor" class="form-control" required>
+                                    <select name="proveedor" id="proveedor" class="form-control">
                                         <option value="">
                                             Seleccionar...
                                         </option>
