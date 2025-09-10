@@ -150,7 +150,9 @@
                             @can('unidad-editar')
                                 actionsHtml += '<a href="{{ route("unidads.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
-
+                                @can('unidad-modificar-envio')
+                                actionsHtml += '<a href="{{ route("unidads.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                            @endcan
 
                             // Agregar formulario de eliminación si el unidad tiene permiso
                             @can('unidad-eliminar')

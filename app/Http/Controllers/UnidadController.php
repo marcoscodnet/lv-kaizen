@@ -25,11 +25,16 @@ class UnidadController extends Controller
      */
     function __construct()
     {
-        $this->middleware('permission:unidad-listar|unidad-crear|unidad-editar|unidad-eliminar', ['only' => ['index','store']]);
+        $this->middleware('permission:unidad-listar|unidad-crear|unidad-editar|unidad-eliminar|unidad-modificar-envio', ['only' => ['index','store']]);
+
         $this->middleware('permission:unidad-crear', ['only' => ['create','store']]);
-        $this->middleware('permission:unidad-editar', ['only' => ['edit','update']]);
+
+        // Ahora permitimos tanto editar completo como modificar solo envío
+        $this->middleware('permission:unidad-editar|unidad-modificar-envio', ['only' => ['edit','update']]);
+
         $this->middleware('permission:unidad-eliminar', ['only' => ['destroy']]);
     }
+
 
     /**
      * Display a listing of the resource.
@@ -195,67 +200,87 @@ class UnidadController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $rules = [
-            'producto_id' => 'required',
-            'sucursal_id' => 'required',
-            'motor' => 'required',
-            'cuadro' => 'required',
-            'precio' => 'nullable|numeric', // puede ser vacío, o un número (decimal)
-            'minimo' => 'nullable|integer', // puede ser vacío, o un entero
+        $unidad = Unidad::findOrFail($id);
 
-        ];
+        // Si tiene permiso para editar todo
+        if ($request->user()->can('unidad-editar')) {
+            $rules = [
+                'producto_id' => 'required',
+                'sucursal_id' => 'required',
+                'motor' => 'required',
+                'cuadro' => 'required',
+                'precio' => 'nullable|numeric',
+                'minimo' => 'nullable|integer',
+            ];
 
-        // Definir los mensajes de error personalizados
-        $messages = [
+            $messages = [
+                'producto_id.required' => 'El campo Producto es obligatorio.',
+                'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
+                'motor.required' => 'El campo Nro. Motor es obligatorio.',
+                'cuadro.required' => 'El campo Nro. Cuadro es obligatorio.',
+            ];
 
-            'producto_id.required' => 'El campo Producto es obligatorio.',
-            'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
-            'motor.required' => 'El campo Nro. Motor es obligatorio.',
-            'cuadro.required' => 'El campo Nro. Cuadro es obligatorio.',
-        ];
+            $validator = Validator::make($request->all(), $rules, $messages);
 
-        // Crear el validador con las reglas y mensajes
-        $validator = Validator::make($request->all(), $rules, $messages);
-
-        // Validar y verificar si hay errores
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $input = $this->sanitizeInput($request->all());
-
-
-
-
-        $unidad = Unidad::find($id);
-        try {
-            $unidad->update($input);
-
-        } catch (QueryException $ex) {
-
-            if ($ex->errorInfo[1] == 1062) {
-                $mensajeError = 'El Producto ya existe.';
-            } else {
-                $mensajeError = $ex->getMessage();
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
             }
 
-            // Retornar al formulario con error
-            return redirect()->back()
-                ->withErrors(['error' => $mensajeError])
-                ->withInput();
+            $input = $this->sanitizeInput($request->all());
 
-        } catch (\Exception $ex) {
+            try {
+                $unidad->update($input);
+            } catch (QueryException $ex) {
+                $mensajeError = ($ex->errorInfo[1] == 1062)
+                    ? 'El Producto ya existe.'
+                    : $ex->getMessage();
 
-            return redirect()->back()
-                ->withErrors(['error' => $ex->getMessage()])
-                ->withInput();
+                return redirect()->back()
+                    ->withErrors(['error' => $mensajeError])
+                    ->withInput();
+            } catch (\Exception $ex) {
+                return redirect()->back()
+                    ->withErrors(['error' => $ex->getMessage()])
+                    ->withInput();
+            }
+        }
+        // Si solo puede modificar el envío
+        elseif ($request->user()->can('unidad-modificar-envio')) {
+            $rules = [
+                'envio' => 'nullable|string|max:255', // ahora no es obligatorio
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            try {
+                // Solo actualizamos envio si se mandó en el request
+                if ($request->has('envio')) {
+                    $unidad->envio = $request->input('envio');
+                    $unidad->save();
+                }
+            } catch (\Exception $ex) {
+                return redirect()->back()
+                    ->withErrors(['error' => $ex->getMessage()])
+                    ->withInput();
+            }
+        }
+        else {
+            abort(403, 'No tienes permisos para modificar esta unidad.');
         }
 
         return redirect()->route('unidads.index')
-            ->with('success','Unidad modificada con éxito');
+            ->with('success', 'Unidad modificada con éxito');
     }
+
+
 
 
     /**

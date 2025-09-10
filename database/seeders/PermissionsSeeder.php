@@ -17,7 +17,7 @@ class PermissionsSeeder extends Seeder
         SqlLogger::startLogging();
 
         $permissions = [
-            'pieza-modificar-descripcion',
+            'unidad-modificar-envio',
 
         ];
 
