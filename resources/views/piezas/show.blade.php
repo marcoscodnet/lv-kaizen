@@ -52,7 +52,22 @@
                                 </div>
                             </div>
                         </div>
-
+                        <div class="row mt-3">
+                            <div class="col-lg-offset-3 col-lg-6">
+                                <div class="form-group">
+                                    <label>Foto de la pieza</label>
+                                    <div>
+                                        @if($pieza->foto)
+                                            <img src="{{ Storage::url($pieza->foto) }}"
+                                                 alt="Foto de la pieza"
+                                                 style="max-width:320px; border:1px solid #ccc;">
+                                        @else
+                                            <p>No hay foto disponible</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="row">
                             <div class="col-lg-offset-3 col-lg-9 col-md-2">

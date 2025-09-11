@@ -94,7 +94,7 @@
                                     <div>
                                         <video id="video" width="320" height="240" autoplay></video>
                                         <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-                                        <img id="photo" src="{{ $pieza->foto ?? '' }}" alt="Foto actual" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
+                                        <img id="photo" src="{{ $pieza->foto ? asset('storage/'.$pieza->foto) : '' }}"  alt="Foto actual" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
                                     </div>
                                     <button type="button" id="capture" class="btn btn-info mt-2" @cannot('pieza-editar') disabled @endcannot>📸 Capturar</button>
                                     <input type="hidden" name="foto_base64" id="foto_base64">
