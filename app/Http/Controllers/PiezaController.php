@@ -108,16 +108,25 @@ class PiezaController extends Controller
             'tipo_pieza_id' => 'required',
         ]);
 
-
         $input = $this->sanitizeInput($request->all());
 
+        // Si se capturó foto desde la cámara
+        if ($request->filled('foto')) {
+            $data = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('foto'));
+            $image = base64_decode($data);
 
-        $pieza = Pieza::create($input);
+            $fileName = 'pieza_' . time() . '.png';
+            Storage::disk('public')->put('piezas/'.$fileName, $image);
 
+            $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
+        }
+
+        Pieza::create($input);
 
         return redirect()->route('piezas.index')
             ->with('success','Pieza creada con éxito');
     }
+
 
     public function ajaxStore(Request $request)
     {
