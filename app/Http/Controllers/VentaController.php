@@ -98,45 +98,13 @@ class VentaController extends Controller
             ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
             ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
 
-        if (!empty($sucursal_id)) {
-
-            $request->session()->put('sucursal_filtro_venta', $sucursal_id);
-
-        }
-        else{
-            $sucursal_id = $request->session()->get('sucursal_filtro_venta');
-
-        }
-        if ($sucursal_id=='-1'){
-            $request->session()->forget('sucursal_filtro_venta');
-            $sucursal_id='';
-        }
-        if (!empty($sucursal_id)) {
-
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);
-
-
         }
 
 
-        if (!empty($user_id)) {
-
-            $request->session()->put('user_filtro_venta', $user_id);
-
-        }
-        else{
-            $user_id = $request->session()->get('user_filtro_venta');
-
-        }
-        if ($user_id=='-1'){
-            $request->session()->forget('user_filtro_venta');
-            $user_id='';
-        }
-        if (!empty($user_id)) {
-
+        if (!empty($user_id) && $user_id != '-1') {
             $query->where('ventas.user_id', $user_id);
-
-
         }
 
 

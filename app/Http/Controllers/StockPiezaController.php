@@ -53,24 +53,10 @@ class StockPiezaController extends Controller
             ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
             ;
 
-        if (!empty($sucursal_id)) {
 
-            $request->session()->put('sucursal_filtro_pieza', $sucursal_id);
 
-        }
-        else{
-            $sucursal_id = $request->session()->get('sucursal_filtro_pieza');
-
-        }
-        if ($sucursal_id=='-1'){
-            $request->session()->forget('sucursal_filtro_pieza');
-            $sucursal_id='';
-        }
-        if (!empty($sucursal_id)) {
-
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('stock_piezas.sucursal_id', $sucursal_id);
-
-
         }
 
 

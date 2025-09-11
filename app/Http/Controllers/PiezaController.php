@@ -263,8 +263,11 @@ class PiezaController extends Controller
     {
 
 
-        Pieza::find($id)->delete();
-
+        $pieza = Pieza::find($id)->delete();
+        // Borrar foto si existe
+        if ($pieza->foto && file_exists(public_path('images/'.$pieza->foto))) {
+            unlink(public_path('images/'.$pieza->foto));
+        }
         return redirect()->route('piezas.index')
             ->with('success','Pieza eliminada con éxito');
     }

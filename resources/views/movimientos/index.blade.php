@@ -193,6 +193,16 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                stateSave: true,
+                // Guardar y restaurar el filtro externo
+                stateSaveParams: function (settings, data) {
+                    data.filtroUsuario = $('#filtroUsuario').val();
+                },
+                stateLoadParams: function (settings, data) {
+                    if (data.filtroUsuario) {
+                        $('#filtroUsuario').val(data.filtroUsuario).trigger('change');
+                    }
+                },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');

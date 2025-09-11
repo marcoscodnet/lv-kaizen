@@ -198,6 +198,21 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                stateSave: true,
+                stateSaveParams: function (settings, data) {
+                    data.filtroDiscontinuo = $('#filtroDiscontinuo').val();
+                    data.filtroStockMinimo = $('#filtroStockMinimo').val();
+
+                },
+                stateLoadParams: function (settings, data) {
+                    if (data.filtroDiscontinuo) {
+                        $('#filtroDiscontinuo').val(data.filtroDiscontinuo).trigger('change');
+                    }
+                    if (data.filtroStockMinimo) {
+                        $('#filtroStockMinimo').val(data.filtroStockMinimo).trigger('change');
+                    }
+
+                },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');

@@ -80,17 +80,9 @@ class MovimientoController extends Controller
             );
 
         // Filtrar por usuario
+        // Aplicar filtro solo si hay un usuario seleccionado y no es "Todos" (-1)
         if (!empty($user_id) && $user_id != '-1') {
-            $request->session()->put('user_filtro_movimiento', $user_id);
             $movimientosQuery->where('movimientos.user_id', $user_id);
-        } else {
-            $user_id = $request->session()->get('user_filtro_movimiento');
-            if (!empty($user_id)) {
-                $movimientosQuery->where('movimientos.user_id', $user_id);
-            }
-            if ($user_id == '-1') {
-                $request->session()->forget('user_filtro_movimiento');
-            }
         }
 
         // Traer todos los movimientos filtrados

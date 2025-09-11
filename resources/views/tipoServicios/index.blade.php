@@ -116,6 +116,7 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                stateSave: true,
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');

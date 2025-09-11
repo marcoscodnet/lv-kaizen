@@ -214,6 +214,19 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                stateSave: true,
+                stateSaveParams: function (settings, data) {
+
+                    data.filtroSucursal = $('#filtroSucursal').val();
+
+                },
+                stateLoadParams: function (settings, data) {
+
+                    if (data.filtroSucursal) {
+                        $('#filtroSucursal').val(data.filtroSucursal).trigger('change');
+                    }
+
+                },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');

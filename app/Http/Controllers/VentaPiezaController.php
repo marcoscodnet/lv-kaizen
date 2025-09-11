@@ -86,28 +86,12 @@ class VentaPiezaController extends Controller
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
         ;
 
-        if (!empty($user_id)) {
 
-            $request->session()->put('user_filtro_venta_pieza', $user_id);
 
-        }
-        else{
-            $user_id = $request->session()->get('user_filtro_venta_pieza');
 
-        }
-        if ($user_id=='-1'){
-            $request->session()->forget('user_filtro_venta_pieza');
-            $user_id='';
-        }
-        if (!empty($user_id)) {
-
+        if (!empty($user_id) && $user_id != '-1') {
             $query->where('venta_piezas.user_id', $user_id);
-
-
         }
-
-
-
 
 
         if (!empty($fechaDesde)) {

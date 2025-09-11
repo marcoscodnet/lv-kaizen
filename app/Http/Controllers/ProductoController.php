@@ -91,34 +91,13 @@ class ProductoController extends Controller
             );
 
 
-
-        if (!empty($discontinuo)) {
-
-            $request->session()->put('discontinuo_filtro_producto', $discontinuo);
-
-        }
-        else{
-            $discontinuo = $request->session()->get('discontinuo_filtro_producto');
-
-        }
-        if ($discontinuo=='-1'){
-            $request->session()->forget('discontinuo_filtro_producto');
-            $discontinuo='';
-        }
-        if (!empty($discontinuo)) {
-            if ($discontinuo==2){
-                $query->where('productos.discontinuo', 0);
-            }
-            else{
-                $query->where('productos.discontinuo', 1);
-            }
-
+        if (!empty($discontinuo) && $discontinuo != '-1') {
+            $query->where('productos.discontinuo', $discontinuo);
         }
 
-        if ($filtroStockMinimo == 1) {
+        if (!empty($filtroStockMinimo) && $filtroStockMinimo != '-1') {
             $query->havingRaw('COUNT(CASE WHEN v.id IS NULL THEN 1 END) < productos.minimo');
         }
-
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
