@@ -27,13 +27,13 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="name">Nombre</label>
                                     <input type="text" class="form-control" id="name" name="name" placeholder="Nombre" value="@if (old('name')){{ old('name') }}@else{{ $user->name }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-4">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="email">E-mail</label>
                                     <input type="text" class="form-control" id="email" name="email" placeholder="email" value="@if (old('email')){{ old('email') }}@else{{ $user->email }}@endif">
@@ -41,13 +41,13 @@
                             </div>
 
 
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="password">Password</label>
                                     <input type="password" class="form-control" id="password" name="password" placeholder="clave" value="{{ old('password') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="password_confirmation">Confirmar clave </label>
                                     <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Confirmar clave">
@@ -56,7 +56,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-5">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="foto">Foto</label>
                                     @if($user->image)

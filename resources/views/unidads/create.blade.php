@@ -25,7 +25,7 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="producto_id">Producto</label>
                                     <select name="producto_id" class="form-control js-example-basic-single" required>
@@ -36,7 +36,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="sucursal_id">Sucursal</label>
                                     <select name="sucursal_id" class="form-control js-example-basic-single" required>
@@ -51,19 +51,19 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="motor">Nro. motor</label>
                                     <input type="text" class="form-control" id="motor" name="motor" placeholder="Nro. motor" value="{{ old('motor') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="cuadro">Nro. cuadro</label>
                                     <input type="text" class="form-control" id="cuadro" name="cuadro" placeholder="Nro. cuadro" value="{{ old('cuadro') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="patente">Patente</label>
                                     <input type="text" class="form-control" id="patente" name="patente" placeholder="Patente" value="{{ old('patente') }}">
@@ -74,25 +74,25 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="ingreso">Ingreso</label>
                                     <input type="date" class="form-control" id="ingreso" name="ingreso"  value="{{ old('ingreso') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="remito">Nro. remito ingreso</label>
                                     <input type="text" class="form-control" id="remito" name="remito" placeholder="Nro. remito ingreso" value="{{ old('remito') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="year">Año/Modelo</label>
                                     <input type="text" class="form-control" id="year" name="year" placeholder="Año/Modelo" value="{{ old('year') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="envio">Nro. Envío</label>
                                     <input type="text" class="form-control" id="envio" name="envio" placeholder="Nro. Envío" value="{{ old('envio') }}">
@@ -102,7 +102,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                     <label for="observaciones" class="col-md-12">Observaciones</label>
@@ -112,7 +112,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 

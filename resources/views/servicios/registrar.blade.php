@@ -365,7 +365,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
+                            <div class="col-12 col-lg-3" id="conyuge-container" style="display: none;">
                                 <div class="form-group">
                                     <label for="conyuge">Cónyuge</label>
                                     <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cónyuge" value="{{ old('conyuge') }}" required>

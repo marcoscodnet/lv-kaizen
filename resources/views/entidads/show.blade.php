@@ -26,13 +26,13 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="nombre">Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="@if (old('nombre')){{ old('nombre') }}@else{{ $entidad->nombre }}@endif" disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-1">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="activa" value="0">
                                     <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"

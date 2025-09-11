@@ -29,7 +29,7 @@
 
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="codigo">Código</label>
                                     <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Codigo" value="@if (old('codigo')){{ old('codigo') }}@else{{ $pieza->codigo }}@endif" required @cannot('pieza-editar') disabled @endcannot>
@@ -46,7 +46,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-5 col-md-3">
+                            <div class="col-12 col-lg-5">
                                 <div class="form-group">
                                     <label for="descripcion">Descripción</label>
                                     <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="@if (old('descripcion')){{ old('descripcion') }}@else{{ $pieza->descripcion }}@endif" required @cannot('pieza-editar') @cannot('pieza-modificar-descripcion') disabled @endcannot @endcannot>
@@ -54,20 +54,20 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="stock_minimo">Stock mínimo</label>
                                     <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" placeholder="Stock mínimo" value="@if (old('stock_minimo')){{ old('stock_minimo') }}@else{{ $pieza->stock_minimo }}@endif" @cannot('pieza-editar') disabled @endcannot>
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
                                     <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $pieza->costo }}@endif" @cannot('pieza-editar') disabled @endcannot>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
                                     <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $pieza->precio_minimo }}@endif" @cannot('pieza-editar') disabled @endcannot>
@@ -79,7 +79,7 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                     <label for="observaciones" class="col-md-12">Observaciones</label>
@@ -88,7 +88,7 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label>Foto de la pieza</label>
                                     <div>
@@ -102,7 +102,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 

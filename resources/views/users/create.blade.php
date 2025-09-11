@@ -26,13 +26,13 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="name">Nombre</label>
                                     <input type="text" class="form-control" id="name" name="name" placeholder="Nombre" value="{{ old('name') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-4">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="email">E-mail</label>
                                     <input type="text" class="form-control" id="email" name="email" placeholder="email" value="{{ old('email') }}">
@@ -40,13 +40,13 @@
                             </div>
 
 
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="password">Password</label>
                                     <input type="password" class="form-control" id="password" name="password" placeholder="clave" value="{{ old('password') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="password_confirmation">Confirmar clave </label>
                                     <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Confirmar clave">
@@ -54,7 +54,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-5">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="sucursal_id">Sucursal</label>
                                     <select name="sucursal_id" class="form-control js-example-basic-single">
@@ -65,7 +65,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-5">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="activo">Activo</label><br>
                                     <input type="checkbox"  id="activo" name="activo" value="true"  {{ old('activa', $obj->activa ?? true) ? 'checked' : '' }}>
@@ -74,7 +74,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-5">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="foto">Foto</label>
 
@@ -83,7 +83,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-6 col-md-5">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="roles">Roles</label>
                                     <select name="roles[]" id="roles" class="form-control" multiple>

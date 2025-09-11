@@ -25,7 +25,7 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="user_id">Vendedor</label>
                                     <select name="user_id" class="form-control js-example-basic-single" required disabled>
@@ -39,7 +39,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
                                     <input type="date" class="form-control" id="fecha" name="fecha"  value="@if (old('fecha')){{ old('fecha') }}@else{{ ($movimiento->fecha)?date('Y-m-d', strtotime($movimiento->fecha)):'' }}@endif" required disabled>
@@ -48,7 +48,7 @@
                         </div>
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="sucursal_origen_id">Origen</label>
                                     <select name="sucursal_origen_id" class="form-control js-example-basic-single" required disabled>
@@ -59,7 +59,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="sucursal_destino_id">Destino</label>
                                     <select name="sucursal_destino_id" class="form-control js-example-basic-single" required disabled>
@@ -73,7 +73,7 @@
 
                         </div>
 
-                        <div class="form-group col-md-12">
+                        <div class="form-group">
 
 
                             <table class="table">
@@ -118,7 +118,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                         <label for="observaciones" class="col-md-12">Observaciones</label>
@@ -128,7 +128,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 

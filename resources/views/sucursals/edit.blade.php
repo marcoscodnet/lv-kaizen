@@ -26,13 +26,13 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="nombre">Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="@if (old('nombre')){{ old('nombre') }}@else{{ $sucursal->nombre }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="email">E-mail</label>
                                     <input type="text" class="form-control" id="email" name="email" placeholder="email" value="@if (old('email')){{ old('email') }}@else{{ $sucursal->email }}@endif">
@@ -41,19 +41,19 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="telefono">Teléfono</label>
                                     <input type="text" class="form-control" id="telefono" name="telefono" placeholder="Teléfono" value="@if (old('telefono')){{ old('telefono') }}@else{{ $sucursal->telefono }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="direccion">Dirección</label>
                                     <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Dirección" value="@if (old('direccion')){{ old('direccion') }}@else{{ $sucursal->direccion }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-5">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="activa">Activa</label><br>
                                     <input type="checkbox"  id="activa" name="activa" value="true"  {{ old('activa', $sucursal->activa ?? false) ? 'checked' : '' }}>
@@ -66,7 +66,7 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                     <label for="comentario" class="col-md-12">Comentario</label>
@@ -76,7 +76,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 

@@ -25,25 +25,25 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="nombre">Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="{{ old('nombre') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="documento">Documento</label>
                                     <input type="text" class="form-control" id="documento" name="documento" placeholder="Documento" value="{{ old('documento') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="cuil">CUIL</label>
                                     <input type="text" class="form-control" id="cuil" name="cuil" placeholder="XX-XXXXXXXX-X" value="{{ old('cuil') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="nacimiento">F. Nacimiento</label>
                                     <input type="date" class="form-control" id="nacimiento" name="nacimiento"  value="{{ old('nacimiento') }}" required>
@@ -51,31 +51,31 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-1 col-md-2">
+                            <div class="col-12 col-lg-1">
                                 <div class="form-group">
                                     <label for="particular_area">Área</label>
                                     <input type="text" class="form-control" id="particular_area" name="particular_area" placeholder="Área" value="{{ old('particular_area') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="particular">Particular</label>
                                     <input type="text" class="form-control" id="particular" name="particular" placeholder="Particular" value="{{ old('particular') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-1 col-md-2">
+                            <div class="col-12 col-lg-1">
                                 <div class="form-group">
                                     <label for="celular_area">Área</label>
                                     <input type="text" class="form-control" id="celular_area" name="celular_area" placeholder="Área" value="{{ old('celular_area') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="celular">Celular</label>
                                     <input type="text" class="form-control" id="celular" name="celular" placeholder="Celular" value="{{ old('celular') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-5 col-md-2">
+                            <div class="col-12 col-lg-5">
                                 <div class="form-group">
                                     <label for="email">E-mail</label>
                                     <input type="email" class="form-control" id="email" name="email" placeholder="email" value="{{ old('email') }}" required>
@@ -85,31 +85,31 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="calle">Calle</label>
                                     <input type="text" class="form-control" id="calle" name="calle" placeholder="Calle" value="{{ old('calle') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="nro">Nro.</label>
                                     <input type="text" class="form-control" id="nro" name="nro" placeholder="Nro." value="{{ old('nro') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="piso">Piso</label>
                                     <input type="text" class="form-control" id="piso" name="piso" placeholder="Piso" value="{{ old('piso') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="depto">Depto.</label>
                                     <input type="text" class="form-control" id="depto" name="depto" placeholder="Depto." value="{{ old('depto') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="cp">CP</label>
                                     <input type="text" class="form-control" id="cp" name="cp" placeholder="CP" value="{{ old('cp') }}" required>
@@ -121,14 +121,14 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="nacionalidad">Nacionalidad</label>
                                     <input type="text" class="form-control" id="nacionalidad" name="nacionalidad" placeholder="Nacionalidad" value="{{ old('nacionalidad') }}" required>
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="estado_civil">Estado Civil</label>
 
@@ -146,13 +146,13 @@
 
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3" id="conyuge-container" style="display: none;">
+                            <div class="col-12 col-lg-3" id="conyuge-container" style="display: none;">
                                 <div class="form-group">
                                     <label for="conyuge">Cónyuge</label>
                                     <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cónyuge" value="{{ old('conyuge') }}" required>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="llego">Como llegó?</label>
 
@@ -173,7 +173,7 @@
                         <div class="row">
 
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="iva">Condición IVA</label>
 
@@ -191,13 +191,13 @@
 
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="ocupacion">Actividad/Ocupación</label>
                                     <input type="text" class="form-control" id="ocupacion" name="ocupacion" placeholder="Actividad/Ocupación" value="{{ old('ocupacion') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="trabajo">Lugar de trabajo</label>
                                     <input type="text" class="form-control" id="trabajo" name="trabajo" placeholder="Lugar de trabajo" value="{{ old('trabajo') }}">

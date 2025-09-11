@@ -29,7 +29,7 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
                                     <label for="pieza_id">Pieza</label>
                                     <select name="pieza_id" id="pieza_id" class="form-control js-example-basic-single" disabled @disabled()>
@@ -45,26 +45,26 @@
 
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="inicial">Cant. Inicial</label>
                                     <input type="number" class="form-control" id="inicial" name="inicial" placeholder="Inicial" value="@if (old('inicial')){{ old('inicial') }}@else{{ $stockPieza->inicial }}@endif" disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="cantidad">Cant. Actual</label>
                                     <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Cantidad" value="@if (old('cantidad')){{ old('cantidad') }}@else{{ $stockPieza->cantidad }}@endif" disabled>
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
                                     <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $stockPieza->costo }}@endif" disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
                                     <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $stockPieza->precio_minimo }}@endif" disabled>
@@ -76,7 +76,7 @@
 
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="sucursal_id">Sucursal</label>
                                     <select name="sucursal_id" class="form-control js-example-basic-single" required disabled>
@@ -87,7 +87,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="proveedor">Proveedor</label>
                                     <select name="proveedor" id="proveedor" class="form-control" required disabled>
@@ -106,14 +106,14 @@
 
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="ingreso_visible">F. Ingreso</label>
 
                                     <input type="date" class="form-control" id="ingreso" name="ingreso"  value="@if (old('ingreso')){{ old('ingreso') }}@else{{ ($stockPieza->ingreso)?date('Y-m-d', strtotime($stockPieza->ingreso)):'' }}@endif" readonly disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <div class="form-group">
                                         <label for="remito">Remito</label>

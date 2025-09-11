@@ -27,7 +27,7 @@
                         @include('includes.messages')
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-5 col-md-2">
+                            <div class="col-12 col-lg-5">
                                 <div class="form-group">
                                     <label for="user_id">Vendedor</label>
                                     <select name="user_id" class="form-control js-example-basic-single" required>
@@ -42,7 +42,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
                                     <input type="date" class="form-control" id="fecha" name="fecha"  value="@if (old('fecha')){{ old('fecha') }}@else{{ ($ventaPieza->fecha)?date('Y-m-d', strtotime($ventaPieza->fecha)):'' }}@endif" readonly required>
@@ -50,7 +50,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group col-md-12">
+                        <div class="form-group">
 
 
                             <table class="table">
@@ -134,7 +134,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                         <label for="descripcion" class="col-md-12">Descripción</label>
@@ -144,7 +144,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 
@@ -159,7 +159,7 @@
 
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="destino">Destino</label>
 
@@ -181,25 +181,25 @@
                         </div>
                         <div class="row" id="divSalon" style="display: none">
 
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="cliente">Cliente</label>
                                     <input type="text" class="form-control" id="cliente" name="cliente" placeholder="Cliente" value="{{ old('cliente', $ventaPieza->cliente) }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="documento">Documento</label>
                                     <input type="text" class="form-control" id="documento" name="documento" placeholder="Documento" value="{{ old('documento', $ventaPieza->documento) }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-2 col-md-2">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="telefono">Teléfono</label>
                                     <input type="text" class="form-control" id="telefono" name="telefono" placeholder="Teléfono" value="{{ old('telefono', $ventaPieza->telefono) }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="moto">Moto</label>
                                     <input type="text" class="form-control" id="moto" name="moto" placeholder="Moto" value="{{ old('moto', $ventaPieza->moto) }}">
@@ -212,7 +212,7 @@
 
                         <div class="row" id="divSucursal" style="display: none">
 
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="sucursal_id">Sucursal</label>
                                     <select name="sucursal_id" class="form-control js-example-basic-single">
@@ -223,7 +223,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="pedido">Nro. Pedido Reparación</label>
                                     <input type="text" class="form-control" id="pedido_sucursal" name="pedido_sucursal" placeholder="Nro. Pedido Reparación" value="{{ old('pedido', $ventaPieza->pedido) }}">
@@ -238,7 +238,7 @@
                         <div class="row" id="divTaller" style="display: none">
 
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="pedido">Nro. Pedido Reparación</label>
                                     <input type="text" class="form-control" id="pedido_taller" name="pedido_taller" placeholder="Nro. Pedido Reparación" value="{{ old('pedido', $ventaPieza->pedido) }}">

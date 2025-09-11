@@ -26,7 +26,7 @@
                         @include('includes.messages')
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="sucursal_origen_id">Origen</label>
                                     <select name="sucursal_origen_id" class="form-control js-example-basic-single" required>
@@ -37,7 +37,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="sucursal_destino_id">Destino</label>
                                     <select name="sucursal_destino_id" class="form-control js-example-basic-single" required>
@@ -48,7 +48,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
                                     <input type="date" class="form-control" id="fecha" name="fecha"  value="{{ old('fecha') }}" required>
@@ -56,7 +56,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group col-md-12">
+                        <div class="form-group">
 
 
                             <table class="table">
@@ -83,7 +83,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                         <label for="observaciones" class="col-md-12">Observaciones</label>
@@ -93,7 +93,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 

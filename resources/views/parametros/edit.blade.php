@@ -27,7 +27,7 @@
                         @include('includes.messages')
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                     <label for="contenido" class="col-md-12">En la impresión, el siguiente texto, se mostrará justificado y con un formato establecido.</label>
@@ -37,7 +37,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 

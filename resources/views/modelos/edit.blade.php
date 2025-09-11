@@ -26,13 +26,13 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6 col-md-3">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="nombre">Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="@if (old('nombre')){{ old('nombre') }}@else{{ $modelo->nombre }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-6 col-md-2">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label for="marca_id">Marca</label>
                                     <select name="marca_id" class="form-control js-example-basic-single">

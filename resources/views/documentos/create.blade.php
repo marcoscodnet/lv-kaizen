@@ -23,21 +23,21 @@
                         @include('includes.messages')
                         <div class="row">
                             <!-- Nombre -->
-                            <div class="col-lg-offset-3 col-lg-4 col-md-3">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="nombre">Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="{{ old('nombre') }}">
                                 </div>
                             </div>
                             <!-- Orden -->
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="orden">Orden</label>
                                     <input type="number" class="form-control" id="orden" name="orden" placeholder="Orden" value="{{ old('orden') }}">
                                 </div>
                             </div>
                             <!-- Habilitado -->
-                            <div class="col-lg-offset-3 col-lg-2 col-md-1">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="habilitado" value="0">
                                     <input class="form-check-input" type="checkbox" id="habilitado" name="habilitado" value="1"
@@ -54,7 +54,7 @@
                         </div>
                         <div class="row">
                             <!-- Archivo -->
-                            <div class="col-lg-offset-3 col-lg-8 col-md-3 mt-3">
+                            <div class="col-12 col-lg-8 mt-3">
                                 <div class="form-group">
                                     <label for="path">Archivo</label>
                                     <input type="file" class="form-control" id="path" name="path">

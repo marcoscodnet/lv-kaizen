@@ -27,7 +27,7 @@
                         @include('includes.messages')
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="pieza_id">Pieza</label>
                                     <select name="pieza_id" id="pieza_id" class="form-control js-example-basic-single" required disabled>
@@ -39,7 +39,7 @@
                                 </div>
                             </div>
                             {{-- Nueva pieza --}}
-                            <div class="col-lg-3 col-md-2">
+                            <div class="col-lg-3">
                                 <div class="form-group">
                                     <label for="nombre">
                                         Nueva pieza
@@ -53,7 +53,7 @@
                                         {{ old('nombre', $pedido->nombre) ? '' : 'disabled' }} disabled>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
                                     <input type="date" class="form-control" id="fecha" name="fecha"  value="@if (old('fecha')){{ old('fecha') }}@else{{ ($pedido->fecha)?date('Y-m-d', strtotime($pedido->fecha)):'' }}@endif" required disabled>
@@ -65,7 +65,7 @@
 
                         <div class="row">
                             {{-- Cantidad --}}
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="cantidad">Cantidad</label>
                                     <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Cantidad"
@@ -74,7 +74,7 @@
                             </div>
 
                             {{-- Estado --}}
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="estado">Estado</label>
                                     <select name="estado" id="estado" class="form-control" required disabled>
@@ -89,7 +89,7 @@
                             </div>
 
                             {{-- Mínimo --}}
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="minimo">$ Mínimo</label>
                                     <input type="number" step="0.01" class="form-control" id="minimo" name="minimo" placeholder="$ Mínimo"
@@ -98,7 +98,7 @@
                             </div>
 
                             {{-- Seña --}}
-                            <div class="col-lg-offset-3 col-lg-2 col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="senia">Seña</label>
                                     <input type="number" step="0.01" class="form-control" id="senia" name="senia" placeholder="Seña"
@@ -109,7 +109,7 @@
 
                         {{-- Observaciones --}}
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
                                     <label for="observacion" class="col-md-12">Observaciones</label>
                                     <textarea id="observacion" name="observacion" class="form-control" rows="3" disabled>{{ old('observacion', $pedido->observacion) }}</textarea>

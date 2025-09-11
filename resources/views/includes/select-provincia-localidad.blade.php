@@ -4,7 +4,7 @@
     $localidadSeleccionada = old('localidad_id', $sucursal->localidad_id ?? $cliente->localidad_id ?? '');
     $nombreLocalidad = $sucursal->localidad->nombre ?? $cliente->localidad->nombre ?? null;
 @endphp
-<div class="col-lg-offset-3 col-lg-5 col-md-2">
+<div class="col-12 col-lg-5">
     <div class="form-group">
         <label for="provincia">Provincia</label>
         <select name="provincia_id" id="provincia_id" class="form-control provincia-select js-example-basic-single"
@@ -18,7 +18,7 @@
         </select>
     </div>
 </div>
-<div class="col-lg-offset-3 col-lg-5 col-md-2">
+<div class="col-12 col-lg-5">
     <div class="form-group">
         <label for="localidad">Localidad</label>
         <select id="localidad" name="localidad_id" class="form-control localidad-select js-example-basic-single" required {{ !empty($disabled) ? 'disabled' : '' }}>

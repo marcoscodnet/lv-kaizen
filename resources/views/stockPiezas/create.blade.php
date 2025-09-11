@@ -48,20 +48,20 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="cantidad">Cantidad</label>
                                     <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Cantidad" value="{{ old('cantidad') }}">
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
                                     <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="{{ old('costo') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
                                     <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="{{ old('precio_minimo') }}">
@@ -73,7 +73,7 @@
 
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="sucursal_id">Sucursal</label>
                                     <select name="sucursal_id" class="form-control js-example-basic-single" required>
@@ -84,7 +84,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="proveedor">Proveedor</label>
                                     <select name="proveedor" id="proveedor" class="form-control">
@@ -106,14 +106,14 @@
                         @endphp
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="ingreso_visible">F. Ingreso</label>
                                     <input type="text" class="form-control" id="ingreso_visible" value="{{ $hoy_formateado }}" readonly>
                                     <input type="hidden" name="ingreso" value="{{ $hoy }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-4 col-md-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <div class="form-group">
                                         <label for="remito">Remito</label>
@@ -148,7 +148,7 @@
                     <div class="modal-body">
                         <div class="row">
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="codigo">Código</label>
                                     <input type="text" class="form-control" id="codigo" name="codigo" placeholder="Codigo" value="{{ old('codigo') }}" required>
@@ -165,7 +165,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-5 col-md-3">
+                            <div class="col-12 col-lg-5">
                                 <div class="form-group">
                                     <label for="descripcion">Descripción</label>
                                     <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="{{ old('descripcion') }}" required>
@@ -173,20 +173,20 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="stock_minimo">Stock mínimo</label>
                                     <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" placeholder="Stock mínimo" value="{{ old('stock_minimo') }}">
                                 </div>
                             </div>
 
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
                                     <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="{{ old('costo') }}">
                                 </div>
                             </div>
-                            <div class="col-lg-offset-3 col-lg-3 col-md-3">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
                                     <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="{{ old('precio_minimo') }}">
@@ -197,7 +197,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-6">
+                            <div class="col-12 col-lg-6">
                                 <div class="form-group">
                                     <label>Foto de la pieza</label>
                                     <div>
@@ -211,7 +211,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
                                     <label for="observaciones" class="col-md-12">Observaciones</label>
@@ -221,7 +221,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-lg-offset-3 col-lg-9 col-md-2">
+                            <div class="col-12 col-lg-9">
                                 <div class="form-group">
 
 
