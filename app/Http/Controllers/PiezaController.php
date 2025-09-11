@@ -117,7 +117,10 @@ class PiezaController extends Controller
             $image = base64_decode($data);
 
             $fileName = 'pieza_' . time() . '.png';
-            Storage::disk('public')->put('piezas/'.$fileName, $image);
+            $filePath = 'images/piezas/'.$fileName;
+
+            // Guardar directamente en public
+            file_put_contents(public_path($filePath), $image);
 
             $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
         }
@@ -210,7 +213,10 @@ class PiezaController extends Controller
                 $image = base64_decode($data);
 
                 $fileName = 'pieza_' . time() . '.png';
-                Storage::disk('public')->put('piezas/'.$fileName, $image);
+                $filePath = 'images/piezas/'.$fileName;
+
+                // Guardar directamente en public
+                file_put_contents(public_path($filePath), $image);
 
                 $input['foto'] = 'piezas/'.$fileName;
             }

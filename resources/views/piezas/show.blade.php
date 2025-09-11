@@ -58,7 +58,7 @@
                                     <label>Foto de la pieza</label>
                                     <div>
                                         @if($pieza->foto)
-                                            <img src="{{ Storage::url($pieza->foto) }}"
+                                            <img src="{{ asset($pieza->foto) }}"
                                                  alt="Foto de la pieza"
                                                  style="max-width:320px; border:1px solid #ccc;">
                                         @else
