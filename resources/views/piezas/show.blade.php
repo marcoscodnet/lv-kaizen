@@ -58,7 +58,7 @@
                                     <label>Foto de la pieza</label>
                                     <div>
                                         @if($pieza->foto)
-                                            <img src="{{ asset('images/'.basename($pieza->foto)) }}"
+                                            <img src="{{ asset('images/'.$pieza->foto) }}"
                                                  alt="Foto de la pieza"
                                                  style="max-width:320px; border:1px solid #ccc;">
                                         @else
