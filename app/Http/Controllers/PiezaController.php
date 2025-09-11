@@ -7,6 +7,7 @@ use App\Models\StockPieza;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Pieza;
+use Illuminate\Support\Facades\Storage;
 
 class PiezaController extends Controller
 {
