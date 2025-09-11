@@ -94,10 +94,10 @@
                                     <div>
                                         <video id="video" width="320" height="240" autoplay></video>
                                         <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-                                        <img id="photo" src="{{ $pieza->foto ? asset('images/'.basename($pieza->foto)) : '' }}"  alt="Foto actual" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
+                                        <img id="photo" src="{{ $pieza->foto ? asset($pieza->foto) : '' }}"  alt="Foto actual" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
                                     </div>
                                     <button type="button" id="capture" class="btn btn-info mt-2" @cannot('pieza-editar') disabled @endcannot>📸 Capturar</button>
-                                    <input type="hidden" name="foto_base64" id="foto_base64">
+                                    <input type="hidden" name="foto" id="foto">
                                 </div>
                             </div>
                         </div>
@@ -162,7 +162,7 @@
             const canvas = document.getElementById('canvas');
             const photo = document.getElementById('photo');
             const capture = document.getElementById('capture');
-            const fotoInput = document.getElementById('foto_base64');
+            const fotoInput = document.getElementById('foto');
 
             // Solo intentar acceder a la cámara si el navegador soporta getUserMedia
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
