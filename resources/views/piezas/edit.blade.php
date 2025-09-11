@@ -156,7 +156,7 @@
             $('.js-example-basic-single').select2({
                 language: 'es'});
         });
-        <script>
+
             document.addEventListener('DOMContentLoaded', function() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -188,7 +188,7 @@
             fotoInput.value = dataURL; // Guardar base64 para enviar al backend
         });
         });
-    </script>
+
 
     </script>
 
