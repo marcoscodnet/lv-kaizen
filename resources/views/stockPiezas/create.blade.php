@@ -196,7 +196,20 @@
 
                         </div>
 
-
+                        <div class="row">
+                            <div class="col-lg-offset-3 col-lg-6">
+                                <div class="form-group">
+                                    <label>Foto de la pieza</label>
+                                    <div>
+                                        <video id="video" width="320" height="240" autoplay></video>
+                                        <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+                                        <img id="photo" src="" alt="Foto de la pieza" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
+                                    </div>
+                                    <button type="button" id="capture" class="btn btn-info mt-2">📸 Capturar</button>
+                                    <input type="hidden" name="foto" id="foto">
+                                </div>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-lg-offset-3 col-lg-9 col-md-2">
                                 <div class="form-group">
@@ -314,6 +327,38 @@
         });
 
 
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const photo = document.getElementById('photo');
+            const capture = document.getElementById('capture');
+            const fotoInput = document.getElementById('foto');
+
+            // Solo intentar acceder a la cámara si el navegador soporta getUserMedia
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(err => {
+                        console.error("No se pudo acceder a la cámara: ", err);
+                    });
+            } else {
+                console.warn("getUserMedia no es soportado en este navegador.");
+            }
+
+            capture.addEventListener('click', () => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/png');
+                photo.src = dataURL;
+                fotoInput.value = dataURL; // Guardar base64 para enviar al backend
+            });
+        });
     </script>
+
 
 @endsection

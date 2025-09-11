@@ -141,7 +141,19 @@ class PiezaController extends Controller
         ]);
 
         $input = $this->sanitizeInput($request->all());
+// Si se capturó foto desde la cámara
+        if ($request->filled('foto')) {
+            $data = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('foto'));
+            $image = base64_decode($data);
 
+            $fileName = 'pieza_' . time() . '.png';
+            $filePath = 'images/piezas/'.$fileName;
+
+            // Guardar directamente en public
+            file_put_contents(public_path($filePath), $image);
+
+            $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
+        }
         $pieza = Pieza::create($input);
 
         // Devolver JSON

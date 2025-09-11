@@ -157,7 +157,7 @@
                 language: 'es'});
         });
 
-            document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const photo = document.getElementById('photo');
