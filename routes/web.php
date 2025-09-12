@@ -23,6 +23,7 @@ use App\Http\Controllers\VentaController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ServicioController;
+use App\Http\Controllers\ConceptoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -126,6 +127,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('servicio-pdf', [ServicioController::class, 'generatePDF'])->name('servicios.pdf');
     Route::post('unidadsvendidas-datatable', [ServicioController::class, 'unidadDataTable'])->name('unidadsvendidas.dataTable');
 
+    Route::resource('conceptos', ConceptoController::class);
 
 });
 

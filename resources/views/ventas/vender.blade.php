@@ -283,7 +283,8 @@
                                 <label class="form-label">F. Nacimiento</label>
                                 <input type="date" name="nacimiento" id="nacimiento" class="form-control" required>
                             </div>
-
+                        </div>
+                        <div class="row">
                             <!-- Particular -->
                             <div class="col-4 col-md-1">
                                 <label class="form-label">Área</label>
@@ -308,6 +309,8 @@
                                 <label class="form-label">E-mail</label>
                                 <input type="email" name="email" id="email" class="form-control" required>
                             </div>
+                        </div>
+                        <div class="row">
                             <!-- Dirección -->
                             <div class="col-12 col-md-4">
                                 <label class="form-label">Calle</label>
@@ -321,11 +324,13 @@
                                 <label class="form-label">CP</label>
                                 <input type="text" name="cp" id="cp" class="form-control" required>
                             </div>
-
+                        </div>
+                        <div class="row">
                                 @include('includes.select-provincia-localidad')
 
 
-
+                        </div>
+                        <div class="row">
                             <!-- Nacionalidad -->
                             <div class="col-12 col-md-4">
                                 <label class="form-label">Nacionalidad</label>
@@ -352,6 +357,8 @@
                                     <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cónyuge" value="{{ old('conyuge') }}" required>
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
                             <!-- Cómo llegó -->
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Cómo llegó?</label>

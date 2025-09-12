@@ -57,6 +57,12 @@
                             </div>
                         </a>
                     @endcan
+                    @can('concepto-listar')
+                        <a class="nav-link" href="{{ route('conceptos.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cash-register"></span></span><span class="nav-link-text ps-1">Conceptos</span>
+                            </div>
+                        </a>
+                    @endcan
                     @can('documento-listar')
                         <a class="nav-link" href="{{ route('documentos.index') }}" role="button">
                             <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-file"></span></span><span class="nav-link-text ps-1">Documentos</span>
