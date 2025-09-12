@@ -258,7 +258,7 @@
 
     <!-- Modal Nuevo Cliente -->
     <div class="modal fade" id="nuevoClienteModal" tabindex="-1" aria-labelledby="nuevoClienteLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
+        <div class="modal-dialog modal-fullscreen-sm-down modal-xl">
             <form id="formNuevoCliente">
                 @csrf
                 <div class="modal-content">
@@ -270,64 +270,64 @@
                     <div class="modal-body">
                         <div class="row">
                             <!-- Nombre -->
-                            <div class="col-md-4 mb-3">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label">Nombre</label>
                                 <input type="text" name="nombre" id="nombre" class="form-control" required>
                                 <input type="hidden" name="cliente_id" id="cliente_id_hidden">
                             </div>
 
                             <!-- Documento -->
-                            <div class="col-md-2 mb-3">
+                            <div class="col-12 col-md-2">
                                 <label class="form-label">Documento</label>
                                 <input type="text" name="documento" id="documento" class="form-control" required>
                             </div>
 
                             <!-- CUIL -->
-                            <div class="col-md-3 mb-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label">CUIL</label>
                                 <input type="text" name="cuil" id="cuil" placeholder="XX-XXXXXXXX-X" class="form-control">
                             </div>
 
                             <!-- Nacimiento -->
-                            <div class="col-md-3 mb-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label">F. Nacimiento</label>
                                 <input type="date" name="nacimiento" id="nacimiento" class="form-control" required>
                             </div>
 
                             <!-- Particular -->
-                            <div class="col-md-1 mb-3">
+                            <div class="col-4 col-md-1">
                                 <label class="form-label">Área</label>
                                 <input type="text" name="particular_area" id="particular_area" class="form-control" required>
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-8 col-md-2">
                                 <label class="form-label">Particular</label>
                                 <input type="text" name="particular" id="particular" class="form-control" required>
                             </div>
 
                             <!-- Celular -->
-                            <div class="col-md-1 mb-3">
+                            <div class="col-4 col-md-1">
                                 <label class="form-label">Área</label>
                                 <input type="text" name="celular_area" id="celular_area" class="form-control" required>
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-8 col-md-2">
                                 <label class="form-label">Celular</label>
                                 <input type="text" name="celular" id="celular" class="form-control" required>
                             </div>
                             <!-- Email -->
-                            <div class="col-md-5 mb-3">
+                            <div class="col-12 col-md-5">
                                 <label class="form-label">E-mail</label>
                                 <input type="email" name="email" id="email" class="form-control" required>
                             </div>
                             <!-- Dirección -->
-                            <div class="col-md-4 mb-3">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label">Calle</label>
                                 <input type="text" name="calle" id="calle" class="form-control" required>
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-12 col-md-2">
                                 <label class="form-label">Nro</label>
                                 <input type="text" name="nro" id="nro" class="form-control" required>
                             </div>
-                            <div class="col-md-2 mb-3">
+                            <div class="col-12 col-md-2">
                                 <label class="form-label">CP</label>
                                 <input type="text" name="cp" id="cp" class="form-control" required>
                             </div>
@@ -337,13 +337,13 @@
 
 
                             <!-- Nacionalidad -->
-                            <div class="col-md-4 mb-3">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label">Nacionalidad</label>
                                 <input type="text" name="nacionalidad" id="nacionalidad" class="form-control" required>
                             </div>
 
                             <!-- Estado Civil -->
-                            <div class="col-md-3 mb-3">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label">Estado Civil</label>
                                 <select name="estado_civil" id="estado_civil" class="form-control" required>
                                     <option value="">
@@ -357,7 +357,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-12 col-lg-3" id="conyuge-container" style="display: none;">
+                            <div class="col-12 col-md-4" id="conyuge-container" style="display: none;">
                                 <div class="form-group">
                                     <label for="conyuge">Cónyuge</label>
                                     <input type="text" class="form-control" id="conyuge" name="conyuge" placeholder="Cónyuge" value="{{ old('conyuge') }}" required>
@@ -365,7 +365,7 @@
                             </div>
 
                             <!-- Cómo llegó -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Cómo llegó?</label>
                                 <select name="llego" id="llego" class="form-control" required>
                                     <option value="">
@@ -380,7 +380,7 @@
                             </div>
 
                             <!-- IVA -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Condición IVA</label>
                                 <select name="iva" id="iva" class="form-control" required>
                                     <option value="">

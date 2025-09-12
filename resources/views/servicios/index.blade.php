@@ -79,7 +79,7 @@
         </div>
         <div class="card-body pt-0">
             <div class="tab-content table-responsive">
-                <table id="example1" class="table table-striped table-hover table-sm nowrap w-100">
+                <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
                         <th scope="col">Nro.</th>
@@ -225,10 +225,10 @@
                             @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('servicio-editar')
-                                actionsHtml += '<a href="{{ route("servicios.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-right: 5px;"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                                actionsHtml += '<a href="{{ route("servicios.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
                                 @can('imprimir-orden-servicio')
-                                actionsHtml += '<a href="{{ route("servicios.pdf") }}?servicio_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
+                                actionsHtml += '<a href="{{ route("servicios.pdf") }}?servicio_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
                             @endcan
 
                             // Agregar formulario de eliminación si el servicio_ tiene permiso

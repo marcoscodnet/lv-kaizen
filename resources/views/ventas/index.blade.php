@@ -79,7 +79,7 @@
         </div>
         <div class="card-body pt-0">
             <div class="tab-content table-responsive">
-                <table id="example1" class="table table-striped table-hover table-sm nowrap w-100">
+                <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
 
@@ -105,7 +105,7 @@
         </div>
         <!-- Modal -->
         <div class="modal fade" id="modalArchivos" tabindex="-1" aria-labelledby="modalArchivosLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
                 <div class="modal-content">
                     <form id="form-descargar" method="GET" action="{{ route('ventas.boleto') }}" target="_blank">
                         <div class="modal-header">
@@ -179,6 +179,7 @@
                 responsive: true,
                 scrollX: true,
                 paging : true,
+
                 "ajax": {
                     "url": "{{ route('ventas.dataTable') }}",
                     "type": "POST",
@@ -258,12 +259,12 @@
                             @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('venta-editar')
-                                actionsHtml += '<a href="{{ route("ventas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-right: 5px;"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                                actionsHtml += '<a href="{{ route("ventas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
 
-                            /*actionsHtml += '<a href="{{ route("ventas.boleto") }}?venta_id=' + row.id + '" alt="Descargar boleto" title="Descargar boleto" target="_blank" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';*/
+                            /*actionsHtml += '<a href="{{ route("ventas.boleto") }}?venta_id=' + row.id + '" alt="Descargar boleto" title="Descargar boleto" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';*/
                             @can('imprimir-boleto')
-                            actionsHtml += '<a href="#" onclick="abrirModalArchivos(' + row.id + ')" alt="Descargar boleto" title="Descargar boleto" style="margin-right: 5px;" class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';
+                            actionsHtml += '<a href="#" onclick="abrirModalArchivos(' + row.id + ')" alt="Descargar boleto" title="Descargar boleto"  class="btn btn-link p-0"><span class="fas fa-file-contract text-500"></span></a>';
                             @endcan
 
 

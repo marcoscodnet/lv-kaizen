@@ -9,3 +9,6 @@ select.form-control {
     -moz-appearance: menulist;    /* Firefox */
     appearance: menulist;
 }
+#example1 td:last-child a {
+    margin-right: 0.1rem;  /* separa los iconos/botones */
+}

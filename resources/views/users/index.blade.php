@@ -35,7 +35,7 @@
     </div>
     <div class="card-body pt-0">
         <div class="tab-content">
-            <table id="example1" class="table table-striped table-hover table-sm nowrap w-100">
+            <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
                 <thead class="bg-200">
                 <tr>
 
