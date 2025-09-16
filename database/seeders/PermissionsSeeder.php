@@ -17,15 +17,11 @@ class PermissionsSeeder extends Seeder
         SqlLogger::startLogging();
 
         $permissions = [
-            'caja-abrir',
-            'caja-cerrar',
-            'caja-listar',
-            'caja-arqueo',
-            'caja-acreditar',
-            'caja-movimiento-registrar',
-            'caja-movimiento-editar',
-            'caja-movimiento-eliminar',
-            'caja-ver',
+            'medio-listar',
+            'medio-crear',
+            'medio-editar',
+            'medio-eliminar',
+            'medio-ver',
         ];
 
         foreach ($permissions as $permission) {

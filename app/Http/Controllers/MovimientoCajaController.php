@@ -42,7 +42,7 @@ class MovimientoCajaController extends Controller
         $request->validate([
             'caja_id' => 'required|exists:cajas,id',
             'concepto_id' => 'required|exists:conceptos,id',
-            'tipo' => 'required|in:ingreso,egreso',
+            'tipo' => 'required|in:Ingreso,Egreso',
             'monto' => 'required|numeric|min:0',
             'medio_id' => 'nullable|exists:medios,id',
             'venta_id' => 'nullable|integer',
@@ -72,44 +72,93 @@ class MovimientoCajaController extends Controller
     // Editar movimiento
     public function edit($movimiento_id)
     {
-        $mov = MovimientoCaja::findOrFail($movimiento_id);
+
+        $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
+
+        // 🔒 Bloquear si la caja ya está cerrada
+        if ($mov->caja->estado === 'Cerrada') {
+            return redirect()->back()->withErrors('No se pueden editar movimientos de una caja cerrada.');
+        }
+
+        // 🔒 Bloquear si ya está acreditado
+        if ($mov->acreditado) {
+            return redirect()->back()->withErrors('No se pueden editar movimientos acreditados.');
+        }
+
         $conceptos = Concepto::where('activo', true)->get();
         $medios = Medio::where('activo', true)->get();
 
         return view('movimiento_cajas.edit', compact('mov', 'conceptos', 'medios'));
     }
 
+
     // Actualizar movimiento
     public function update(Request $request, $movimiento_id)
     {
-        $mov = MovimientoCaja::findOrFail($movimiento_id);
+        $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
 
+        // 🔒 Validaciones de negocio
+        if ($mov->caja->estado === 'Cerrada') {
+            return redirect()->route('cajas.show', $mov->caja_id)
+                ->withErrors('No se pueden editar movimientos de una caja cerrada.');
+        }
+
+        if ($mov->acreditado) {
+            return redirect()->route('cajas.show', $mov->caja_id)
+                ->withErrors('No se pueden editar movimientos ya acreditados.');
+        }
+
+        // Validación de datos
         $request->validate([
             'concepto_id' => 'required|exists:conceptos,id',
-            'tipo' => 'required|in:ingreso,egreso',
+            'tipo' => 'required|in:Ingreso,Egreso',
             'monto' => 'required|numeric|min:0',
             'medio_id' => 'nullable|exists:medios,id',
             'venta_id' => 'nullable|integer',
             'acreditado' => 'nullable|boolean',
-            'referencia' => 'nullable|string|max:255'
+            'referencia' => 'nullable|string|max:255',
         ]);
 
-        $mov->update($request->only(['concepto_id','medio_id','venta_id','tipo','monto','acreditado','referencia']));
+        // Actualización
+        $mov->update($request->only([
+            'concepto_id',
+            'medio_id',
+            'venta_id',
+            'tipo',
+            'monto',
+            'acreditado',
+            'referencia'
+        ]));
 
         return redirect()->route('cajas.show', $mov->caja_id)
             ->with('success', 'Movimiento actualizado correctamente.');
     }
 
+
     // Eliminar movimiento
     public function destroy($movimiento_id)
     {
-        $mov = MovimientoCaja::findOrFail($movimiento_id);
+        $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
+
+        // Bloquear si la caja está cerrada
+        if ($mov->caja->estado === 'Cerrada') {
+            return redirect()->route('cajas.show', $mov->caja_id)
+                ->withErrors('No se pueden eliminar movimientos de una caja cerrada.');
+        }
+
+        // Bloquear si el movimiento ya está acreditado
+        if ($mov->acreditado) {
+            return redirect()->route('cajas.show', $mov->caja_id)
+                ->withErrors('No se pueden eliminar movimientos acreditados.');
+        }
+
         $caja_id = $mov->caja_id;
         $mov->delete();
 
         return redirect()->route('cajas.show', $caja_id)
             ->with('success', 'Movimiento eliminado correctamente.');
     }
+
 
     // Acreditar movimiento
     public function acreditar($movimiento_id)

@@ -11,12 +11,17 @@
             <h5><i class="fas fa-cash-register"></i> Caja #{{ $caja->id }} - {{ ucfirst($caja->estado) }}</h5>
             <div>
                 @if($caja->estado === 'Abierta')
-                    <a href="{{ route('cajas.cerrar', $caja->id) }}" class="btn btn-danger btn-sm"
-                       onclick="return confirm('¿Está seguro que desea cerrar la caja?')">Cerrar Caja</a>
+                    <form action="{{ route('cajas.cerrar', $caja->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('¿Está seguro que desea cerrar la caja?')">
+                            Cerrar Caja
+                        </button>
+                    </form>
                 @endif
             </div>
         </div>
-
+        @include('includes.messages')
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-3">
@@ -73,20 +78,40 @@
                             <td>{{ $mov->venta_id ?? '-' }}</td>
                             <td>{{ ucfirst($mov->tipo) }}</td>
                             <td>${{ number_format($mov->monto, 2) }}</td>
-                            <td>{{ $mov->acreditado ? 'Sí' : 'No' }}</td>
+                            <td>
+                                @if($mov->tipo === 'Ingreso')
+                                    {{ $mov->acreditado ? 'Sí' : 'No' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
                             <td>
                                 @can('caja-movimiento-editar')
-                                    <a href="{{ route('movimientos.edit', $mov->id) }}" class="btn btn-link p-0" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span>
+                                    <a href="{{ route('movimiento_cajas.edit', $mov->id) }}" class="btn btn-link p-0" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top">
+                                        <span class="text-500 fas fa-edit"></span>
+                                    </a>
                                 @endcan
+                                    @can('caja-acreditar')
+                                        @if($mov->tipo === 'Ingreso' && !$mov->acreditado && $caja->estado === 'Abierta')
+                                            <form action="{{ route('movimiento_cajas.acreditar', $mov->id) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" onclick="return confirm('¿Acreditar este movimiento?')" title="Acreditar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top">
+                                                    <span class="text-500 fas fa-check"></span>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endcan
                                 @can('caja-movimiento-eliminar')
-                                    <form action="{{ route('movimientos.destroy', $mov->id) }}" method="POST" style="display:inline;">
+                                    <form action="{{ route('movimiento_cajas.destroy', $mov->id) }}" method="POST" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" onclick="return confirm('¿Eliminar este movimiento?')" title="Eliminar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span>
-
+                                        <button type="submit" onclick="return confirm('¿Eliminar este movimiento?')" title="Eliminar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top">
+                                            <span class="text-500 fas fa-trash-alt"></span>
                                         </button>
                                     </form>
                                 @endcan
+
 
 
 

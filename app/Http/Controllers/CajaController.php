@@ -11,6 +11,10 @@ use App\Models\Concepto;
 use App\Models\Medio;
 use App\Models\Venta;
 use DB;
+use PDF;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class CajaController extends Controller
 {
     use SanitizesInput;
@@ -152,7 +156,7 @@ class CajaController extends Controller
                 'user_id' => auth()->id(),
                 'apertura' => now(),
                 'inicial' => $request->inicial,
-                'estado' => 'abierta',
+                'estado' => 'Abierta',
             ]);
 
             // Crear el movimiento de apertura
@@ -192,22 +196,24 @@ class CajaController extends Controller
 
 
 
-    // Cerrar caja
+    // Cerrar caja automáticamente
     public function cerrar($id)
     {
         $caja = Caja::with('movimientos')->findOrFail($id);
 
-        $totalIngresos = $caja->movimientos()->where('tipo','ingreso')->where('acreditado',true)->sum('monto');
-        $totalEgresos  = $caja->movimientos()->where('tipo','egreso')->sum('monto');
+        // Calcular monto final automáticamente (sin sumar el inicial)
+        $ingresosAcreditados = $caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto');
+        $egresos = $caja->movimientos->where('tipo', 'Egreso')->sum('monto');
 
-        $caja->update([
-            'final' => $caja->inicial + $totalIngresos - $totalEgresos,
-            'cierre' => now(),
-            'estado' => 'cerrada'
-        ]);
+        $caja->final = $ingresosAcreditados - $egresos;
+        $caja->cierre = now();
+        $caja->estado = 'Cerrada';
+        $caja->save();
 
-        return redirect()->route('cajas.index')->with('success','Caja cerrada correctamente.');
+        return redirect()->route('cajas.arqueo', $caja->id)
+            ->with('success', 'Caja cerrada correctamente.');
     }
+
 
     // Mostrar arqueo de la caja
     public function arqueo($id)
@@ -223,6 +229,103 @@ class CajaController extends Controller
 
         return view('cajas.arqueo', compact('caja','totales'));
     }
+
+    public function generateArqueoPDF($cajaId, $attach = false)
+    {
+        $caja = Caja::with('movimientos.concepto', 'movimientos.medio', 'user', 'sucursal')->findOrFail($cajaId);
+
+        $data = [
+            'caja' => $caja
+        ];
+
+        $pdf = PDF::loadView('cajas.arqueo_pdf', $data);
+
+        $pdfPath = 'Arqueo_Caja_' . $cajaId . '.pdf';
+
+        if ($attach) {
+            $fullPath = public_path('/temp/' . $pdfPath);
+            $pdf->save($fullPath);
+            return $fullPath;
+        } else {
+            return $pdf->download($pdfPath);
+        }
+    }
+
+    public function generateArqueoExcel($cajaId)
+    {
+        $caja = Caja::with('movimientos.concepto', 'movimientos.medio', 'user', 'sucursal')->findOrFail($cajaId);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Encabezado similar al PDF
+        $sheet->setCellValue('A1', "Arqueo Caja #{$caja->id}");
+        $sheet->setCellValue('A2', "Sucursal: {$caja->sucursal->nombre}");
+        $sheet->setCellValue('A3', "Apertura: " . $caja->apertura->format('d/m/Y H:i'));
+        $sheet->setCellValue('A4', "Usuario: {$caja->user->name}");
+        $sheet->setCellValue('A5', "Estado: " . ucfirst($caja->estado));
+        $sheet->setCellValue('A6', "Monto Inicial: $" . number_format($caja->inicial, 2));
+
+        if($caja->estado === 'Cerrada'){
+            $sheet->setCellValue('A7', "Monto Final: $" . number_format($caja->final, 2));
+            $startRow = 9; // Tabla comienza debajo del encabezado
+        } else {
+            $startRow = 8;
+        }
+
+        // Encabezados de la tabla
+        $sheet->setCellValue('A'.$startRow, 'Fecha');
+        $sheet->setCellValue('B'.$startRow, 'Concepto');
+        $sheet->setCellValue('C'.$startRow, 'Medio');
+        $sheet->setCellValue('D'.$startRow, 'Tipo');
+        $sheet->setCellValue('E'.$startRow, 'Monto');
+        $sheet->setCellValue('F'.$startRow, 'Acreditado');
+
+        $row = $startRow + 1;
+
+        foreach($caja->movimientos as $mov){
+            $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i'));
+            $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
+            $sheet->setCellValue('C'.$row, optional($mov->medio)->nombre ?? '-');
+            $sheet->setCellValue('D'.$row, ucfirst($mov->tipo));
+            $sheet->setCellValue('E'.$row, $mov->monto);
+            $sheet->setCellValue('F'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');
+            $row++;
+        }
+
+        // Totales al final
+        $totalIngresos = $caja->movimientos->where('tipo','Ingreso')->where('acreditado',true)->sum('monto');
+        $totalEgresos = $caja->movimientos->where('tipo','Egreso')->sum('monto');
+        $saldo = $totalIngresos - $totalEgresos;
+
+        $sheet->setCellValue('D'.$row, 'Total Ingresos Acreditados:');
+        $sheet->setCellValue('E'.$row, $totalIngresos);
+        $row++;
+        $sheet->setCellValue('D'.$row, 'Total Egresos:');
+        $sheet->setCellValue('E'.$row, $totalEgresos);
+        $row++;
+        $sheet->setCellValue('D'.$row, 'Saldo Actual:');
+        $sheet->setCellValue('E'.$row, $saldo);
+
+        // Formato de moneda
+        $sheet->getStyle('E'.($startRow+1).':E'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+
+        // Autoajustar ancho de columnas
+        foreach(range('A','F') as $col){
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'arqueo_caja_'.$caja->id.'_'.date('Ymd_His').'.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="'.$filename.'"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
 
 
 }

@@ -15,7 +15,7 @@ class MovimientoCaja extends Model
         'concepto_id',
         'tipo',
         'monto',
-        'medio',
+        'medio_id',
         'referencia',
         'acreditado',
         'fecha',

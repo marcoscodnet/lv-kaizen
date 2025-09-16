@@ -181,21 +181,27 @@
                         @endcan
 
                         @can('caja-movimiento-registrar')
-                            <a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
+                            <!--<a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span>
                                     <span class="nav-link-text ps-1">Movimientos</span>
                                 </div>
-                            </a>
+                            </a>-->
                         @endcan
 
+                        @php
+                            $cajaAbierta = \App\Models\Caja::where('estado', 'Abierta')->first();
+                        @endphp
+
                         @can('caja-arqueo')
-                            <a class="nav-link" href="{{ route('cajas.arqueo.actual') }}" role="button">
-                                <div class="d-flex align-items-center">
-                                    <span class="nav-link-icon"><span class="fas fa-chart-line"></span></span>
-                                    <span class="nav-link-text ps-1">Arqueo</span>
-                                </div>
-                            </a>
+                            @if($cajaAbierta)
+                                <a class="nav-link" href="{{ route('cajas.arqueo.actual') }}" role="button">
+                                    <div class="d-flex align-items-center">
+                                        <span class="nav-link-icon"><span class="fas fa-chart-line"></span></span>
+                                        <span class="nav-link-text ps-1">Arqueo</span>
+                                    </div>
+                                </a>
+                            @endif
                         @endcan
                     </li>
                     <li class="nav-item">

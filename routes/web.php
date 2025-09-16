@@ -146,6 +146,14 @@ Route::group(['middleware' => ['auth']], function() {
         // 📌 Arqueo de Cajas
         Route::get('arqueo/actual', [CajaController::class, 'arqueoActual'])->name('arqueo.actual');
         Route::get('arqueo/{caja}', [CajaController::class, 'arqueo'])->name('arqueo');
+
+        // 📌 Exportar Arqueo PDF
+        Route::get('arqueo/{caja}/export-pdf', [CajaController::class, 'generateArqueoPDF'])->name('arqueo.export.pdf');
+
+// 📌 Exportar Arqueo Excel
+        Route::get('arqueo/{caja}/export-excel', [CajaController::class, 'generateArqueoExcel'])->name('arqueo.export.excel');
+
+
     });
 
 // 📌 Movimientos de Caja
@@ -153,9 +161,18 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('/', [MovimientoCajaController::class, 'index'])->name('index');
         Route::get('create/{caja}', [MovimientoCajaController::class, 'create'])->name('create');
         Route::post('store', [MovimientoCajaController::class, 'store'])->name('store');
-        Route::post('registrar', [MovimientoCajaController::class, 'registrar'])->name('registrar');
+
+        // EDITAR
+        Route::get('edit/{movimiento}', [MovimientoCajaController::class, 'edit'])->name('edit');
+        Route::put('update/{movimiento}', [MovimientoCajaController::class, 'update'])->name('update');
+
+        // ELIMINAR
+        Route::delete('destroy/{movimiento}', [MovimientoCajaController::class, 'destroy'])->name('destroy');
+
+        // Acreditar
         Route::post('acreditar/{movimiento}', [MovimientoCajaController::class, 'acreditar'])->name('acreditar');
     });
+
 
 
 
