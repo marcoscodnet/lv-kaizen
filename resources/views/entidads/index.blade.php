@@ -52,7 +52,7 @@
 
                             <td>{{ $entidad->nombre }}</td>
                             <td>{{ $entidad->activa?'SI':'NO' }}</td>
-                            <td class="text-end"><div>
+                            <td ><div>
 
                                     {{-- Botón Ver (lupa) --}}
                                     @can('entidad-ver')

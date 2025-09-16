@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateConceptosTable extends Migration
+class CreateMediosTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,12 @@ class CreateConceptosTable extends Migration
      */
     public function up()
     {
-        Schema::create('conceptos', function (Blueprint $table) {
+        Schema::create('medios', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->enum('tipo', ['Suma', 'Resta']);
             $table->boolean('ticket')->default(false);
             $table->boolean('referencia')->default(false);
-            $table->boolean('credito')->default(false);
+            $table->boolean('tangible')->default(false);
             $table->boolean('activo')->default(true);
             $table->timestamps();
         });
@@ -32,6 +31,6 @@ class CreateConceptosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('conceptos');
+        Schema::dropIfExists('medios');
     }
 }

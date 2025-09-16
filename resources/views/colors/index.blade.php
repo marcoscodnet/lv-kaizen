@@ -48,7 +48,7 @@
 
                             <td>{{ $color->nombre }}</td>
 
-                            <td class="text-end"><div>
+                            <td ><div>
                                     {{-- Botón Ver (lupa) --}}
                                     @can('color-ver')
                                         <a class="btn btn-link p-0"

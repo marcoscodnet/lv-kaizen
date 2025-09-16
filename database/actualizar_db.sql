@@ -829,3 +829,6 @@ WHERE 1
 UPDATE stock_piezas
 SET inicial = cantidad
 WHERE inicial IS NULL;
+
+###############################################15/09/2025#################################################
+ALTER TABLE movimiento_cajas MODIFY medio_id INT NULL;

@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'suma' => 'suma',
-    'resta' => 'resta'
+    'Suma' => 'Suma',
+    'Resta' => 'Resta'
 ];

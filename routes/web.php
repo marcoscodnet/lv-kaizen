@@ -24,6 +24,10 @@ use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\ConceptoController;
+use App\Http\Controllers\MedioController;
+use App\Http\Controllers\CajaController;
+use App\Http\Controllers\MovimientoCajaController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -128,6 +132,32 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('unidadsvendidas-datatable', [ServicioController::class, 'unidadDataTable'])->name('unidadsvendidas.dataTable');
 
     Route::resource('conceptos', ConceptoController::class);
+    Route::resource('medios', MedioController::class);
+
+    // 📌 Cajas
+    Route::prefix('cajas')->name('cajas.')->group(function () {
+        Route::get('/', [CajaController::class, 'index'])->name('index');
+        Route::post('datatable', [CajaController::class, 'dataTable'])->name('dataTable');
+        Route::get('abrir', [CajaController::class, 'abrir'])->name('abrir');
+        Route::post('store', [CajaController::class, 'store'])->name('store');
+        Route::post('cerrar/{caja}', [CajaController::class, 'cerrar'])->name('cerrar');
+        Route::get('{caja}', [CajaController::class, 'show'])->name('show');
+
+        // 📌 Arqueo de Cajas
+        Route::get('arqueo/actual', [CajaController::class, 'arqueoActual'])->name('arqueo.actual');
+        Route::get('arqueo/{caja}', [CajaController::class, 'arqueo'])->name('arqueo');
+    });
+
+// 📌 Movimientos de Caja
+    Route::prefix('movimientos-caja')->name('movimiento_cajas.')->group(function () {
+        Route::get('/', [MovimientoCajaController::class, 'index'])->name('index');
+        Route::get('create/{caja}', [MovimientoCajaController::class, 'create'])->name('create');
+        Route::post('store', [MovimientoCajaController::class, 'store'])->name('store');
+        Route::post('registrar', [MovimientoCajaController::class, 'registrar'])->name('registrar');
+        Route::post('acreditar/{movimiento}', [MovimientoCajaController::class, 'acreditar'])->name('acreditar');
+    });
+
+
 
 });
 

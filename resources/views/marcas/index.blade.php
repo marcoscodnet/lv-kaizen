@@ -52,7 +52,7 @@
 
                             <td>{{ $marca->nombre }}</td>
 
-                            <td class="text-end"><div>
+                            <td ><div>
                                     {{-- Botón Ver (lupa) --}}
                                     @can('marca-ver')
                                         <a class="btn btn-link p-0"

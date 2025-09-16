@@ -87,11 +87,11 @@
                             </div>
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
-                                    <input type="hidden" name="activa" value="0">
-                                    <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"
-                                        {{ old('activa', $concepto->activa ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="activa">
-                                        Activa
+                                    <input type="hidden" name="activo" value="0">
+                                    <input class="form-check-input" type="checkbox" id="activo" name="activo" value="1"
+                                        {{ old('activo', $concepto->activo ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="activo">
+                                        Activo
                                     </label>
                                 </div>
 

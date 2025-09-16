@@ -60,7 +60,7 @@
                             <td>{{ $concepto->referencia?'SI':'NO' }}</td>
                             <td>{{ $concepto->credito?'SI':'NO' }}</td>
                             <td>{{ $concepto->activo?'SI':'NO' }}</td>
-                            <td class="text-end"><div>
+                            <td ><div>
 
                                     {{-- Botón Ver (lupa) --}}
                                     @can('concepto-ver')

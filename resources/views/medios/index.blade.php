@@ -12,18 +12,22 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-layer-group" aria-hidden="true"></i><span class="ms-2">Tipos de Unidades</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-credit-card" aria-hidden="true"></i><span class="ms-2">Medios de Pago</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
-                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('tipoUnidads.create') }}">
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('medios.create') }}">
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
 
                     </div>
                 </div>
+
+
+
+
             </div>
             @include('includes.messages')
         </div>
@@ -36,6 +40,10 @@
 
                         <th scope="col">Nombre</th>
 
+                        <th scope="col">Ticket</th>
+                        <th scope="col">Referencia</th>
+                        <th scope="col">Tangible</th>
+                        <th scope="col">Activo</th>
 
 
                         <th scope="col">Acciones</th>
@@ -43,16 +51,21 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach ($tipoUnidads as $tipoUnidad)
+                    @foreach ($medios as $medio)
                         <tr>
 
-                            <td>{{ $tipoUnidad->nombre }}</td>
+                            <td>{{ $medio->nombre }}</td>
 
+                            <td>{{ $medio->ticket?'SI':'NO' }}</td>
+                            <td>{{ $medio->referencia?'SI':'NO' }}</td>
+                            <td>{{ $medio->tangible?'SI':'NO' }}</td>
+                            <td>{{ $medio->activo?'SI':'NO' }}</td>
                             <td ><div>
+
                                     {{-- Botón Ver (lupa) --}}
-                                    @can('tipo-unidad-ver')
+                                    @can('medio-ver')
                                         <a class="btn btn-link p-0"
-                                           href="{{ route('tipoUnidads.show', $tipoUnidad->id) }}"
+                                           href="{{ route('medios.show', $medio->id) }}"
                                            alt="Ver"
                                            title="Ver"
                                            data-bs-toggle="tooltip"
@@ -61,10 +74,10 @@
                                         </a>
                                     @endcan
 
-                                    @can('tipo-unidad-editar')<a href="{{ route('tipoUnidads.edit',$tipoUnidad->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                                    @can('medio-editar')<a class="btn btn-link p-0" href="{{ route('medios.edit',$medio->id) }}" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
-                                @can('tipo-unidad-eliminar')
-                                    <form id="delete-form-{{ $tipoUnidad->id }}" method="post" action="{{ route('tipoUnidads.destroy',$tipoUnidad->id) }}" style="display: none">
+                                @can('medio-eliminar')
+                                    <form id="delete-form-{{ $medio->id }}" method="post" action="{{ route('medios.destroy',$medio->id) }}" style="display: none">
                                         {{ csrf_field() }}
                                         {{ method_field('DELETE') }}
                                     </form>
@@ -73,12 +86,17 @@
                         if(confirm('Está seguro?'))
                         {
                         event.preventDefault();
-                        document.getElementById('delete-form-{{ $tipoUnidad->id }}').submit();
+                        document.getElementById('delete-form-{{ $medio->id }}').submit();
                         }
                         else{
                         event.preventDefault();
-                        }" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Eliminar"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
-                                </div></td>
+                        }" alt="Eliminar" title="Eliminar" class="btn btn-link p-0" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-trash-alt"></span></a>@endcan
+
+
+
+
+
+                            </div></td>
 
                         </tr>
                     @endforeach

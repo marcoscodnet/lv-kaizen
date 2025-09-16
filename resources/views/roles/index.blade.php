@@ -46,7 +46,7 @@
                         <tr>
 
                             <td>{{ $role->name }}</td>
-                            <td class="text-end"><div>@can('rol-editar')<a href="{{ route('roles.edit',$role->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
+                            <td ><div>@can('rol-editar')<a href="{{ route('roles.edit',$role->id) }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>@endcan
 
                                 @can('rol-eliminar')
                                     <form id="delete-form-{{ $role->id }}" method="post" action="{{ route('roles.destroy',$role->id) }}" style="display: none">

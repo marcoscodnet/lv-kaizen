@@ -53,7 +53,7 @@
                             <td>{{ $sucursal->telefono }}</td>
                             <td>{{ $sucursal->localidad->nombre }}</td>
                             <td>{{ $sucursal->activa?'SI':'NO' }}</td>
-                            <td class="text-end"><div>
+                            <td ><div>
                                     {{-- Botón Ver (lupa) --}}
                                     @can('sucursal-ver')
                                         <a class="btn btn-link p-0"

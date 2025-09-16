@@ -49,12 +49,12 @@ class VentaController extends Controller
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('Todos', '-1');
-        $ventas = Venta::all();
+        //$ventas = Venta::all();
         $documentos = Documento::where('habilitado', 1)
             ->orderBy('orden')
             ->get();
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
-        return view ('ventas.index',compact('ventas','documentos','users','sucursals'));
+        return view ('ventas.index',compact('documentos','users','sucursals'));
     }
 
 

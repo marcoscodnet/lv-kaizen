@@ -81,6 +81,12 @@
                             </div>
                         </a>
                     @endcan
+                    @can('medio-listar')
+                        <a class="nav-link" href="{{ route('medios.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-credit-card"></span></span><span class="nav-link-text ps-1">Medios de pago</span>
+                            </div>
+                        </a>
+                    @endcan
                     @can('modelo-listar')
                         <a class="nav-link" href="{{ route('modelos.index') }}" role="button">
                             <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cubes"></span></span><span class="nav-link-text ps-1">Modelos</span>
@@ -154,6 +160,43 @@
                             </a>
                         @endcan
 
+                    </li>
+                    <li class="nav-item">
+                        <!-- label-->
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">Caja / Finanzas
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider" />
+                            </div>
+                        </div>
+
+                        @can('caja-listar')
+                            <a class="nav-link" href="{{ route('cajas.index') }}" role="button">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon"><span class="fas fa-cash-register"></span></span>
+                                    <span class="nav-link-text ps-1">Cajas</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                        @can('caja-movimiento-registrar')
+                            <a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span>
+                                    <span class="nav-link-text ps-1">Movimientos</span>
+                                </div>
+                            </a>
+                        @endcan
+
+                        @can('caja-arqueo')
+                            <a class="nav-link" href="{{ route('cajas.arqueo.actual') }}" role="button">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon"><span class="fas fa-chart-line"></span></span>
+                                    <span class="nav-link-text ps-1">Arqueo</span>
+                                </div>
+                            </a>
+                        @endcan
                     </li>
                     <li class="nav-item">
                         <!-- label-->
