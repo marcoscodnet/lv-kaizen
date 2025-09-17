@@ -15,7 +15,7 @@ class MovimientoCaja extends Model
         'concepto_id',
         'tipo',
         'monto',
-        'medio_id',
+        'entidad_id',
         'referencia',
         'acreditado',
         'fecha',
@@ -40,8 +40,8 @@ class MovimientoCaja extends Model
         return $this->belongsTo(Concepto::class);
     }
 
-    public function medio()
+    public function entidad()
     {
-        return $this->belongsTo(Medio::class);
+        return $this->belongsTo(Entidad::class);
     }
 }

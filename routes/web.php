@@ -24,7 +24,6 @@ use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\ConceptoController;
-use App\Http\Controllers\MedioController;
 use App\Http\Controllers\CajaController;
 use App\Http\Controllers\MovimientoCajaController;
 
@@ -132,7 +131,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('unidadsvendidas-datatable', [ServicioController::class, 'unidadDataTable'])->name('unidadsvendidas.dataTable');
 
     Route::resource('conceptos', ConceptoController::class);
-    Route::resource('medios', MedioController::class);
+
 
     // 📌 Cajas
     Route::prefix('cajas')->name('cajas.')->group(function () {

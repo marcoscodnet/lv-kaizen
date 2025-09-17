@@ -81,12 +81,7 @@
                             </div>
                         </a>
                     @endcan
-                    @can('medio-listar')
-                        <a class="nav-link" href="{{ route('medios.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-credit-card"></span></span><span class="nav-link-text ps-1">Medios de pago</span>
-                            </div>
-                        </a>
-                    @endcan
+
                     @can('modelo-listar')
                         <a class="nav-link" href="{{ route('modelos.index') }}" role="button">
                             <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cubes"></span></span><span class="nav-link-text ps-1">Modelos</span>

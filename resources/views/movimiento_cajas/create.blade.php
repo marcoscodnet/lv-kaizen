@@ -28,12 +28,12 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label for="medio_id" class="form-label">Medio de Pago</label>
-                        <select name="medio_id" id="medio_id" class="form-control select2">
+                        <label for="entidad_id" class="form-label">Entidad</label>
+                        <select name="entidad_id" id="entidad_id" class="form-control select2">
                             <option value="">Seleccione</option>
-                            @foreach($medios as $medio)
-                                <option value="{{ $medio->id }}" {{ old('medio_id') == $medio->id ? 'selected' : '' }}>
-                                    {{ $medio->nombre }}
+                            @foreach($entidads as $entidad)
+                                <option value="{{ $entidad->id }}" {{ old('entidad_id') == $entidad->id ? 'selected' : '' }}>
+                                    {{ $entidad->nombre }}
                                 </option>
                             @endforeach
                         </select>

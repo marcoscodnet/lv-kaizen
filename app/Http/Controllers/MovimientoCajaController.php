@@ -6,11 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\MovimientoCaja;
 use App\Models\Caja;
 use App\Models\Concepto;
-use App\Models\Medio;
+use App\Models\Entidad;
 use DB;
-
+use App\Traits\SanitizesInput;
 class MovimientoCajaController extends Controller
 {
+    use SanitizesInput;
     public function __construct()
     {
         $this->middleware('permission:caja-movimiento-registrar', ['only' => ['create','store']]);
@@ -22,7 +23,7 @@ class MovimientoCajaController extends Controller
     // Listado de movimientos (opcional)
     public function index()
     {
-        $movimientos = MovimientoCaja::with(['caja', 'concepto', 'medio'])->latest()->get();
+        $movimientos = MovimientoCaja::with(['caja', 'concepto', 'entidad'])->latest()->get();
         return view('movimiento_cajas.index', compact('movimientos'));
     }
 
@@ -31,9 +32,9 @@ class MovimientoCajaController extends Controller
     {
         $caja = Caja::findOrFail($caja_id);
         $conceptos = Concepto::where('activo', true)->get();
-        $medios = Medio::where('activo', true)->get();
+        $entidads = Entidad::where('activa', true)->get();
 
-        return view('movimiento_cajas.create', compact('caja', 'conceptos', 'medios'));
+        return view('movimiento_cajas.create', compact('caja', 'conceptos', 'entidads'));
     }
 
     // Guardar movimiento
@@ -44,7 +45,7 @@ class MovimientoCajaController extends Controller
             'concepto_id' => 'required|exists:conceptos,id',
             'tipo' => 'required|in:Ingreso,Egreso',
             'monto' => 'required|numeric|min:0',
-            'medio_id' => 'nullable|exists:medios,id',
+            'entidad_id' => 'nullable|exists:entidads,id',
             'venta_id' => 'nullable|integer',
             'acreditado' => 'nullable|boolean',
             'referencia' => 'nullable|string|max:255'
@@ -52,17 +53,18 @@ class MovimientoCajaController extends Controller
 
         DB::transaction(function () use ($request) {
             MovimientoCaja::create([
-                'caja_id' => $request->caja_id,
-                'concepto_id' => $request->concepto_id,
-                'medio_id' => $request->medio_id,
-                'venta_id' => $request->venta_id,
-                'tipo' => $request->tipo,
-                'monto' => $request->monto,
+                'caja_id' => $this->sanitizeInput($request->caja_id),
+                'concepto_id' => $this->sanitizeInput($request->concepto_id),
+                'entidad_id' => $this->sanitizeInput($request->entidad_id),
+                'venta_id' => $this->sanitizeInput($request->venta_id),
+                'tipo' => $this->sanitizeInput($request->tipo),
+                'monto' => $this->sanitizeInput($request->monto),
                 'acreditado' => $request->acreditado ?? true,
                 'fecha' => now(),
-                'referencia' => $request->referencia,
+                'referencia' => $this->sanitizeInput($request->referencia),
                 'user_id' => auth()->id(),
             ]);
+
         });
 
         return redirect()->route('cajas.show', $request->caja_id)
@@ -86,9 +88,9 @@ class MovimientoCajaController extends Controller
         }
 
         $conceptos = Concepto::where('activo', true)->get();
-        $medios = Medio::where('activo', true)->get();
+        $entidads = Entidad::where('activa', true)->get();
 
-        return view('movimiento_cajas.edit', compact('mov', 'conceptos', 'medios'));
+        return view('movimiento_cajas.edit', compact('mov', 'conceptos', 'entidads'));
     }
 
 
@@ -113,22 +115,23 @@ class MovimientoCajaController extends Controller
             'concepto_id' => 'required|exists:conceptos,id',
             'tipo' => 'required|in:Ingreso,Egreso',
             'monto' => 'required|numeric|min:0',
-            'medio_id' => 'nullable|exists:medios,id',
+            'entidad_id' => 'nullable|exists:entidads,id',
             'venta_id' => 'nullable|integer',
             'acreditado' => 'nullable|boolean',
             'referencia' => 'nullable|string|max:255',
         ]);
 
         // Actualización
-        $mov->update($request->only([
-            'concepto_id',
-            'medio_id',
-            'venta_id',
-            'tipo',
-            'monto',
-            'acreditado',
-            'referencia'
-        ]));
+        $mov->update([
+            'concepto_id' => $this->sanitizeInput($request->concepto_id),
+            'entidad_id' => $this->sanitizeInput($request->entidad_id),
+            'venta_id' => $this->sanitizeInput($request->venta_id),
+            'tipo' => $this->sanitizeInput($request->tipo),
+            'monto' => $this->sanitizeInput($request->monto),
+            'acreditado' => $request->acreditado,
+            'referencia' => $this->sanitizeInput($request->referencia),
+        ]);
+
 
         return redirect()->route('cajas.show', $mov->caja_id)
             ->with('success', 'Movimiento actualizado correctamente.');

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
-use App\Models\Medio;
+use App\Models\Entidad;
 use App\Models\Venta;
 use DB;
 use PDF;
@@ -150,21 +150,23 @@ class CajaController extends Controller
         DB::beginTransaction();
 
         try {
-            // Crear la caja
+            $inicial = $this->sanitizeInput($request->input('inicial'));
+
             $caja = Caja::create([
-                'sucursal_id' => $request->sucursal_id,
+                'sucursal_id' => $this->sanitizeInput($request->input('sucursal_id')),
                 'user_id' => auth()->id(),
                 'apertura' => now(),
-                'inicial' => $request->inicial,
+                'inicial' => $inicial,
                 'estado' => 'Abierta',
             ]);
+
 
             // Crear el movimiento de apertura
             $conceptoApertura = Concepto::firstOrCreate(['nombre' => 'Apertura']);
             MovimientoCaja::create([
                 'caja_id' => $caja->id,
                 'concepto_id' => $conceptoApertura->id,
-                'medio_id' => null,
+                'entidad_id' => null,
                 'venta_id' => null,
                 'tipo' => 'ingreso',
                 'monto' => $request->inicial,
@@ -188,10 +190,10 @@ class CajaController extends Controller
     // Ver caja abierta
     public function show($id)
     {
-        $caja = Caja::with(['movimientos.concepto','movimientos.medio','movimientos.venta'])->findOrFail($id);
+        $caja = Caja::with(['movimientos.concepto','movimientos.entidad','movimientos.venta'])->findOrFail($id);
         $conceptos = Concepto::where('activo',true)->get();
-        $medios = Medio::where('activo',true)->get();
-        return view('cajas.show', compact('caja','conceptos','medios'));
+        $entidads = Entidad::where('activa',true)->get();
+        return view('cajas.show', compact('caja','conceptos','entidads'));
     }
 
 
@@ -218,7 +220,7 @@ class CajaController extends Controller
     // Mostrar arqueo de la caja
     public function arqueo($id)
     {
-        $caja = Caja::with(['movimientos.concepto','movimientos.medio','movimientos.venta'])->findOrFail($id);
+        $caja = Caja::with(['movimientos.concepto','movimientos.entidad','movimientos.venta'])->findOrFail($id);
 
         // Totales separados por tipo y acreditado
         $totales = [
@@ -232,7 +234,7 @@ class CajaController extends Controller
 
     public function generateArqueoPDF($cajaId, $attach = false)
     {
-        $caja = Caja::with('movimientos.concepto', 'movimientos.medio', 'user', 'sucursal')->findOrFail($cajaId);
+        $caja = Caja::with('movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal')->findOrFail($cajaId);
 
         $data = [
             'caja' => $caja
@@ -253,7 +255,7 @@ class CajaController extends Controller
 
     public function generateArqueoExcel($cajaId)
     {
-        $caja = Caja::with('movimientos.concepto', 'movimientos.medio', 'user', 'sucursal')->findOrFail($cajaId);
+        $caja = Caja::with('movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal')->findOrFail($cajaId);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -276,7 +278,7 @@ class CajaController extends Controller
         // Encabezados de la tabla
         $sheet->setCellValue('A'.$startRow, 'Fecha');
         $sheet->setCellValue('B'.$startRow, 'Concepto');
-        $sheet->setCellValue('C'.$startRow, 'Medio');
+        $sheet->setCellValue('C'.$startRow, 'Entidad');
         $sheet->setCellValue('D'.$startRow, 'Tipo');
         $sheet->setCellValue('E'.$startRow, 'Monto');
         $sheet->setCellValue('F'.$startRow, 'Acreditado');
@@ -286,7 +288,7 @@ class CajaController extends Controller
         foreach($caja->movimientos as $mov){
             $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i'));
             $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
-            $sheet->setCellValue('C'.$row, optional($mov->medio)->nombre ?? '-');
+            $sheet->setCellValue('C'.$row, optional($mov->entidad)->nombre ?? '-');
             $sheet->setCellValue('D'.$row, ucfirst($mov->tipo));
             $sheet->setCellValue('E'.$row, $mov->monto);
             $sheet->setCellValue('F'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');

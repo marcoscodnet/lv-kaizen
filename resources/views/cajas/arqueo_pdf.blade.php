@@ -13,7 +13,7 @@
     <tr>
         <th>Fecha</th>
         <th>Concepto</th>
-        <th>Medio</th>
+        <th>Entidad</th>
         <th>Tipo</th>
         <th>Monto</th>
         <th>Acreditado</th>
@@ -24,7 +24,7 @@
         <tr>
             <td>{{ $mov->fecha->format('d/m/Y H:i') }}</td>
             <td>{{ optional($mov->concepto)->nombre ?? '-' }}</td>
-            <td>{{ optional($mov->medio)->nombre ?? '-' }}</td>
+            <td>{{ optional($mov->entidad)->nombre ?? '-' }}</td>
             <td>{{ ucfirst($mov->tipo) }}</td>
             <td>${{ number_format($mov->monto,2) }}</td>
             <td>{{ $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-' }}</td>
