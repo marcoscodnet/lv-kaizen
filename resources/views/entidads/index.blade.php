@@ -39,6 +39,9 @@
 
 
                         <th scope="col">Nombre</th>
+                        <th scope="col">Ticket</th>
+                        <th scope="col">Referencia</th>
+                        <th scope="col">Tangible</th>
                         <th scope="col">Activa</th>
 
 
@@ -51,6 +54,9 @@
                         <tr>
 
                             <td>{{ $entidad->nombre }}</td>
+                            <td>{{ $entidad->ticket?'SI':'NO' }}</td>
+                            <td>{{ $entidad->referencia?'SI':'NO' }}</td>
+                            <td>{{ $entidad->tangible?'SI':'NO' }}</td>
                             <td>{{ $entidad->activa?'SI':'NO' }}</td>
                             <td ><div>
 

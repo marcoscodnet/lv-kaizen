@@ -263,13 +263,13 @@ class CajaController extends Controller
         // Encabezado similar al PDF
         $sheet->setCellValue('A1', "Arqueo Caja #{$caja->id}");
         $sheet->setCellValue('A2', "Sucursal: {$caja->sucursal->nombre}");
-        $sheet->setCellValue('A3', "Apertura: " . $caja->apertura->format('d/m/Y H:i'));
+        $sheet->setCellValue('A3', "Apertura: " . $caja->apertura->format('d/m/Y H:i:s'));
         $sheet->setCellValue('A4', "Usuario: {$caja->user->name}");
         $sheet->setCellValue('A5', "Estado: " . ucfirst($caja->estado));
-        $sheet->setCellValue('A6', "Monto Inicial: $" . number_format($caja->inicial, 2));
+        $sheet->setCellValue('A6', "Monto Inicial: $" . number_format($caja->inicial, 2, ',', '.'));
 
         if($caja->estado === 'Cerrada'){
-            $sheet->setCellValue('A7', "Monto Final: $" . number_format($caja->final, 2));
+            $sheet->setCellValue('A7', "Monto Final: $" . number_format($caja->final, 2, ',', '.'));
             $startRow = 9; // Tabla comienza debajo del encabezado
         } else {
             $startRow = 8;
@@ -286,7 +286,7 @@ class CajaController extends Controller
         $row = $startRow + 1;
 
         foreach($caja->movimientos as $mov){
-            $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i'));
+            $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i:s'));
             $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
             $sheet->setCellValue('C'.$row, optional($mov->entidad)->nombre ?? '-');
             $sheet->setCellValue('D'.$row, ucfirst($mov->tipo));

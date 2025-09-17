@@ -34,12 +34,12 @@
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-3"><strong>Sucursal:</strong> {{ $caja->sucursal->nombre }}</div>
-                <div class="col-md-3"><strong>Apertura:</strong> {{ $caja->apertura->format('d/m/Y H:i') }}</div>
+                <div class="col-md-3"><strong>Apertura:</strong> {{ $caja->apertura->format('d/m/Y H:i:s') }}</div>
                 <div class="col-md-3"><strong>Usuario:</strong> {{ $caja->user->name }}</div>
-                <div class="col-md-3"><strong>Monto Inicial:</strong> ${{ number_format($caja->inicial, 2) }}</div>
+                <div class="col-md-3"><strong>Monto Inicial:</strong> ${{ number_format($caja->inicial, 2, ',', '.') }}</div>
                 @if($caja->estado === 'cerrada')
-                    <div class="col-md-3"><strong>Monto Final:</strong> ${{ number_format($caja->final, 2) }}</div>
-                    <div class="col-md-3"><strong>Cierre:</strong> {{ $caja->cierre->format('d/m/Y H:i') }}</div>
+                    <div class="col-md-3"><strong>Monto Final:</strong> ${{ number_format($caja->final, 2, ',', '.') }}</div>
+                    <div class="col-md-3"><strong>Cierre:</strong> {{ $caja->cierre->format('d/m/Y H:i:s') }}</div>
                 @endif
             </div>
 
@@ -48,19 +48,19 @@
                 <div class="col-md-4">
                     <div class="card bg-success text-white p-2">
                         <strong>Ingresos Acreditados</strong>
-                        <h4>${{ number_format($totales['ingresosAcreditados'], 2) }}</h4>
+                        <h4>${{ number_format($totales['ingresosAcreditados'], 2, ',', '.') }}</h4>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card bg-warning text-dark p-2">
                         <strong>Ingresos Pendientes</strong>
-                        <h4>${{ number_format($totales['ingresosPendientes'], 2) }}</h4>
+                        <h4>${{ number_format($totales['ingresosPendientes'], 2, ',', '.') }}</h4>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card bg-danger text-white p-2">
                         <strong>Egresos</strong>
-                        <h4>${{ number_format($totales['egresos'], 2) }}</h4>
+                        <h4>${{ number_format($totales['egresos'], 2, ',', '.') }}</h4>
                     </div>
                 </div>
             </div>
@@ -69,7 +69,7 @@
                 <div class="col-md-12">
                     <div class="card bg-info text-white p-2 text-center">
                         <strong>Saldo Actual:</strong>
-                        <h4>${{ number_format($totales['ingresosAcreditados'] - $totales['egresos'], 2) }}</h4>
+                        <h4>${{ number_format($totales['ingresosAcreditados'] - $totales['egresos'], 2, ',', '.') }}</h4>
 
                     </div>
                 </div>
@@ -92,12 +92,12 @@
                     <tbody>
                     @foreach($caja->movimientos as $mov)
                         <tr>
-                            <td>{{ $mov->fecha->format('d/m/Y H:i') }}</td>
+                            <td>{{ $mov->fecha->format('d/m/Y H:i:s') }}</td>
                             <td>{{ optional($mov->concepto)->nombre ?? '-' }}</td>
                             <td>{{ optional($mov->entidad)->nombre ?? '-' }}</td>
                             <td>{{ $mov->venta_id ?? '-' }}</td>
                             <td>{{ ucfirst($mov->tipo) }}</td>
-                            <td>${{ number_format($mov->monto, 2) }}</td>
+                            <td>${{ number_format($mov->monto, 2, ',', '.') }}</td>
                             <td>
                                 @if($mov->tipo === 'Ingreso')
                                     {{ $mov->acreditado ? 'Sí' : 'No' }}

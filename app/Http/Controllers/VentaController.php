@@ -13,6 +13,9 @@ use App\Models\Unidad;
 use App\Models\Venta;
 use App\Models\Entidad;
 use App\Models\Documento;
+use App\Models\Caja;
+use App\Models\MovimientoCaja;
+use App\Models\Concepto;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
@@ -267,7 +270,7 @@ class VentaController extends Controller
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
             'forma' => 'required',
-            'fecha' => 'required|date_format:d/m/Y H:i',
+            'fecha' => 'required|date_format:d/m/Y H:i:s',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:1',
@@ -345,13 +348,46 @@ class VentaController extends Controller
                 $detalle->observacion = $this->sanitizeInput($request->observaciones[$i]);
                 $detalle->save();
 
+                // ✅ Solo generar movimiento si hay caja abierta y entidad tangible
+                $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                    ->where('user_id', $request->user_id)
+                    ->where('estado', 'Abierta')
+                    ->first();
+
+                if (!$cajaAbierta) {
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
+                        ->withInput();
+                }
+
+                $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
+
+                $entidad = Entidad::find($entidadId);
+                if ($entidad && $entidad->tangible && $detalle->pagado > 0) {
+                    MovimientoCaja::create([
+                        'caja_id' => $cajaAbierta->id,
+                        'concepto_id' => $conceptoVenta->id,
+                        'entidad_id' => $entidad->id,
+                        'venta_id' => $venta->id,
+                        'tipo' => 'Ingreso',
+                        'monto' => $detalle->pagado,
+                        'acreditado' => $entidad->tangible,
+                        'fecha' => now(),
+                        'user_id' => $request->user_id,
+                        'referencia' => $detalle->detalle,
+                    ]);
+                }
+
             }
             $autorizada = $this->sanitizeInput($request->autorizada);
             if ($autorizada){
                 $autorizacion = new Autorizacion();
                 $autorizacion->user_id = $this->sanitizeInput($request->user_id);
                 $autorizacion->unidad_id = $this->sanitizeInput($request->unidad_id);
-                $autorizacion->fecha = $this->sanitizeInput($request->fecha);
+                $autorizacion->fecha = $request->filled('fecha')
+                    ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d')
+                    : null;
                 $autorizacion->save();
             }
 
@@ -475,6 +511,37 @@ class VentaController extends Controller
                 $detalle->detalle = $input['detalle'][$i] ?? null;
                 $detalle->observacion = $input['observaciones'][$i] ?? null;
                 $detalle->save();
+
+                // ✅ Generar movimiento de caja si corresponde
+                $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                    ->where('user_id', $request->user_id)
+                    ->where('estado', 'Abierta')
+                    ->first();
+
+                if (!$cajaAbierta) {
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
+                        ->withInput();
+                }
+
+                $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
+
+                $entidad = Entidad::find($entidadId);
+                if ($entidad && $entidad->tangible && $detalle->pagado > 0) {
+                    MovimientoCaja::create([
+                        'caja_id' => $cajaAbierta->id,
+                        'concepto_id' => $conceptoVenta->id,
+                        'entidad_id' => $entidad->id,
+                        'venta_id' => $venta->id,
+                        'tipo' => 'Ingreso',
+                        'monto' => $detalle->pagado,
+                        'acreditado' => $entidad->tangible,
+                        'fecha' => now(),
+                        'user_id' => $request->user_id,
+                        'referencia' => $detalle->detalle,
+                    ]);
+                }
             }
 
 

@@ -9,5 +9,16 @@ class Entidad extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre','activa'];
+    protected $fillable = [
+        'nombre',
+        'ticket',
+        'referencia',
+        'tangible',
+        'activa'
+    ];
+
+    public function movimientos()
+    {
+        return $this->hasMany(MovimientoCaja::class, 'medio_id');
+    }
 }

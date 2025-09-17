@@ -28,20 +28,20 @@
                     <strong>Sucursal:</strong> {{ $caja->sucursal->nombre }}
                 </div>
                 <div class="col-md-3">
-                    <strong>Apertura:</strong> {{ $caja->apertura->format('d/m/Y H:i') }}
+                    <strong>Apertura:</strong> {{ $caja->apertura->format('d/m/Y H:i:s') }}
                 </div>
                 <div class="col-md-3">
                     <strong>Usuario:</strong> {{ $caja->user->name }}
                 </div>
                 <div class="col-md-3">
-                    <strong>Monto Inicial:</strong> ${{ number_format($caja->inicial, 2) }}
+                    <strong>Monto Inicial:</strong> ${{ number_format($caja->inicial, 2, ',', '.') }}
                 </div>
                 @if($caja->estado === 'cerrada')
                     <div class="col-md-3">
-                        <strong>Monto Final:</strong> ${{ number_format($caja->final, 2) }}
+                        <strong>Monto Final:</strong> ${{ number_format($caja->final, 2, ',', '.') }}
                     </div>
                     <div class="col-md-3">
-                        <strong>Cierre:</strong> {{ $caja->cierre->format('d/m/Y H:i') }}
+                        <strong>Cierre:</strong> {{ $caja->cierre->format('d/m/Y H:i:s') }}
                     </div>
                 @endif
             </div>
@@ -72,12 +72,12 @@
                     <tbody>
                     @foreach($caja->movimientos as $mov)
                         <tr>
-                            <td>{{ $mov->fecha->format('d/m/Y H:i') }}</td>
+                            <td>{{ $mov->fecha->format('d/m/Y H:i:s') }}</td>
                             <td>{{ optional($mov->concepto)->nombre ?? '-' }}</td>
                             <td>{{ optional($mov->entidad)->nombre ?? '-' }}</td>
                             <td>{{ $mov->venta_id ?? '-' }}</td>
                             <td>{{ ucfirst($mov->tipo) }}</td>
-                            <td>${{ number_format($mov->monto, 2) }}</td>
+                            <td>${{ number_format($mov->monto, 2, ',', '.') }}</td>
                             <td>
                                 @if($mov->tipo === 'Ingreso')
                                     {{ $mov->acreditado ? 'Sí' : 'No' }}
@@ -123,9 +123,9 @@
             </div>
 
             <div class="mt-3">
-                <strong>Total Ingresos Acreditados:</strong> ${{ number_format($caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto'), 2) }} <br>
-                <strong>Total Egresos:</strong> ${{ number_format($caja->movimientos->where('tipo', 'Egreso')->sum('monto'), 2) }} <br>
-                <strong>Saldo Actual:</strong> ${{ number_format($caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto') - $caja->movimientos->where('tipo', 'Egreso')->sum('monto'), 2) }}
+                <strong>Total Ingresos Acreditados:</strong> ${{ number_format($caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto'), 2, ',', '.') }} <br>
+                <strong>Total Egresos:</strong> ${{ number_format($caja->movimientos->where('tipo', 'Egreso')->sum('monto'), 2, ',', '.') }} <br>
+                <strong>Saldo Actual:</strong> ${{ number_format($caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto') - $caja->movimientos->where('tipo', 'Egreso')->sum('monto'), 2, ',', '.') }}
             </div>
 
         </div>

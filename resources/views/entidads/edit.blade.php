@@ -32,7 +32,43 @@
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="@if (old('nombre')){{ old('nombre') }}@else{{ $entidad->nombre }}@endif">
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-6">
+
+                        </div>
+                        <div class="row">
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="ticket" value="0">
+                                    <input class="form-check-input" type="checkbox" id="ticket" name="ticket" value="1"
+                                        {{ old('ticket', $entidad->ticket ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="ticket">
+                                        Ticket
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="referencia" value="0">
+                                    <input class="form-check-input" type="checkbox" id="referencia" name="referencia" value="1"
+                                        {{ old('referencia', $entidad->referencia ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="referencia">
+                                        Referencia
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="tangible" value="0">
+                                    <input class="form-check-input" type="checkbox" id="tangible" name="tangible" value="1"
+                                        {{ old('tangible', $entidad->tangible ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="tangible">
+                                        Tangible
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="activa" value="0">
                                     <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"
@@ -44,7 +80,6 @@
 
                             </div>
                         </div>
-
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">Guardar</button>

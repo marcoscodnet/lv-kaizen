@@ -371,7 +371,7 @@ class ClienteController extends Controller
 
         return response()->json([
             'id' => $cliente->id,
-            'text' => $cliente->nombre
+            'text' => $cliente->full_name_phone
         ]);
     }
 

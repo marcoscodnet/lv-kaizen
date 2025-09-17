@@ -31,19 +31,55 @@
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="{{ old('nombre') }}">
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-6">
+
+                        </div>
+                        <div class="row">
+
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="ticket" value="0">
+                                    <input class="form-check-input" type="checkbox" id="ticket" name="ticket" value="1"
+                                        {{ old('ticket', $obj->ticket ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="ticket">
+                                        Ticket
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="referencia" value="0">
+                                    <input class="form-check-input" type="checkbox" id="referencia" name="referencia" value="1"
+                                        {{ old('referencia', $obj->referencia ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="referencia">
+                                        Referencia
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="tangible" value="0">
+                                    <input class="form-check-input" type="checkbox" id="tangible" name="tangible" value="1"
+                                        {{ old('tangible', $obj->tangible ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="tangible">
+                                        Tangible
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="activa" value="0">
                                     <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"
                                         {{ old('activa', $obj->activa ?? true) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="activa">
-                                        Activa
+                                        activa
                                     </label>
                                 </div>
 
                             </div>
                         </div>
-
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
                                 <button type="submit" class="btn btn-primary">Guardar</button>
