@@ -78,11 +78,17 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('unidad-datatable', [UnidadController::class, 'dataTable'])->name('unidads.dataTable');
     Route::get('/api/unidads-por-producto/{productoId}', [UnidadController::class, 'getUnidadsPorProducto'])->name('api.unidads.getUnidadsPorProducto');
 
+    Route::get('/piezas/masivo', [PiezaController::class, 'createMasivo'])->name('piezas.masivo');
+
+    Route::post('/piezas/store-masivo', [PiezaController::class, 'storeMasivo'])
+        ->name('piezas.storeMasivo');
+
     Route::resource('piezas', PiezaController::class);
     Route::post('pieza-datatable', [PiezaController::class, 'dataTable'])->name('piezas.dataTable');
 
     Route::get('/api/piezas/{id}', [PiezaController::class, 'getDatos'])->name('api.piezas.getDatos');
     Route::post('/piezas/ajax-store', [PiezaController::class, 'ajaxStore'])->name('piezas.ajaxStore');
+
 
 
 

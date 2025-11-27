@@ -286,4 +286,60 @@ class PiezaController extends Controller
         ]);
     }
 
+    public function createMasivo()
+    {
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
+        return view('piezas.masivo', compact('tipos'));
+    }
+
+
+    public function storeMasivo(Request $request)
+    {
+        $codigos = $request->input('codigo', []);
+        $tipos = $request->input('tipo_pieza_id', []);
+        $descripciones = $request->input('descripcion', []);
+        $fotos = $request->input('foto', []);
+
+        $count = count($codigos);
+
+        $dataToInsert = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            // Validación simple por fila
+            if (empty($codigos[$i]) || empty($tipos[$i]) || empty($descripciones[$i])) {
+                return redirect()->back()->withErrors("La fila " . ($i+1) . " tiene campos vacíos")->withInput();
+            }
+
+            $data = [
+                'codigo' => $codigos[$i],
+                'tipo_pieza_id' => $tipos[$i],
+                'descripcion' => $descripciones[$i],
+                'foto' => null
+            ];
+
+            // Procesar foto Base64 si existe
+            if (!empty($fotos[$i])) {
+                $image = preg_replace('#^data:image/\w+;base64,#i', '', $fotos[$i]);
+                $image = base64_decode($image);
+
+                $fileName = 'pieza_' . time() . '_' . uniqid() . '.png';
+                $filePath = 'images/piezas/' . $fileName;
+
+                file_put_contents(public_path($filePath), $image);
+
+                $data['foto'] = 'piezas/' . $fileName;
+            }
+
+            $dataToInsert[] = $data;
+        }
+
+        // Insertar todas las piezas de una vez
+        Pieza::insert($dataToInsert);
+
+        return redirect()->route('piezas.index')
+            ->with('success', 'Piezas cargadas correctamente');
+    }
+
+
+
 }
