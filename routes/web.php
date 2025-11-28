@@ -26,6 +26,7 @@ use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\ConceptoController;
 use App\Http\Controllers\CajaController;
 use App\Http\Controllers\MovimientoCajaController;
+use App\Http\Controllers\UbicacionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +61,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('entidads', EntidadController::class);
     Route::resource('tipoServicios', TipoServicioController::class);
     Route::resource('tipoPiezas', TipoPiezaController::class);
+    Route::resource('ubicacions', UbicacionController::class);
 
     Route::resource('clientes', ClienteController::class);
     Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');

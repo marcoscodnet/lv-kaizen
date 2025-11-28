@@ -101,6 +101,12 @@
                             </div>
                         </a>
                     @endcan
+                    @can('ubicacion-listar')
+                        <a class="nav-link" href="{{ route('ubicacions.index') }}" role="button">
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-box-open"></span></span><span class="nav-link-text ps-1">Ubicaciones</span>
+                            </div>
+                        </a>
+                    @endcan
                     @can('tipo-pieza-listar')
                         <a class="nav-link" href="{{ route('tipoPiezas.index') }}" role="button">
                             <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Tipos de Piezas</span>
