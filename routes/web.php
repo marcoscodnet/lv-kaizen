@@ -105,6 +105,12 @@ Route::group(['middleware' => ['auth']], function() {
         return \App\Models\Localidad::with('provincia')->findOrFail($id);
     });
 
+    Route::get('/ubicaciones/{sucursal_id}', function ($sucursal_id) {
+        return \App\Models\Ubicacion::where('sucursal_id', $sucursal_id)
+            ->select('id', 'nombre')
+            ->orderBy('nombre')
+            ->get();
+    });
 
 
     Route::resource('movimientos', MovimientoController::class);

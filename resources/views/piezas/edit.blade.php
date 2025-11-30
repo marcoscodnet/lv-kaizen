@@ -77,7 +77,10 @@
 
                         </div>
 
+                        <div class="row">
+                            @include('includes.select-sucursal-ubicacion')
 
+                        </div>
                         <div class="row">
                             <div class="col-12 col-lg-9">
                                 <div class="form-group">
@@ -148,6 +151,8 @@
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
     <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
+    <script src="{{ asset('assets/js/combo-sucursal-ubicacion.js') }}"></script>
+
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
     <!-- page script -->
     <script>
@@ -155,7 +160,11 @@
 
             $('.js-example-basic-single').select2({
                 language: 'es'});
+            if ($('.sucursal-select').val()) {
+                $('.sucursal-select').trigger('change');
+            }
         });
+        var ubicacionUrl = "{{ url('ubicaciones') }}";
 
         document.addEventListener('DOMContentLoaded', function() {
             const video = document.getElementById('video');

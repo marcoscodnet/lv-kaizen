@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sucursal;
 use App\Models\TipoPieza;
 use App\Models\StockPieza;
 use App\Traits\SanitizesInput;
@@ -33,20 +34,27 @@ class PiezaController extends Controller
     {
 
         $piezas = Pieza::all();
-        return view ('piezas.index',compact('piezas'));
+        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        return view ('piezas.index',compact('piezas','sucursals'));
     }
 
     public function dataTable(Request $request)
     {
-        $columnas = ['piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre','piezas.stock_minimo','piezas.stock_actual','piezas.costo','piezas.precio_minimo','piezas.observaciones']; // Define las columnas disponibles
+        $columnas = ['piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre','piezas.stock_minimo','piezas.stock_actual','sucursals.nombre','ubicacions.nombre','piezas.observaciones']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
-
-        $query = Pieza::select('piezas.id as id', 'piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre as tipo_pieza','piezas.stock_minimo','piezas.stock_actual','piezas.costo','piezas.precio_minimo','piezas.observaciones')
+        $sucursal_id = $request->input('sucursal_id');
+        $query = Pieza::select('piezas.id as id', 'piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre as tipo_pieza','piezas.stock_minimo','piezas.stock_actual','sucursals.nombre as sucursal_nombre','ubicacions.nombre as ubicacion_nombre','piezas.observaciones')
 
             ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
+            ->leftJoin('ubicacions', 'piezas.ubicacion_id', '=', 'ubicacions.id')
+            ->leftJoin('sucursals', 'ubicacions.sucursal_id', '=', 'sucursals.id')
         ;
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('ubicacions.sucursal_id', $sucursal_id);
+        }
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
@@ -90,9 +98,11 @@ class PiezaController extends Controller
      */
     public function create()
     {
-
+        $sucursales = Sucursal::where('activa', 1)
+            ->orderBy('nombre')
+            ->get();
         $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
-        return view('piezas.create',compact('tipos'));
+        return view('piezas.create',compact('tipos','sucursales'));
     }
 
     /**
@@ -194,9 +204,11 @@ class PiezaController extends Controller
     public function edit($id)
     {
         $pieza = Pieza::find($id);
-
+        $sucursales = Sucursal::where('activa', 1)
+            ->orderBy('nombre')
+            ->get();
         $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
-        return view('piezas.edit',compact('pieza','tipos'));
+        return view('piezas.edit',compact('pieza','tipos', 'sucursales'));
     }
 
     /**

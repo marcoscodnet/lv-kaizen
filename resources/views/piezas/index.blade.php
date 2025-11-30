@@ -32,6 +32,38 @@
             @include('includes.messages')
         </div>
         <div class="card-body pt-0">
+            <div class="row">
+
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroSucursal">Sucursal:</label>
+                        <select name="filtroSucursal" id="filtroSucursal" class="form-control js-example-basic-single">
+                            <option value="">Todas</option>
+                            @foreach($sucursals as $sucursalId => $sucursal)
+                                <option value="{{ $sucursalId }}">{{ $sucursal }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroUbicacion">Ubicación:</label>
+                        <select name="filtroUbicacion" id="filtroUbicacion" class="form-control js-example-basic-single">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                </div>
+
+
+
+
+
+            </div>
+            <!-- /.form-group -->
+        </div>
+        <div class="card-body pt-0">
             <div class="tab-content table-responsive">
                 <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
                     <thead class="bg-200">
@@ -43,8 +75,8 @@
                         <th scope="col">Tipo</th>
                         <th scope="col">Stock mín.</th>
                         <th scope="col">Stock actual</th>
-                        <th scope="col">Costo</th>
-                        <th scope="col">Precio mín.</th>
+                        <th scope="col">Sucursal</th>
+                        <th scope="col">Ubicación</th>
                         <th scope="col">Observaciones</th>
 
                         <th scope="col">Acciones</th>
@@ -76,12 +108,17 @@
     <!-- FastClick -->
     <script src="{{ asset('bower_components/fastclick/lib/fastclick.js') }}"></script>
 
+    <script>
+        var ubicacionesUrl = "{{ url('/ubicaciones') }}";
+    </script>
 
     <!-- page script -->
     <!-- page script -->
     <script>
         $(document).ready(function() {
-            $('#example1').DataTable({
+
+
+            var table =  $('#example1').DataTable({
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
                 "autoWidth": false, // Desactiva el ajuste automático del anchos
@@ -93,6 +130,7 @@
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
+                        d.sucursal_id = $('#filtroSucursal').val();
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
                     },
@@ -112,8 +150,8 @@
                     { data: 'tipo_pieza', name: 'tipo_pieza' },
                     { data: 'stock_minimo', name: 'stock_minimo' },
                     { data: 'stock_actual', name: 'stock_actual' },
-                    { data: 'costo', name: 'costo' },
-                    { data: 'precio_minimo', name: 'precio_minimo' },
+                    { data: 'sucursal_nombre', name: 'sucursal_nombre' },
+                    { data: 'ubicacion_nombre', name: 'ubicacion_nombre' },
                     { data: 'observaciones', name: 'observaciones' },
                     // Actions column
                     {
@@ -154,6 +192,19 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                stateSave: true,
+                stateSaveParams: function (settings, data) {
+
+                    data.filtroSucursal = $('#filtroSucursal').val();
+
+                },
+                stateLoadParams: function (settings, data) {
+
+                    if (data.filtroSucursal) {
+                        $('#filtroSucursal').val(data.filtroSucursal).trigger('change');
+                    }
+
+                },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');
@@ -161,7 +212,33 @@
                     $('input[type="search"]').css('width', '70%');
                 }
             });
+            
+            $('#filtroSucursal').change(function() {
+                cargarUbicaciones($(this).val());
+                table.ajax.reload();
+            });
+
+            $('#filtroUbicacion').change(function() {
+                table.ajax.reload();
+            });
+
         });
+        function cargarUbicaciones(sucursalId) {
+            $('#filtroUbicacion').html('<option value="">Todas</option>');
+
+            if (!sucursalId) {
+                return;
+            }
+
+            $.get(ubicacionesUrl + '/' + sucursalId, function(data) {
+                data.forEach(function(ubicacion) {
+                    $('#filtroUbicacion').append(
+                        '<option value="'+ ubicacion.id +'">'+ ubicacion.nombre +'</option>'
+                    );
+                });
+            });
+        }
+
 
     </script>
 @endsection
