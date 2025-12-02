@@ -325,55 +325,39 @@ class PiezaController extends Controller
      */
     public function destroy($id)
     {
-        // Opcional: control de permisos
-        if (!request()->user()->can('pieza-eliminar')) {
-            abort(403, 'No tienes permisos para eliminar piezas.');
-        }
-
+        // 1) Buscar la pieza
         $pieza = Pieza::find($id);
 
         if (!$pieza) {
             return redirect()->route('piezas.index')
-                ->with('error', 'Pieza no encontrada.');
+                ->with('error','Pieza no encontrada.');
         }
 
-        DB::beginTransaction();
+        // 2) Guardar nombre de la foto ANTES de borrar
+        $foto = $pieza->foto;
 
-        try {
-            // 1) Detach relaciones pivot (ubicacions)
-            if (method_exists($pieza, 'ubicacions')) {
-                $pieza->ubicacions()->detach();
-            }
-
-            // 2) Eliminar stocks relacionados si corresponde
-            if (method_exists($pieza, 'stocksPieza') && $pieza->stocksPieza()->count() > 0) {
-                // Si querés conservar stocks, no los borres; aquí los eliminamos.
-                $pieza->stocksPieza()->delete();
-            }
-
-            // 3) Borrar archivo de la foto (si existe)
-            if (!empty($pieza->foto)) {
-                $filePath = public_path('images/' . $pieza->foto);
-                if (file_exists($filePath)) {
-                    @unlink($filePath);
-                }
-            }
-
-            // 4) Eliminar la pieza
-            $pieza->delete();
-
-            DB::commit();
-
-            return redirect()->route('piezas.index')
-                ->with('success', 'Pieza eliminada con éxito');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            \Log::error('Error al eliminar pieza ID '.$id.': '.$e->getMessage());
-
-            return redirect()->route('piezas.index')
-                ->with('error', 'Ocurrió un error al intentar eliminar la pieza.');
+        // 3) Eliminar relaciones pivot si existen
+        if (method_exists($pieza, 'ubicacions')) {
+            $pieza->ubicacions()->detach();
         }
+
+        // 4) Eliminar stocks si tenés esa relación
+        if (method_exists($pieza, 'stocksPieza')) {
+            $pieza->stocksPieza()->delete();
+        }
+
+        // 5) Eliminar la pieza
+        $pieza->delete();  // <-- acá se elimina el registro
+
+        // 6) Borrar archivo de imagen DESPUÉS de eliminar el registro
+        if ($foto && file_exists(public_path('images/' . $foto))) {
+            @unlink(public_path('images/' . $foto));
+        }
+
+        return redirect()->route('piezas.index')
+            ->with('success','Pieza eliminada con éxito');
     }
+
 
 
     public function getDatos($id)
