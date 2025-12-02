@@ -9,14 +9,15 @@ class Pieza extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['codigo','descripcion','stock_minimo','costo','precio_minimo','stock_actual','observaciones','tipo_pieza_id','foto','ubicacion_id'];
+    protected $fillable = ['codigo','descripcion','stock_minimo','costo','precio_minimo','stock_actual','observaciones','tipo_pieza_id','foto'];
 
     public function tipoPieza() {
         return $this->belongsTo('App\Models\TipoPieza', 'tipo_pieza_id');
     }
 
-    public function ubicacion() {
-        return $this->belongsTo('App\Models\Ubicacion', 'ubicacion_id');
+    public function ubicacions() {
+        return $this->belongsToMany(Ubicacion::class, 'pieza_ubicacions')
+            ->withTimestamps();
     }
 
     public function stocksPieza() {

@@ -39,7 +39,6 @@
                     <div class="form-group">
                         <label for="filtroSucursal">Sucursal:</label>
                         <select name="filtroSucursal" id="filtroSucursal" class="form-control js-example-basic-single">
-                            <option value="">Todas</option>
                             @foreach($sucursals as $sucursalId => $sucursal)
                                 <option value="{{ $sucursalId }}">{{ $sucursal }}</option>
                             @endforeach
@@ -131,6 +130,7 @@
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
                         d.sucursal_id = $('#filtroSucursal').val();
+                        d.ubicacion_id = $('#filtroUbicacion').val();
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
                     },
@@ -196,12 +196,17 @@
                 stateSaveParams: function (settings, data) {
 
                     data.filtroSucursal = $('#filtroSucursal').val();
+                    data.filtroUbicacion = $('#filtroUbicacion').val();
 
                 },
                 stateLoadParams: function (settings, data) {
 
                     if (data.filtroSucursal) {
                         $('#filtroSucursal').val(data.filtroSucursal).trigger('change');
+                    }
+
+                    if (data.filtroUbicacion) {
+                        $('#filtroUbicacion').val(data.filtroUbicacion).trigger('change');
                     }
 
                 },
@@ -212,7 +217,7 @@
                     $('input[type="search"]').css('width', '70%');
                 }
             });
-            
+
             $('#filtroSucursal').change(function() {
                 cargarUbicaciones($(this).val());
                 table.ajax.reload();

@@ -73,10 +73,24 @@
 
 
                         </div>
-                        <div class="row">
-                            @include('includes.select-sucursal-ubicacion')
+                        <div class="form-group">
+                            <table class="table">
+                                <thead>
+                                <th>Sucursal</th>
+                                <th>Ubicación</th>
+                                <th>
+                                    <a href="#" class="addRowUbicacion btn btn-success btn-sm">
+                                        <i class="fa fa-plus"></i>
+                                    </a>
+                                </th>
+                                </thead>
 
+                                <tbody id="cuerpoUbicaciones">
+
+                                </tbody>
+                            </table>
                         </div>
+
                         <div class="row mt-3">
                             <div class="col-lg-6">
                                 <label for="foto">Foto de la pieza</label>
@@ -152,6 +166,10 @@
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
     <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
+    <script>
+        var ubicacionUrl = "{{ url('ubicaciones') }}";
+    </script>
+
     <script src="{{ asset('assets/js/combo-sucursal-ubicacion.js') }}"></script>
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
@@ -161,11 +179,74 @@
 
             $('.js-example-basic-single').select2({
                 language: 'es'});
-            if ($('.sucursal-select').val()) {
-                $('.sucursal-select').trigger('change');
+            // Renderizar el select de sucursales
+            var selectSucursal = `{!! '<select name="sucursal_id[]" class="form-control js-example-basic-single selectSucursal">' !!}
+            @foreach($sucursales as $s)
+            {!! '<option value="'.$s->id.'">'.$s->nombre.'</option>' !!}
+            @endforeach
+            {!! '</select>' !!}`;
+
+            // Select de ubicación vacío
+            var selectUbicacion = `<select name="ubicacion_id[]" class="form-control js-example-basic-single selectUbicacion">
+        <option value="">Seleccionar...</option>
+    </select>`;
+
+            // Agregar fila
+            $('.addRowUbicacion').on('click', function(e){
+                e.preventDefault();
+                addRowUbicacion();
+            });
+
+            function addRowUbicacion() {
+                var tr = `<tr>
+            <td style="width:40%;">${selectSucursal}</td>
+            <td style="width:40%;">${selectUbicacion}</td>
+            <td><a href="#" class="btn btn-danger btn-sm removeUbicacion"><i class="fa fa-times text-white"></i></a></td>
+        </tr>`;
+
+                $('#cuerpoUbicaciones').append(tr);
+
+                $('.js-example-basic-single').select2({ language: 'es' });
+
+                // 🔥 Forzar a que NO quede seleccionada la primera sucursal
+                $('.selectSucursal').last().val('').trigger('change');
             }
+
+            // Eliminar fila
+            $('body').on('click', '.removeUbicacion', function(e){
+                var confirmDelete = confirm('¿Estás seguro?');
+                if (confirmDelete) {
+                    $(this).closest('tr').remove();
+                }
+            });
+
+            // Cargar ubicaciones al seleccionar sucursal
+            $('body').on('change', '.selectSucursal', function () {
+                let row = $(this).closest('tr');
+                let sucursalId = $(this).val();
+                let ubicacionSelect = row.find('.selectUbicacion');
+
+                ubicacionSelect.empty().append('<option value="">Cargando...</option>');
+
+                if (sucursalId) {
+                    $.ajax({
+                        url: ubicacionUrl + '/' + sucursalId,
+                        method: 'GET',
+                        success: function(data) {
+                            ubicacionSelect.empty();
+                            ubicacionSelect.append('<option value="">Seleccionar...</option>');
+                            data.forEach(function(ubi) {
+                                ubicacionSelect.append(`<option value="${ubi.id}">${ubi.nombre}</option>`);
+                            });
+                        },
+                        error: function () {
+                            ubicacionSelect.empty().append('<option value="">Error al cargar</option>');
+                        }
+                    });
+                }
+            });
         });
-        var ubicacionUrl = "{{ url('ubicaciones') }}";
+
         document.addEventListener("DOMContentLoaded", function() {
             const video = document.getElementById("video");
             const canvas = document.getElementById("canvas");

@@ -1,28 +1,39 @@
 $(document).ready(function () {
-    $('.sucursal-select').on('change', function () {
+    $('body').on('change', '.sucursal-select', function () {
+
+        let row = $(this).closest('tr');
         let sucursalID = $(this).val();
-        let ubicacionSelect = $(this).closest('form').find('.ubicacion-select');
+        let ubicacionSelect = row.find('.ubicacion-select');
 
         ubicacionSelect.empty().append('<option value="">Cargando...</option>');
-        let selectedUbicacionId = $('.sucursal-select').data('old-ubicacion');
-        //console.log('seleccionada: '+selectedUbicacionId);
+
+        // Valor seleccionado SOLO de esa fila
+        let selectedUbicacionId = ubicacionSelect.data('old-ubicacion') || "";
+
         if (sucursalID) {
+
             $.ajax({
-                url: ubicacionUrl + '/' + sucursalID,  // Usando la variable de JS
+                url: ubicacionUrl + '/' + sucursalID,
                 type: 'GET',
                 dataType: 'json',
                 success: function (data) {
+
                     ubicacionSelect.empty().append('<option value=""></option>');
-                    $.each(data, function (key, value) {
+
+                    $.each(data, function (_, value) {
                         let selected = value.id == selectedUbicacionId ? 'selected' : '';
-                        ubicacionSelect.append('<option value="' + value.id + '" ' + selected + '>' + value.nombre + '</option>');
+                        ubicacionSelect.append(
+                            `<option value="${value.id}" ${selected}>${value.nombre}</option>`
+                        );
                     });
+
                     ubicacionSelect.select2();
                 }
             });
+
         } else {
             ubicacionSelect.empty().append('<option value="">Seleccione una sucursal primero</option>');
-            ubicacionSelect.select2(); // También reinicializás si está vacío
+            ubicacionSelect.select2();
         }
     });
 });

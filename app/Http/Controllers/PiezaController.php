@@ -9,7 +9,7 @@ use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Pieza;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\DB;
 class PiezaController extends Controller
 {
     use SanitizesInput;
@@ -45,15 +45,39 @@ class PiezaController extends Controller
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $sucursal_id = $request->input('sucursal_id');
-        $query = Pieza::select('piezas.id as id', 'piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre as tipo_pieza','piezas.stock_minimo','piezas.stock_actual','sucursals.nombre as sucursal_nombre','ubicacions.nombre as ubicacion_nombre','piezas.observaciones')
-
+        $ubicacion_id = $request->input('ubicacion_id');
+        $query = Pieza::select(
+            'piezas.id',
+            'piezas.codigo',
+            'piezas.descripcion',
+            'tipo_piezas.nombre as tipo_pieza',
+            'piezas.stock_minimo',
+            'piezas.stock_actual',
+            DB::raw("GROUP_CONCAT(DISTINCT sucursals.nombre ORDER BY sucursals.nombre SEPARATOR ' / ') as sucursal_nombre"),
+            DB::raw("GROUP_CONCAT(DISTINCT ubicacions.nombre ORDER BY ubicacions.nombre SEPARATOR ' / ') as ubicacion_nombre"),
+            'piezas.observaciones'
+        )
             ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
-            ->leftJoin('ubicacions', 'piezas.ubicacion_id', '=', 'ubicacions.id')
+            ->leftJoin('pieza_ubicacions', 'piezas.id', '=', 'pieza_ubicacions.pieza_id')
+            ->leftJoin('ubicacions', 'pieza_ubicacions.ubicacion_id', '=', 'ubicacions.id')
             ->leftJoin('sucursals', 'ubicacions.sucursal_id', '=', 'sucursals.id')
-        ;
+            ->groupBy(
+                'piezas.id',
+                'piezas.codigo',
+                'piezas.descripcion',
+                'tipo_piezas.nombre',
+                'piezas.stock_minimo',
+                'piezas.stock_actual',
+                'piezas.observaciones'
+            );
+
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ubicacions.sucursal_id', $sucursal_id);
+        }
+
+        if (!empty($ubicacion_id) && $ubicacion_id != '-1') {
+            $query->where('ubicacions.id', $ubicacion_id);
         }
 
         // Aplicar la búsqueda
@@ -135,7 +159,13 @@ class PiezaController extends Controller
             $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
         }
 
-        Pieza::create($input);
+        // 1. Crear la pieza
+        $pieza = Pieza::create($input);
+
+        // 2. Asociar ubicación si se seleccionó
+        if ($request->filled('ubicacion_id')) {
+            $pieza->ubicacions()->attach($request->ubicacion_id);
+        }
 
         return redirect()->route('piezas.index')
             ->with('success','Pieza creada con éxito');
@@ -208,8 +238,17 @@ class PiezaController extends Controller
             ->orderBy('nombre')
             ->get();
         $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
-        return view('piezas.edit',compact('pieza','tipos', 'sucursales'));
+        // 🔥 Construimos un array simple para JS
+        $ubicacionesActuales = $pieza->ubicacions->map(function ($u) {
+            return [
+                'sucursal_id'  => $u->pivot->sucursal_id, // valor que debe aparecer en el select de sucursal
+                'ubicacion_id' => $u->id,                 // valor que debe aparecer en el select de ubicacion
+            ];
+        });
+
+        return view('piezas.edit', compact('pieza','tipos','sucursales','ubicacionesActuales'));
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -245,6 +284,19 @@ class PiezaController extends Controller
                 $input['foto'] = 'piezas/'.$fileName;
             }
             $pieza->update($input);
+
+            // -----------------------------
+            //    GUARDAR UBICACIONES
+            // -----------------------------
+
+            // ubicacion_id[] viene del formulario
+            $ubicaciones = $request->input('ubicacion_id', []);
+
+            // Eliminar vacíos ("" o null)
+            $ubicaciones = array_filter($ubicaciones);
+
+            // Solo guarda ubicacion_id
+            $pieza->ubicacions()->sync($ubicaciones);
         }
         // Si solo puede modificar descripción
         elseif ($request->user()->can('pieza-modificar-descripcion')) {

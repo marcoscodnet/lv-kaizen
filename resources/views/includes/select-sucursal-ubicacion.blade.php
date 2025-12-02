@@ -1,39 +1,29 @@
-@php
-    $sucursalSeleccionada = old('sucursal_id', $pieza->ubicacion->sucursal_id ?? '');
-    $ubicacionSeleccionada = old('ubicacion_id', $pieza->ubicacion_id ?? '');
-    $nombreUbicacion = $pieza->ubicacion->nombre ?? null;
+<div class="col-12 mt-3">
+    <label>Ubicaciones donde se encuentra la pieza</label>
 
-@endphp
+    <table class="table table-bordered mt-2">
+        <thead>
+        <tr>
+            <th>Sucursal</th>
+            <th>Ubicación</th>
+            <th>
+                <a href="#" class="btn btn-success btn-sm addRowUbicacion">
+                    <i class="fa fa-plus"></i>
+                </a>
+            </th>
+        </tr>
+        </thead>
 
-<div class="col-12 col-lg-5">
-    <div class="form-group">
-        <label for="sucursal_id">Sucursal</label>
-        <select name="sucursal_id" id="sucursal_id"
-                class="form-control sucursal-select js-example-basic-single"
-                data-old-ubicacion="{{ $ubicacionSeleccionada }}"
-                required>
-            <option value=""></option>
-            @foreach($sucursales as $sucursal)
-                <option value="{{ $sucursal->id }}"
-                    {{ $sucursalSeleccionada == $sucursal->id ? 'selected' : '' }}>
-                    {{ $sucursal->nombre }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+        <tbody id="cuerpoUbicaciones">
+        </tbody>
+    </table>
 </div>
 
-<div class="col-12 col-lg-5">
-    <div class="form-group">
-        <label for="ubicacion_id">Ubicación</label>
-        <select id="ubicacion_id" name="ubicacion_id"
-                class="form-control ubicacion-select js-example-basic-single" required>
-            <option value=""></option>
-            @if($ubicacionSeleccionada)
-                <option value="{{ $ubicacionSeleccionada }}" selected>
-                    {{ $nombreUbicacion ?? 'Ubicación seleccionada' }}
-                </option>
-            @endif
-        </select>
-    </div>
-</div>
+{{-- Dejar opciones de sucursales para JS --}}
+<script>
+    window.sucursalesOptions = `
+        @foreach($sucursales as $sucursal)
+    <option value="{{ $sucursal->id }}">{{ $sucursal->nombre }}</option>
+        @endforeach
+    `;
+</script>

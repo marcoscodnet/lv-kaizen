@@ -78,9 +78,27 @@
                         </div>
 
                         <div class="row">
-                            @include('includes.select-sucursal-ubicacion')
+                            <div class="form-group">
+                                <table class="table">
+                                    <thead>
+                                    <th>Sucursal</th>
+                                    <th>Ubicación</th>
+                                    <th>
+                                        @can('pieza-editar')
+                                            <a href="#" class="addRowUbicacion btn btn-success btn-sm">
+                                                <i class="fa fa-plus"></i>
+                                            </a>
+                                        @endcan
+                                    </th>
+                                    </thead>
 
+                                    <tbody id="cuerpoUbicaciones">
+                                    {{-- Las filas se crean desde JavaScript --}}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+
                         <div class="row">
                             <div class="col-12 col-lg-9">
                                 <div class="form-group">
@@ -151,6 +169,36 @@
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
     <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
+    <script>
+        var ubicacionesActuales = @json(
+            $pieza->ubicacions->map(function($u){
+                return [
+                    'sucursal_id' => $u->sucursal_id,   // ✔ viene de la ubicación
+                    'ubicacion_id' => $u->id            // ✔ ID de la ubicación
+                ];
+            })
+        );
+
+        // Correcto: select completo construido una sola vez
+        var selectSucursalHTML = `
+<select name="sucursal_id[]" class="form-control selectSucursal">
+    <option value="">Seleccionar...</option>
+    @foreach($sucursales as $s)
+        <option value="{{ $s->id }}">{{ $s->nombre }}</option>
+    @endforeach
+        </select>`;
+
+        // Correcto
+        var selectUbicacionHTML = `
+<select name="ubicacion_id[]" class="form-control js-example-basic-single selectUbicacion">
+    <option value="">Seleccionar...</option>
+</select>`;
+
+        var ubicacionUrl = "{{ url('ubicaciones') }}";
+    </script>
+
+
+
     <script src="{{ asset('assets/js/combo-sucursal-ubicacion.js') }}"></script>
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
@@ -158,47 +206,108 @@
     <script>
         $(document).ready(function () {
 
-            $('.js-example-basic-single').select2({
-                language: 'es'});
-            if ($('.sucursal-select').val()) {
-                $('.sucursal-select').trigger('change');
+            $('.js-example-basic-single').select2({ language: 'es' });
+
+            // ➤ AGREGAR FILA
+            function addRowUbicacion(sucursal_id = '', ubicacion_id = '') {
+
+                var tr = `<tr>
+        <td style="width:40%;">${selectSucursalHTML}</td>
+        <td style="width:40%;">${selectUbicacionHTML}</td>
+        <td>
+            @can('pieza-editar')
+                <a href="#" class="btn btn-danger btn-sm removeUbicacion">
+                    <i class="fa fa-times text-white"></i>
+                </a>
+            @endcan
+                </td>
+            </tr>`;
+
+                $('#cuerpoUbicaciones').append(tr);
+
+                let row = $('#cuerpoUbicaciones tr').last();
+                let sucSelect = row.find('.selectSucursal');
+                let ubiSelect = row.find('.selectUbicacion');
+
+                sucSelect.select2({ language: 'es' });
+                ubiSelect.select2({ language: 'es' });
+
+                // Seleccionamos sucursal
+                sucSelect.val(sucursal_id).trigger('change');
+
+                // ⚠️ SI TIENE SUCURSAL → CARGO UBICACIONES Y SOLO LUEGO SELECCIONO LA UBICACIÓN
+                if (sucursal_id) {
+                    $.ajax({
+                        url: ubicacionUrl + '/' + sucursal_id,
+                        method: 'GET',
+                        success: function(data) {
+
+                            ubiSelect.empty()
+                                .append('<option value="">Seleccionar...</option>');
+
+                            data.forEach(function(ubi) {
+                                ubiSelect.append(`<option value="${ubi.id}">${ubi.nombre}</option>`);
+                            });
+
+                            // 👇👇👇 CORRECCIÓN IMPORTANTE 👇👇👇
+                            // Recién cuando el AJAX terminó → selecciono ubicación
+                            setTimeout(() => {
+                                ubiSelect.val(ubicacion_id).trigger('change');
+                            }, 50);  // pequeño delay para que Select2 procese la lista
+                        }
+                    });
+                }
             }
+
+
+
+            // ➤ Botón "+"
+            $('body').on('click', '.addRowUbicacion', function(e){
+                e.preventDefault();
+                addRowUbicacion();
+            });
+
+            // ➤ Eliminar fila
+            $('body').on('click', '.removeUbicacion', function(e){
+                if (confirm('¿Estás seguro?')) {
+                    $(this).closest('tr').remove();
+                }
+            });
+
+            // ➤ Cambio de sucursal → cargar ubicaciones
+            $('body').on('change', '.selectSucursal', function () {
+                let row = $(this).closest('tr');
+                let sucursalId = $(this).val();
+                let ubicacionSelect = row.find('.selectUbicacion');
+
+                ubicacionSelect.empty().append('<option value="">Cargando...</option>');
+
+                if (sucursalId) {
+                    $.ajax({
+                        url: ubicacionUrl + '/' + sucursalId,
+                        method: 'GET',
+                        success: function(data) {
+                            ubicacionSelect.empty();
+                            ubicacionSelect.append('<option value="">Seleccionar...</option>');
+                            data.forEach(function(ubi) {
+                                ubicacionSelect.append(`<option value="${ubi.id}">${ubi.nombre}</option>`);
+                            });
+                        }
+                    });
+                }
+            });
+
+            // ➤ Precargar ubicaciones existentes
+            if (ubicacionesActuales.length > 0) {
+                ubicacionesActuales.forEach(u => {
+                    addRowUbicacion(u.sucursal_id, u.ubicacion_id);
+                });
+            } else {
+                addRowUbicacion(); // una fila vacía
+            }
+
         });
-        var ubicacionUrl = "{{ url('ubicaciones') }}";
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const photo = document.getElementById('photo');
-            const capture = document.getElementById('capture');
-            const fotoInput = document.getElementById('foto');
-
-            // Solo intentar acceder a la cámara si el navegador soporta getUserMedia
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-            video.srcObject = stream;
-            video.play();
-        })
-            .catch(err => {
-            console.error("No se pudo acceder a la cámara: ", err);
-        });
-        } else {
-            console.warn("getUserMedia no es soportado en este navegador.");
-        }
-
-            capture.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/png');
-            photo.src = dataURL;
-            fotoInput.value = dataURL; // Guardar base64 para enviar al backend
-        });
-        });
-
-
     </script>
+
 
 @endsection
