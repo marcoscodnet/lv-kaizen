@@ -325,38 +325,33 @@ class PiezaController extends Controller
      */
     public function destroy($id)
     {
-        // 1) Buscar la pieza
-        $pieza = Pieza::find($id);
+        try {
+            $pieza = Pieza::findOrFail($id);
 
-        if (!$pieza) {
+            // Intentar borrar
+            $pieza->delete();
+
+            // Si tenía foto, borrar archivo
+            if ($pieza->foto && file_exists(public_path('images/'.$pieza->foto))) {
+                unlink(public_path('images/'.$pieza->foto));
+            }
+
             return redirect()->route('piezas.index')
-                ->with('error','Pieza no encontrada.');
+                ->with('success', 'Pieza eliminada con éxito');
+
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            // Error 1451 = clave foránea impide borrar
+            if ($e->errorInfo[1] == 1451) {
+                return redirect()->route('piezas.index')
+                    ->with('error', 'No se puede eliminar la pieza porque está asociada a ventas.');
+            }
+
+            return redirect()->route('piezas.index')
+                ->with('error', 'Ocurrió un error al intentar eliminar la pieza.');
         }
-
-        // 2) Guardar nombre de la foto ANTES de borrar
-        $foto = $pieza->foto;
-
-        // 3) Eliminar relaciones pivot si existen
-        if (method_exists($pieza, 'ubicacions')) {
-            $pieza->ubicacions()->detach();
-        }
-
-        // 4) Eliminar stocks si tenés esa relación
-        if (method_exists($pieza, 'stocksPieza')) {
-            $pieza->stocksPieza()->delete();
-        }
-
-        // 5) Eliminar la pieza
-        $pieza->delete();  // <-- acá se elimina el registro
-
-        // 6) Borrar archivo de imagen DESPUÉS de eliminar el registro
-        if ($foto && file_exists(public_path('images/' . $foto))) {
-            @unlink(public_path('images/' . $foto));
-        }
-
-        return redirect()->route('piezas.index')
-            ->with('success','Pieza eliminada con éxito');
     }
+
 
 
 
