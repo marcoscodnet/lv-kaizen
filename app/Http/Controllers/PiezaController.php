@@ -325,16 +325,56 @@ class PiezaController extends Controller
      */
     public function destroy($id)
     {
-
-
-        $pieza = Pieza::find($id)->delete();
-        // Borrar foto si existe
-        if ($pieza->foto && file_exists(public_path('images/'.$pieza->foto))) {
-            unlink(public_path('images/'.$pieza->foto));
+        // Opcional: control de permisos
+        if (!request()->user()->can('pieza-eliminar')) {
+            abort(403, 'No tienes permisos para eliminar piezas.');
         }
-        return redirect()->route('piezas.index')
-            ->with('success','Pieza eliminada con éxito');
+
+        $pieza = Pieza::find($id);
+
+        if (!$pieza) {
+            return redirect()->route('piezas.index')
+                ->with('error', 'Pieza no encontrada.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // 1) Detach relaciones pivot (ubicacions)
+            if (method_exists($pieza, 'ubicacions')) {
+                $pieza->ubicacions()->detach();
+            }
+
+            // 2) Eliminar stocks relacionados si corresponde
+            if (method_exists($pieza, 'stocksPieza') && $pieza->stocksPieza()->count() > 0) {
+                // Si querés conservar stocks, no los borres; aquí los eliminamos.
+                $pieza->stocksPieza()->delete();
+            }
+
+            // 3) Borrar archivo de la foto (si existe)
+            if (!empty($pieza->foto)) {
+                $filePath = public_path('images/' . $pieza->foto);
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+            }
+
+            // 4) Eliminar la pieza
+            $pieza->delete();
+
+            DB::commit();
+
+            return redirect()->route('piezas.index')
+                ->with('success', 'Pieza eliminada con éxito');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Error al eliminar pieza ID '.$id.': '.$e->getMessage());
+
+            return redirect()->route('piezas.index')
+                ->with('error', 'Ocurrió un error al intentar eliminar la pieza.');
+        }
     }
+
 
     public function getDatos($id)
     {
