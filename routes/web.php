@@ -27,6 +27,7 @@ use App\Http\Controllers\ConceptoController;
 use App\Http\Controllers\CajaController;
 use App\Http\Controllers\MovimientoCajaController;
 use App\Http\Controllers\UbicacionController;
+use App\Exports\PiezasExport;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,6 +85,13 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::post('/piezas/store-masivo', [PiezaController::class, 'storeMasivo'])
         ->name('piezas.storeMasivo');
+
+    Route::get('/piezas/exportar', [PiezaController::class, 'exportarXLS'])
+        ->name('piezas.exportarXLS');
+
+    Route::get('/piezas/exportarPDF', [PiezaController::class, 'exportarPDF'])
+        ->name('piezas.exportarPDF');
+
 
     Route::resource('piezas', PiezaController::class);
     Route::post('pieza-datatable', [PiezaController::class, 'dataTable'])->name('piezas.dataTable');
@@ -185,6 +193,8 @@ Route::group(['middleware' => ['auth']], function() {
         // Acreditar
         Route::post('acreditar/{movimiento}', [MovimientoCajaController::class, 'acreditar'])->name('acreditar');
     });
+
+
 
 
 

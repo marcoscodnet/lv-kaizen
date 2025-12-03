@@ -46,7 +46,20 @@
                     </div>
                 </div>
 
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroTipo">Tipos:</label>
+                        <select name="filtroTipo" id="filtroTipo" class="form-control js-example-basic-single">
 
+                            @foreach($tipos as $tipoId => $tipo)
+                                <option value="{{ $tipoId }}">
+                                    {{ $tipo }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                </div>
 
 
             </div>
@@ -60,6 +73,7 @@
 
                         <th scope="col">Remito</th>
                         <th scope="col">Código</th>
+                        <th scope="col">Tipo</th>
                         <th scope="col">Descripción</th>
                         <th scope="col">Cant. Inicial</th>
                         <th scope="col">Cant. Actual</th>
@@ -124,6 +138,7 @@
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
                         d.sucursal_id = $('#filtroSucursal').val();
+                        d.tipo_id = $('#filtroTipo').val();
                     },
                     "error": function(xhr, error, thrown) {
                         if (xhr.status === 401) {
@@ -153,6 +168,7 @@
                 columns: [
                     { data: 'remito', name: 'remito' },
                     { data: 'codigo', name: 'codigo' },
+                    { data: 'tipo_nombre', name: 'tipo_nombre' },
                     { data: 'descripcion', name: 'descripcion' },
                     { data: 'inicial', name: 'inicial' },
                     { data: 'cantidad', name: 'cantidad' },
@@ -218,12 +234,16 @@
                 stateSaveParams: function (settings, data) {
 
                     data.filtroSucursal = $('#filtroSucursal').val();
+                    data.filtroTipo = $('#filtroTipo').val();
 
                 },
                 stateLoadParams: function (settings, data) {
 
                     if (data.filtroSucursal) {
                         $('#filtroSucursal').val(data.filtroSucursal).trigger('change');
+                    }
+                    if (data.filtroTipo) {
+                        $('#filtroTipo').val(data.filtroTipo).trigger('change');
                     }
 
                 },
@@ -235,6 +255,9 @@
                 }
             });
             $('#filtroSucursal').change(function() {
+                table.ajax.reload();
+            });
+            $('#filtroTipo').change(function() {
                 table.ajax.reload();
             });
         });

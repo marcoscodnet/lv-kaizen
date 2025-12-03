@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sucursal;
+use App\Models\Ubicacion;
 use App\Models\TipoPieza;
 use App\Models\StockPieza;
 use App\Traits\SanitizesInput;
@@ -10,6 +11,10 @@ use Illuminate\Http\Request;
 use App\Models\Pieza;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PDF;
 class PiezaController extends Controller
 {
     use SanitizesInput;
@@ -40,13 +45,54 @@ class PiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['piezas.codigo', 'piezas.descripcion','tipo_piezas.nombre','piezas.stock_minimo','piezas.stock_actual','sucursals.nombre','ubicacions.nombre','piezas.observaciones']; // Define las columnas disponibles
+        $columnas = [
+            'codigo',
+            'descripcion',
+            'tipo_pieza',
+            'stock_minimo',
+            'stock_actual',
+            'sucursal_nombre',
+            'ubicacion_nombre',
+            'observaciones'
+        ];
+
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $sucursal_id = $request->input('sucursal_id');
         $ubicacion_id = $request->input('ubicacion_id');
-        $query = Pieza::select(
+
+
+        // ----------------------------------------------
+        // 1) QUERY BASE PARA COUNT CORRECTO
+        // ----------------------------------------------
+        $queryBase = Pieza::query()
+            ->leftJoin('pieza_ubicacions', 'piezas.id', '=', 'pieza_ubicacions.pieza_id')
+            ->leftJoin('ubicacions', 'pieza_ubicacions.ubicacion_id', '=', 'ubicacions.id');
+
+        if ($sucursal_id && $sucursal_id != '-1') {
+            $queryBase->where('ubicacions.sucursal_id', $sucursal_id);
+        }
+
+        if ($ubicacion_id && $ubicacion_id != '-1') {
+            $queryBase->where('ubicacions.id', $ubicacion_id);
+        }
+
+        if (!empty($busqueda)) {
+            $queryBase->where(function ($sub) use ($busqueda) {
+                $sub->orWhere('piezas.codigo', 'like', "%$busqueda%")
+                    ->orWhere('piezas.descripcion', 'like', "%$busqueda%");
+            });
+        }
+
+        $recordsFiltered = $queryBase->distinct()->count('piezas.id');
+        $recordsTotal = Pieza::count();
+
+
+        // ----------------------------------------------
+        // 2) SUBQUERY PARA DATOS AGRUPADOS (GROUP_CONCAT)
+        // ----------------------------------------------
+        $subquery = Pieza::select(
             'piezas.id',
             'piezas.codigo',
             'piezas.descripcion',
@@ -71,48 +117,42 @@ class PiezaController extends Controller
                 'piezas.observaciones'
             );
 
-
-        if (!empty($sucursal_id) && $sucursal_id != '-1') {
-            $query->where('ubicacions.sucursal_id', $sucursal_id);
+        // aplicar filtros igual que en base
+        if ($sucursal_id && $sucursal_id != '-1') {
+            $subquery->where('ubicacions.sucursal_id', $sucursal_id);
         }
 
-        if (!empty($ubicacion_id) && $ubicacion_id != '-1') {
-            $query->where('ubicacions.id', $ubicacion_id);
+        if ($ubicacion_id && $ubicacion_id != '-1') {
+            $subquery->where('ubicacions.id', $ubicacion_id);
         }
 
-        // Aplicar la búsqueda
         if (!empty($busqueda)) {
-            $query->where(function ($query) use ($columnas, $busqueda) {
-                foreach ($columnas as $columna) {
-                    if ($columna){
-                        $query->orWhere($columna, 'like', "%$busqueda%");
-                    }
-
-                }
+            $subquery->where(function ($q) use ($busqueda) {
+                $q->orWhere('piezas.codigo', 'like', "%$busqueda%")
+                    ->orWhere('piezas.descripcion', 'like', "%$busqueda%");
             });
         }
 
 
-
-
-        // Obtener la cantidad total de registros después de aplicar el filtro de búsqueda
-        $recordsFiltered = $query->count();
-
-
-        $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
-
-        // Obtener la cantidad total de registros sin filtrar
-        $recordsTotal = Pieza::count();
-
+        // ----------------------------------------------
+        // 3) PAGINAR SOBRE EL SUBQUERY AGRUPADO
+        // ----------------------------------------------
+        $queryFinal = DB::table(DB::raw("({$subquery->toSql()}) as t"))
+            ->mergeBindings($subquery->getQuery())
+            ->orderBy($columnaOrden, $orden)
+            ->skip($request->input('start'))
+            ->take($request->input('length'))
+            ->get();
 
 
         return response()->json([
-            'data' => $datos, // Obtener solo los elementos paginados
+            'data' => $queryFinal,
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
         ]);
     }
+
 
 
     /**
@@ -422,6 +462,235 @@ class PiezaController extends Controller
         return redirect()->route('piezas.index')
             ->with('success', 'Piezas cargadas correctamente');
     }
+
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = [
+            'piezas.codigo',
+            'piezas.descripcion',
+            'tipo_piezas.nombre',
+            'piezas.stock_minimo',
+            'piezas.stock_actual',
+            'sucursals.nombre',
+            'ubicacions.nombre',
+            'piezas.observaciones'
+        ];
+
+        $busqueda = $request->search;
+        $sucursal_id = $request->sucursal_id;
+        $ubicacion_id = $request->ubicacion_id;
+
+        // ------------------------------
+        // OBTENER NOMBRES DE LOS FILTROS
+        // ------------------------------
+        $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
+            ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        $ubicacionNombre = ($ubicacion_id && $ubicacion_id != -1)
+            ? (Ubicacion::find($ubicacion_id)->nombre ?? '—')
+            : 'Todas';
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Pieza::select(
+            'piezas.codigo',
+            'piezas.descripcion',
+            'tipo_piezas.nombre as tipo_pieza',
+            'piezas.stock_minimo',
+            'piezas.stock_actual',
+            DB::raw("GROUP_CONCAT(DISTINCT sucursals.nombre ORDER BY sucursals.nombre SEPARATOR ' / ') as sucursal_nombre"),
+            DB::raw("GROUP_CONCAT(DISTINCT ubicacions.nombre ORDER BY ubicacions.nombre SEPARATOR ' / ') as ubicacion_nombre"),
+            'piezas.observaciones'
+        )
+            ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
+            ->leftJoin('pieza_ubicacions', 'piezas.id', '=', 'pieza_ubicacions.pieza_id')
+            ->leftJoin('ubicacions', 'pieza_ubicacions.ubicacion_id', '=', 'ubicacions.id')
+            ->leftJoin('sucursals', 'ubicacions.sucursal_id', '=', 'sucursals.id')
+            ->groupBy(
+                'piezas.id',
+                'piezas.codigo',
+                'piezas.descripcion',
+                'tipo_piezas.nombre',
+                'piezas.stock_minimo',
+                'piezas.stock_actual',
+                'piezas.observaciones'
+            );
+
+        if ($sucursal_id && $sucursal_id != '-1') {
+            $query->where('ubicacions.sucursal_id', $sucursal_id);
+        }
+
+        if ($ubicacion_id && $ubicacion_id != '-1') {
+            $query->where('ubicacions.id', $ubicacion_id);
+        }
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $piezas = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Piezas");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+        $sheet->setCellValue('A1', 'Sucursal:');
+        $sheet->setCellValue('B1', $sucursalNombre);
+
+        $sheet->setCellValue('A2', 'Ubicación:');
+        $sheet->setCellValue('B2', $ubicacionNombre);
+
+        $sheet->setCellValue('A3', 'Búsqueda:');
+        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Código", "Descripción", "Tipo", "Stock mínimo",
+            "Stock actual", "Sucursal", "Ubicación", "Observaciones"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($piezas as $p) {
+            $sheet->setCellValue("A{$row}", $p->codigo);
+            $sheet->setCellValue("B{$row}", $p->descripcion);
+            $sheet->setCellValue("C{$row}", $p->tipo_pieza);
+            $sheet->setCellValue("D{$row}", $p->stock_minimo);
+            $sheet->setCellValue("E{$row}", $p->stock_actual);
+            $sheet->setCellValue("F{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("G{$row}", $p->ubicacion_nombre);
+            $sheet->setCellValue("H{$row}", $p->observaciones);
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "piezas.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = [
+            'piezas.codigo',
+            'piezas.descripcion',
+            'tipo_piezas.nombre',
+            'piezas.stock_minimo',
+            'piezas.stock_actual',
+            'sucursals.nombre',
+            'ubicacions.nombre',
+            'piezas.observaciones'
+        ];
+
+        $busqueda = $request->search;
+        $sucursal_id = $request->sucursal_id;
+        $ubicacion_id = $request->ubicacion_id;
+        $sucursalNombre = Sucursal::find($sucursal_id)->nombre ?? 'Todas';
+        $ubicacionNombre = Ubicacion::find($ubicacion_id)->nombre ?? 'Todas';
+
+        // MISMA QUERY QUE EN dataTable
+        $query = Pieza::select(
+            'piezas.codigo',
+            'piezas.descripcion',
+            'tipo_piezas.nombre as tipo_pieza',
+            'piezas.stock_minimo',
+            'piezas.stock_actual',
+            DB::raw("GROUP_CONCAT(DISTINCT sucursals.nombre ORDER BY sucursals.nombre SEPARATOR ' / ') as sucursal_nombre"),
+            DB::raw("GROUP_CONCAT(DISTINCT ubicacions.nombre ORDER BY ubicacions.nombre SEPARATOR ' / ') as ubicacion_nombre"),
+            'piezas.observaciones'
+        )
+            ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
+            ->leftJoin('pieza_ubicacions', 'piezas.id', '=', 'pieza_ubicacions.pieza_id')
+            ->leftJoin('ubicacions', 'pieza_ubicacions.ubicacion_id', '=', 'ubicacions.id')
+            ->leftJoin('sucursals', 'ubicacions.sucursal_id', '=', 'sucursals.id')
+            ->groupBy(
+                'piezas.id',
+                'piezas.codigo',
+                'piezas.descripcion',
+                'tipo_piezas.nombre',
+                'piezas.stock_minimo',
+                'piezas.stock_actual',
+                'piezas.observaciones'
+            );
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('ubicacions.sucursal_id', $sucursal_id);
+        }
+
+        if (!empty($ubicacion_id) && $ubicacion_id != '-1') {
+            $query->where('ubicacions.id', $ubicacion_id);
+        }
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $piezas = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'piezas' => $piezas,
+            'sucursalNombre' => $sucursalNombre,
+            'ubicacionNombre' => $ubicacionNombre,
+        ];
+
+        $pdf = PDF::loadView('piezas.pdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('piezas.pdf');
+    }
+
 
 
 

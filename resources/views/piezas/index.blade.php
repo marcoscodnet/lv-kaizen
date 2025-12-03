@@ -26,6 +26,21 @@
                             <span class="d-none d-sm-inline-block ms-2">Carga masiva</span>
                         </a>
 
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarExcel()">
+                            <span class="fas fa-file-excel"></span>
+                            <span class="d-none d-sm-inline-block ms-2">Excel</span>
+                        </a>
+
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarPDF()">
+                            <span class="fas fa-file-pdf"></span>
+                            <span class="d-none d-sm-inline-block ms-2">PDF</span>
+                        </a>
+
+
                     </div>
                 </div>
             </div>
@@ -242,6 +257,28 @@
                     );
                 });
             });
+        }
+
+        function exportarExcel() {
+            let sucursal = $('#filtroSucursal').val();
+            let ubicacion = $('#filtroUbicacion').val();
+
+            let url = "{{ route('piezas.exportarXLS') }}"
+                + "?sucursal_id=" + sucursal
+                + "&ubicacion_id=" + ubicacion;
+
+            window.location.href = url;
+        }
+
+        function exportarPDF() {
+            let sucursal = $('#filtroSucursal').val();
+            let ubicacion = $('#filtroUbicacion').val();
+
+            let url = "{{ route('piezas.exportarPDF') }}"
+                + "?sucursal_id=" + sucursal
+                + "&ubicacion_id=" + ubicacion;
+
+            window.location.href = url;
         }
 
 
