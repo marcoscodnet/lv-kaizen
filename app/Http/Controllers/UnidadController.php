@@ -14,7 +14,9 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PDF;
 class UnidadController extends Controller
 {
     use SanitizesInput;
@@ -349,6 +351,156 @@ class UnidadController extends Controller
                 ];
             })
         );
+    }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','sucursals.nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Unidad::select('unidads.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro')
+            ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
+            ->leftJoin('sucursals', 'unidads.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('tipo_unidads', 'productos.tipo_unidad_id', '=', 'tipo_unidads.id')
+            ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
+            ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
+            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $unidads = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Unidades");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+
+        $sheet->setCellValue('A3', 'Búsqueda:');
+        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Tipo", "Marca", "Modelo", "Color",
+            "Sucursal", "Ingreso", "Año", "Envío", "Motor", "Envío", "Cuadro"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($unidads as $p) {
+            $sheet->setCellValue("A{$row}", $p->tipo_unidad_nombre);
+            $sheet->setCellValue("B{$row}", $p->marca_nombre);
+            $sheet->setCellValue("C{$row}", $p->modelo_nombre);
+            $sheet->setCellValue("D{$row}", $p->color_nombre);
+            $sheet->setCellValue("E{$row}", $p->sucursal_nombre);
+            // 🟢 Formato de fecha dd/mm/YYYY
+            $sheet->setCellValue("G{$row}",
+                $p->ingreso
+                    ? \Carbon\Carbon::parse($p->ingreso)->format('d/m/Y')
+                    : '—'
+            );
+            $sheet->setCellValue("F{$row}", $p->year);
+
+            $sheet->setCellValue("H{$row}", $p->envio);
+            $sheet->setCellValue("I{$row}", $p->motor);
+            $sheet->setCellValue("J{$row}", $p->cuadro);
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "unidads.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','sucursals.nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Unidad::select('unidads.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro')
+            ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
+            ->leftJoin('sucursals', 'unidads.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('tipo_unidads', 'productos.tipo_unidad_id', '=', 'tipo_unidads.id')
+            ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
+            ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
+            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $unidads = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'unidads' => $unidads,
+            'busqueda' => $busqueda,
+        ];
+
+        $pdf = PDF::loadView('unidads.pdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('unidads.pdf');
     }
 
 }

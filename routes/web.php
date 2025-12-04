@@ -90,6 +90,13 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('/productos/update-precio', [App\Http\Controllers\ProductoController::class, 'updatePrecio'])
         ->name('productos.updatePrecio');
 
+
+    Route::get('/unidads/exportar', [UnidadController::class, 'exportarXLS'])
+        ->name('unidads.exportarXLS');
+
+    Route::get('/unidads/exportarPDF', [UnidadController::class, 'exportarPDF'])
+        ->name('unidads.exportarPDF');
+
     Route::resource('unidads', UnidadController::class);
     Route::post('unidad-datatable', [UnidadController::class, 'dataTable'])->name('unidads.dataTable');
     Route::get('/api/unidads-por-producto/{productoId}', [UnidadController::class, 'getUnidadsPorProducto'])->name('api.unidads.getUnidadsPorProducto');

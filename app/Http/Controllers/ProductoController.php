@@ -345,11 +345,11 @@ class ProductoController extends Controller
         // ------------------------------
         $discontinuoNombre = (!empty($discontinuo) && $discontinuo != '-1')
             ? ($discontinuo?'SI':'NO')
-            : 'Todas';
+            : 'Todos';
 
         $minimoNombre = (!empty($filtroStockMinimo) && $filtroStockMinimo != '-1')
             ? ($filtroStockMinimo?'SI':'NO')
-            : 'Todas';
+            : 'Todos';
 
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
@@ -493,11 +493,11 @@ class ProductoController extends Controller
         // ------------------------------
         $discontinuoNombre = (!empty($discontinuo) && $discontinuo != '-1')
             ? ($discontinuo?'SI':'NO')
-            : 'Todas';
+            : 'Todos';
 
         $minimoNombre = (!empty($filtroStockMinimo) && $filtroStockMinimo != '-1')
             ? ($filtroStockMinimo?'SI':'NO')
-            : 'Todas';
+            : 'Todos';
 
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()

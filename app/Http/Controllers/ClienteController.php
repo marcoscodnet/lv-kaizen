@@ -434,7 +434,7 @@ class ClienteController extends Controller
         // ENCABEZADOS DE LA TABLA
         // ------------------------------
         $headers = [
-            "Monbre", "Documento", "Teléfono", "Celular",
+            "Nombre", "Documento", "Teléfono", "Celular",
             "Localidad", "Provincia", "Nacimiento", "E-mail"
         ];
 
