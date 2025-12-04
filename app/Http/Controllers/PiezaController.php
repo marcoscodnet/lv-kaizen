@@ -681,6 +681,7 @@ class PiezaController extends Controller
         // Pasamos datos a la vista PDF
         $data = [
             'piezas' => $piezas,
+            'busqueda' => $busqueda,
             'sucursalNombre' => $sucursalNombre,
             'ubicacionNombre' => $ubicacionNombre,
         ];

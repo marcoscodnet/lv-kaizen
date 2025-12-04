@@ -15,14 +15,14 @@
 <!-- Cabecera con imagen -->
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Piezas</h2>
+    <h2 style="margin-top: 10px;">Listado de Productos</h2>
 </div>
 
 <!-- Filtros aplicados -->
 <p><strong>Filtros aplicados:</strong></p>
 <p>
-    <strong>Sucursal:</strong> {{ $sucursalNombre }} <br>
-    <strong>Ubicación:</strong> {{ $ubicacionNombre }}<br>
+    <strong>Discontinuos:</strong> {{ $discontinuoNombre }} <br>
+    <strong>Debajo del mínimo:</strong> {{ $minimoNombre }}<br>
     @if(!empty($busqueda))
         <strong>Búsqueda:</strong> {{ $busqueda }}<br>
     @endif
@@ -32,27 +32,27 @@
 <table>
     <thead>
     <tr>
-        <th>Código</th>
-        <th>Descripción</th>
         <th>Tipo</th>
-        <th>Stock Mínimo</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Color</th>
+        <th>$ sugerido</th>
+        <th>Stock mín.</th>
         <th>Stock Actual</th>
-        <th>Sucursal</th>
-        <th>Ubicación</th>
-        <th>Observaciones</th>
+        <th>Discontinuo</th>
     </tr>
     </thead>
     <tbody>
-    @foreach($piezas as $p)
+    @foreach($productos as $p)
         <tr>
-            <td>{{ $p->codigo }}</td>
-            <td>{{ $p->descripcion }}</td>
-            <td>{{ $p->tipo_pieza }}</td>
-            <td>{{ $p->stock_minimo }}</td>
+            <td>{{ $p->tipo_unidad_nombre }}</td>
+            <td>{{ $p->marca_nombre }}</td>
+            <td>{{ $p->modelo_nombre }}</td>
+            <td>{{ $p->color_nombre }}</td>
+            <td>{{ $p->precio }}</td>
+            <td>{{ $p->minimo }}</td>
             <td>{{ $p->stock_actual }}</td>
-            <td>{{ $p->sucursal_nombre }}</td>
-            <td>{{ $p->ubicacion_nombre }}</td>
-            <td>{{ $p->observaciones }}</td>
+            <td>{{ $p->discontinuo }}</td>
         </tr>
     @endforeach
     </tbody>

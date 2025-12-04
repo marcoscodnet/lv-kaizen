@@ -64,6 +64,12 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('tipoPiezas', TipoPiezaController::class);
     Route::resource('ubicacions', UbicacionController::class);
 
+    Route::get('/clientes/exportar', [ClienteController::class, 'exportarXLS'])
+        ->name('clientes.exportarXLS');
+
+    Route::get('/clientes/exportarPDF', [ClienteController::class, 'exportarPDF'])
+        ->name('clientes.exportarPDF');
+
     Route::resource('clientes', ClienteController::class);
     Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');
     Route::post('/clientes/quickstore', [ClienteController::class, 'quickStore'])->name('clientes.quickstore');
@@ -71,6 +77,13 @@ Route::group(['middleware' => ['auth']], function() {
 
 
     Route::resource('parametros', ParametroController::class);
+
+
+    Route::get('/productos/exportar', [ProductoController::class, 'exportarXLS'])
+        ->name('productos.exportarXLS');
+
+    Route::get('/productos/exportarPDF', [ProductoController::class, 'exportarPDF'])
+        ->name('productos.exportarPDF');
 
     Route::resource('productos', ProductoController::class);
     Route::post('producto-datatable', [ProductoController::class, 'dataTable'])->name('productos.dataTable');

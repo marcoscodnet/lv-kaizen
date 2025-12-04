@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use App\Models\Cliente;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PDF;
 class ClienteController extends Controller
 {
     use SanitizesInput;
@@ -385,6 +387,150 @@ class ClienteController extends Controller
 
         return response()->json($cliente);
     }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = ['clientes.nombre', 'clientes.documento','clientes.particular','clientes.celular','localidads.nombre','provincias.nombre','clientes.nacimiento','clientes.email']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Cliente::select('clientes.id as id', 'clientes.nombre as cliente_nombre','clientes.documento', DB::raw("CONCAT('(',clientes.particular_area, ') ', clientes.particular) as telefono"), DB::raw("CONCAT('(',clientes.celular_area, ') ', clientes.celular) as celular"), 'localidads.nombre as localidad_nombre', 'provincias.nombre as provincia_nombre','clientes.nacimiento','clientes.email')
+
+            ->leftJoin('localidads', 'clientes.localidad_id', '=', 'localidads.id')
+            ->leftJoin('provincias', 'localidads.provincia_id', '=', 'provincias.id')
+        ;
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $clientes = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Clientes");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+
+        $sheet->setCellValue('A3', 'Búsqueda:');
+        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Monbre", "Documento", "Teléfono", "Celular",
+            "Localidad", "Provincia", "Nacimiento", "E-mail"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($clientes as $p) {
+            $sheet->setCellValue("A{$row}", $p->nombre);
+            $sheet->setCellValue("B{$row}", $p->documento);
+            $sheet->setCellValue("C{$row}", $p->particular);
+            $sheet->setCellValue("D{$row}", $p->celular);
+            $sheet->setCellValue("E{$row}", $p->localidad_nombre);
+            $sheet->setCellValue("F{$row}", $p->provincia_nombre);
+            // 🟢 Formato de fecha dd/mm/YYYY
+            $sheet->setCellValue("G{$row}",
+                $p->nacimiento
+                    ? \Carbon\Carbon::parse($p->nacimiento)->format('d/m/Y')
+                    : '—'
+            );
+            $sheet->setCellValue("H{$row}", $p->email);
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "clientes.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = ['clientes.nombre', 'clientes.documento','clientes.particular','clientes.celular','localidads.nombre','provincias.nombre','clientes.nacimiento','clientes.email']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+
+        $busqueda = $request->search;
+
+
+        // MISMA QUERY QUE EN dataTable
+        $query = Cliente::select('clientes.id as id', 'clientes.nombre as cliente_nombre','clientes.documento', DB::raw("CONCAT('(',clientes.particular_area, ') ', clientes.particular) as telefono"), DB::raw("CONCAT('(',clientes.celular_area, ') ', clientes.celular) as celular"), 'localidads.nombre as localidad_nombre', 'provincias.nombre as provincia_nombre','clientes.nacimiento','clientes.email')
+
+            ->leftJoin('localidads', 'clientes.localidad_id', '=', 'localidads.id')
+            ->leftJoin('provincias', 'localidads.provincia_id', '=', 'provincias.id')
+        ;
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $clientes = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'clientes' => $clientes,
+            'busqueda' => $busqueda,
+        ];
+
+        $pdf = PDF::loadView('clientes.pdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('clientes.pdf');
+    }
+
+
 
 
 }
