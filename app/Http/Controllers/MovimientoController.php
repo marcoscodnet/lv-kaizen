@@ -352,6 +352,20 @@ class MovimientoController extends Controller
         $busqueda = $request->search;
         $user_id = $request->user_id;
 
+        // ===============================
+        //     NOMBRE DEL USUARIO
+        // ===============================
+        $usuarioFiltrado = "Todos";
+
+        if (!empty($user_id) && $user_id != "-1") {
+            $usuario = User::find($user_id);
+            if ($usuario) {
+                $usuarioFiltrado = $usuario->name;
+            } else {
+                $usuarioFiltrado = "Desconocido";
+            }
+        }
+
         // MISMAS COLUMNAS Y ORDEN:
         $sortColumn = 'id';
         $dir = 'asc';
@@ -370,7 +384,7 @@ class MovimientoController extends Controller
         $sheet->setCellValue('B2', $busqueda ?: 'Todos');
 
         $sheet->setCellValue('A3', 'Usuario:');
-        $sheet->setCellValue('B3', $user_id ?: 'Todos');
+        $sheet->setCellValue('B3', $usuarioFiltrado ?: 'Todos');
 
         // ENCABEZADOS
         $headers = [

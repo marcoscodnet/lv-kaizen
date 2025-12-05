@@ -7,7 +7,9 @@ use App\Models\Pieza;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PDF;
 class PedidoController extends Controller
 {
     use SanitizesInput;
@@ -197,6 +199,141 @@ class PedidoController extends Controller
 
         return redirect()->route('pedidos.index')
             ->with('success','Pedido eliminado con éxito');
+    }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = [   'pedidos.fecha','piezas.codigo','pedidos.nombre','pedidos.observacion','pedidos.estado','pedidos.id']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Pedido::select('pedidos.id as id','pedidos.fecha','piezas.codigo as pieza_codigo','pedidos.nombre as nueva','pedidos.observacion','pedidos.estado')
+
+            ->leftJoin('piezas', 'pedidos.pieza_id', '=', 'piezas.id');
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $pedidos = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Pedidos");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+
+        $sheet->setCellValue('A3', 'Búsqueda:');
+        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Fecha", "Pieza", "Nueva", "Observaciones",
+            "Estado"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($pedidos as $p) {
+            $sheet->setCellValue("G{$row}",
+                $p->fecha
+                    ? \Carbon\Carbon::parse($p->fecha)->format('d/m/Y')
+                    : '—'
+            );
+            $sheet->setCellValue("A{$row}", $p->pieza_codigo);
+            $sheet->setCellValue("B{$row}", $p->nueva);
+            $sheet->setCellValue("C{$row}", $p->observacion);
+            $sheet->setCellValue("D{$row}", $p->estado);
+
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "pedidos.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = [   'pedidos.fecha','piezas.codigo','pedidos.nombre','pedidos.observacion','pedidos.estado','pedidos.id']; // Define las columnas disponibles
+
+
+
+        $busqueda = $request->search;
+
+
+        // MISMA QUERY QUE EN dataTable
+        $query = Pedido::select('pedidos.id as id','pedidos.fecha','piezas.codigo as pieza_codigo','pedidos.nombre as nueva','pedidos.observacion','pedidos.estado')
+
+            ->leftJoin('piezas', 'pedidos.pieza_id', '=', 'piezas.id');
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $pedidos = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'pedidos' => $pedidos,
+            'busqueda' => $busqueda,
+        ];
+
+        $pdf = PDF::loadView('pedidos.pdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('pedidos.pdf');
     }
 
 }

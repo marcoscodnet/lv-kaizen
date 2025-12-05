@@ -21,6 +21,19 @@
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarExcel()">
+                            <span class="fas fa-file-excel"></span>
+                            <span class="d-none d-sm-inline-block ms-2">Excel</span>
+                        </a>
+
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarPDF()">
+                            <span class="fas fa-file-pdf"></span>
+                            <span class="d-none d-sm-inline-block ms-2">PDF</span>
+                        </a>
 
                     </div>
                 </div>
@@ -172,6 +185,23 @@
                 }
             });
         });
+
+        function exportarExcel() {
+            let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
+            let url = "{{ route('pedidos.exportarXLS') }}"
+                + "?search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+
+            window.location.href = url;
+        }
+
+        function exportarPDF() {
+            let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
+
+            let url = "{{ route('pedidos.exportarPDF') }}"
+                + "?search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+
+            window.location.href = url;
+        }
 
     </script>
 @endsection

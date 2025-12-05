@@ -21,6 +21,19 @@
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Registrar</span>
                         </a>
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarExcel()">
+                            <span class="fas fa-file-excel"></span>
+                            <span class="d-none d-sm-inline-block ms-2">Excel</span>
+                        </a>
+
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarPDF()">
+                            <span class="fas fa-file-pdf"></span>
+                            <span class="d-none d-sm-inline-block ms-2">PDF</span>
+                        </a>
 
                     </div>
                 </div>
@@ -285,6 +298,38 @@
             });
         });
 
+        function exportarExcel() {
+            let sucursal_id = $('#filtroSucursal').val();
+            let user_id = $('#filtroUsuario').val();
+            let desde = $('#fechaDesde').val();
+            let hasta = $('#fechaHasta').val();
+            let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
+            let url = "{{ route('servicios.exportarXLS') }}"
+                + "?sucursal_id=" + sucursal_id
+                + "&user_id=" + user_id
+                + "&desde=" + desde
+                + "&hasta=" + hasta
+                + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+
+            window.location.href = url;
+        }
+
+        function exportarPDF() {
+            let sucursal_id = $('#filtroSucursal').val();
+            let user_id = $('#filtroUsuario').val();
+            let desde = $('#fechaDesde').val();
+            let hasta = $('#fechaHasta').val();
+            let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
+
+            let url = "{{ route('servicios.exportarPDF') }}"
+                + "?sucursal_id=" + sucursal_id
+                + "&user_id=" + user_id
+                + "&desde=" + desde
+                + "&hasta=" + hasta
+                + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+
+            window.location.href = url;
+        }
 
     </script>
 @endsection

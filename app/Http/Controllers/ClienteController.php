@@ -496,7 +496,6 @@ class ClienteController extends Controller
 
         $columnas = ['clientes.nombre', 'clientes.documento','clientes.particular','clientes.celular','localidads.nombre','provincias.nombre','clientes.nacimiento','clientes.email']; // Define las columnas disponibles
 
-        $busqueda = $request->search;
 
         $busqueda = $request->search;
 

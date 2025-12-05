@@ -167,8 +167,23 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::resource('documentos', DocumentoController::class);
 
+
+    Route::get('/pedidos/exportar', [pedidoController::class, 'exportarXLS'])
+        ->name('pedidos.exportarXLS');
+
+    Route::get('/pedidos/exportarPDF', [pedidoController::class, 'exportarPDF'])
+        ->name('pedidos.exportarPDF');
+
     Route::resource('pedidos', PedidoController::class);
     Route::post('pedido-datatable', [PedidoController::class, 'dataTable'])->name('pedidos.dataTable');
+
+
+    Route::get('/servicios/exportar', [servicioController::class, 'exportarXLS'])
+        ->name('servicios.exportarXLS');
+
+    Route::get('/servicios/exportarPDF', [servicioController::class, 'exportarPDF'])
+        ->name('servicios.exportarPDF');
+
 
     Route::get('/servicios/unidads', [ServicioController::class, 'unidads'])->name('servicios.unidads');
     Route::get('servicios/registrar/{venta?}', [ServicioController::class, 'registrar'])->name('servicios.registrar');

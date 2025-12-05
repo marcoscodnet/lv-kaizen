@@ -11,6 +11,7 @@ use App\Models\Servicio;
 use App\Models\Unidad;
 use App\Models\Provincia;
 use App\Models\TipoServicio;
+use App\Models\User;
 use App\Models\Venta;
 use App\Traits\SanitizesInput;
 use Carbon\Carbon;
@@ -20,6 +21,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use PDF;
 use App\Constants;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 class ServicioController extends Controller
 {
     use SanitizesInput;
@@ -531,5 +535,261 @@ class ServicioController extends Controller
 
         // Renderiza la vista de previsualización para HTML
         //return view('integrantes.alta', $data);
+    }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = [
+            'servicios.id',
+            'servicios.id',
+            'servicios.carga',
+            'servicios.motor',
+            'servicios.modelo',
+            'servicios.chasis',
+            'clientes.nombre',
+            'servicios.mecanicos',
+            'servicios.monto',
+            'tipo_servicios.nombre',
+            DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END"),
+            'sucursals.nombre',
+            'users.name'
+        ];
+
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+        $sucursal_id = $request->sucursdal_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Servicio::select(
+            'servicios.id as id',
+            'servicios.id as nro',
+            'servicios.carga',
+            'servicios.motor',
+            'servicios.modelo',
+            'servicios.chasis',
+            'clientes.nombre as cliente',
+            'servicios.mecanicos',
+            'servicios.monto',
+            'tipo_servicios.nombre as tipo_servicio',
+            DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END as pagado"),
+            'sucursals.nombre as sucursal_nombre',
+            'users.name as usuario_nombre'
+
+        )
+            ->leftJoin('tipo_servicios', 'servicios.tipo_servicio_id', '=', 'tipo_servicios.id')
+            ->leftJoin('sucursals', 'servicios.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
+            ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
+
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('servicios.sucursal_id', $sucursal_id);
+        }
+
+
+
+        if (!empty($user_id) && $user_id != '-1') {
+            $query->where('servicios.user_id', $user_id);
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('servicios.carga', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('servicios.carga', '<=', $fechaHasta);
+        }
+
+        $servicios = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Servicios");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+
+        $sheet->setCellValue('A3', 'Búsqueda:');
+        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Nro.", "Fecha", "Nro. Motor", "Modelo",
+            "Chasis", "Cliente", "Técnico", "Monto", "Servicio", "Cerrado", "Sucursal", "Vendedor"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($servicios as $p) {
+            $sheet->setCellValue("A{$row}", $p->id);
+            $sheet->setCellValue("G{$row}",
+                $p->carga
+                    ? \Carbon\Carbon::parse($p->carga)->format('d/m/Y')
+                    : '—'
+            );
+            $sheet->setCellValue("B{$row}", $p->motor);
+            $sheet->setCellValue("C{$row}", $p->modelo);
+            $sheet->setCellValue("D{$row}", $p->chasis);
+            $sheet->setCellValue("E{$row}", $p->cliente);
+            $sheet->setCellValue("F{$row}", $p->mecanicos);
+            $sheet->setCellValue("H{$row}", $p->monto);
+            $sheet->setCellValue("H{$row}", $p->tipo_servicio);
+            $sheet->setCellValue("H{$row}", $p->pagado);
+            $sheet->setCellValue("H{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("H{$row}", $p->usuario_nombre);
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "servicios.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = [
+            'servicios.id',
+            'servicios.id',
+            'servicios.carga',
+            'servicios.motor',
+            'servicios.modelo',
+            'servicios.chasis',
+            'clientes.nombre',
+            'servicios.mecanicos',
+            'servicios.monto',
+            'tipo_servicios.nombre',
+            DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END"),
+            'sucursals.nombre',
+            'users.name'
+        ];
+
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+        $sucursal_id = $request->sucursdal_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+
+        $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
+            ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        // ===============================
+        //     NOMBRE DEL USUARIO
+        // ===============================
+        $usuarioFiltrado = "Todos";
+
+        if (!empty($user_id) && $user_id != "-1") {
+            $usuario = User::find($user_id);
+            if ($usuario) {
+                $usuarioFiltrado = $usuario->name;
+            } else {
+                $usuarioFiltrado = "Desconocido";
+            }
+        }
+
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Servicio::select(
+            'servicios.id as id',
+            'servicios.id as nro',
+            'servicios.carga',
+            'servicios.motor',
+            'servicios.modelo',
+            'servicios.chasis',
+            'clientes.nombre as cliente',
+            'servicios.mecanicos',
+            'servicios.monto',
+            'tipo_servicios.nombre as tipo_servicio',
+            DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END as pagado"),
+            'sucursals.nombre as sucursal_nombre',
+            'users.name as usuario_nombre'
+
+        )
+            ->leftJoin('tipo_servicios', 'servicios.tipo_servicio_id', '=', 'tipo_servicios.id')
+            ->leftJoin('sucursals', 'servicios.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
+            ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
+
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('servicios.sucursal_id', $sucursal_id);
+        }
+
+
+
+        if (!empty($user_id) && $user_id != '-1') {
+            $query->where('servicios.user_id', $user_id);
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('servicios.carga', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('servicios.carga', '<=', $fechaHasta);
+        }
+
+        $servicios = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'servicios' => $servicios,
+            'busqueda' => $busqueda,
+            'usuarioFiltrado' => $usuarioFiltrado,
+            'sucursalNombre' => $sucursalNombre,
+        ];
+
+        $pdf = PDF::loadView('servicios.exportpdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('servicios.exportpdf');
     }
 }

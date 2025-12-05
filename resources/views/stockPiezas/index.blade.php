@@ -48,7 +48,7 @@
 
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label for="filtroTipo">Tipos:</label>
+                        <label for="filtroTipo">Tipo:</label>
                         <select name="filtroTipo" id="filtroTipo" class="form-control js-example-basic-single">
 
                             @foreach($tipos as $tipoId => $tipo)
