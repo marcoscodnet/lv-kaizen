@@ -70,7 +70,20 @@
                     </div>
                 </div>
 
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroTipo">Tipos:</label>
+                        <select name="filtroTipo" id="filtroTipo" class="form-control js-example-basic-single">
 
+                            @foreach($tipos as $tipoId => $tipo)
+                                <option value="{{ $tipoId }}">
+                                    {{ $tipo }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                </div>
 
 
 
@@ -146,6 +159,7 @@
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
                         d.sucursal_id = $('#filtroSucursal').val();
                         d.ubicacion_id = $('#filtroUbicacion').val();
+                        d.tipo_id = $('#filtroTipo').val();
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
                     },
@@ -212,6 +226,7 @@
 
                     data.filtroSucursal = $('#filtroSucursal').val();
                     data.filtroUbicacion = $('#filtroUbicacion').val();
+                    data.filtroTipo = $('#filtroTipo').val();
 
                 },
                 stateLoadParams: function (settings, data) {
@@ -222,6 +237,10 @@
 
                     if (data.filtroUbicacion) {
                         $('#filtroUbicacion').val(data.filtroUbicacion).trigger('change');
+                    }
+
+                    if (data.filtroTipo) {
+                        $('#filtroTipo').val(data.filtroTipo).trigger('change');
                     }
 
                 },
@@ -239,6 +258,10 @@
             });
 
             $('#filtroUbicacion').change(function() {
+                table.ajax.reload();
+            });
+
+            $('#filtroTipo').change(function() {
                 table.ajax.reload();
             });
 

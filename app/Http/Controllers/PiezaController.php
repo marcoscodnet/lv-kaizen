@@ -40,7 +40,8 @@ class PiezaController extends Controller
 
         $piezas = Pieza::all();
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
-        return view ('piezas.index',compact('piezas','sucursals'));
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todos', '-1');
+        return view ('piezas.index',compact('piezas','sucursals','tipos'));
     }
 
     public function dataTable(Request $request)
@@ -61,7 +62,7 @@ class PiezaController extends Controller
         $busqueda = $request->input('search.value');
         $sucursal_id = $request->input('sucursal_id');
         $ubicacion_id = $request->input('ubicacion_id');
-
+        $tipo_id = $request->input('tipo_id');
 
         // ----------------------------------------------
         // 1) QUERY BASE PARA COUNT CORRECTO
@@ -76,6 +77,10 @@ class PiezaController extends Controller
 
         if ($ubicacion_id && $ubicacion_id != '-1') {
             $queryBase->where('ubicacions.id', $ubicacion_id);
+        }
+
+        if (!empty($tipo_id) && $tipo_id != '-1') {
+            $queryBase->where('piezas.tipo_pieza_id', $tipo_id);
         }
 
         if (!empty($busqueda)) {
@@ -124,6 +129,10 @@ class PiezaController extends Controller
 
         if ($ubicacion_id && $ubicacion_id != '-1') {
             $subquery->where('ubicacions.id', $ubicacion_id);
+        }
+
+        if (!empty($tipo_id) && $tipo_id != '-1') {
+            $subquery->where('piezas.tipo_pieza_id', $tipo_id);
         }
 
         if (!empty($busqueda)) {
