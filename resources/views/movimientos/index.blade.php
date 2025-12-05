@@ -232,7 +232,7 @@
 
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
             let url = "{{ route('movimientos.exportarXLS') }}"
-                + "?usuario_id=" + usuario
+                + "?user_id=" + usuario
 
                 + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
 
@@ -245,7 +245,7 @@
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
 
             let url = "{{ route('movimientos.exportarPDF') }}"
-                + "?usuario_id=" + usuario
+                + "?user_id=" + usuario
 
                 + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
 

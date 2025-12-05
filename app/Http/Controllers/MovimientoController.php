@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\Sucursal;
 use App\Models\Movimiento;
 use App\Models\Unidad;
+use App\Models\User;
 use App\Models\UnidadMovimiento;
 use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
