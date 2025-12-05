@@ -140,6 +140,11 @@ Route::group(['middleware' => ['auth']], function() {
             ->get();
     });
 
+    Route::get('/movimientos/exportar', [MovimientoController::class, 'exportarXLS'])
+        ->name('movimientos.exportarXLS');
+
+    Route::get('/movimientos/exportarPDF', [MovimientoController::class, 'exportarPDF'])
+        ->name('movimientos.exportarPDF');
 
     Route::resource('movimientos', MovimientoController::class);
     Route::post('movimiento-datatable', [MovimientoController::class, 'dataTable'])->name('movimientos.dataTable');

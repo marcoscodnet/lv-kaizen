@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Producto;
 use App\Models\Sucursal;
 use App\Models\Movimiento;
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use DB;
 use PDF;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 class MovimientoController extends Controller
 {
     use SanitizesInput;
@@ -50,7 +54,6 @@ class MovimientoController extends Controller
         $busqueda = $request->input('search.value');
         $user_id = $request->input('user_id');
 
-        // Columnas que se pueden ordenar (en el mismo orden que DataTables)
         $columnsMap = [
             'usuario_nombre',
             'origen_nombre',
@@ -66,67 +69,13 @@ class MovimientoController extends Controller
         $dir = $request->input('order.0.dir', 'asc');
         $sortColumn = $columnsMap[$colIndex] ?? 'id';
 
-        // Traer movimientos con sus unidades
-        $movimientosQuery = Movimiento::with(['unidadMovimientos.unidad'])
-            ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
-            ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
-            ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
-            ->select(
-                'movimientos.id as id',
-                DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
-                'origen.nombre as origen_nombre',
-                'destino.nombre as destino_nombre',
-                'movimientos.fecha'
-            );
-
-        // Filtrar por usuario
-        // Aplicar filtro solo si hay un usuario seleccionado y no es "Todos" (-1)
-        if (!empty($user_id) && $user_id != '-1') {
-            $movimientosQuery->where('movimientos.user_id', $user_id);
-        }
-
-        // Traer todos los movimientos filtrados
-        $movimientos = $movimientosQuery->get();
-
-        // Mapear movimientos y concatenar cuadros/motores
-        $datos = $movimientos->map(function($movimiento) {
-            $cuadros = $movimiento->unidadMovimientos->pluck('unidad.cuadro')->filter()->implode(', ');
-            $motores = $movimiento->unidadMovimientos->pluck('unidad.motor')->filter()->implode(', ');
-
-            return [
-                'id' => $movimiento->id,
-                'usuario_nombre' => $movimiento->usuario_nombre,
-                'origen_nombre' => $movimiento->origen_nombre,
-                'destino_nombre' => $movimiento->destino_nombre,
-                'fecha' => $movimiento->fecha,
-                'cuadros' => $cuadros,
-                'motores' => $motores
-            ];
-        });
-
-        // Filtrar búsqueda en PHP, incluyendo cuadros y motores
-        if (!empty($busqueda)) {
-            $busqueda = mb_strtolower($busqueda);
-            $datos = $datos->filter(function($item) use ($busqueda) {
-                return str_contains(mb_strtolower($item['usuario_nombre']), $busqueda)
-                    || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
-                    || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
-                    || str_contains(mb_strtolower($item['fecha']), $busqueda)
-                    || str_contains(mb_strtolower($item['cuadros']), $busqueda)
-                    || str_contains(mb_strtolower($item['motores']), $busqueda);
-            });
-        }
-
-        // Ordenamiento en PHP
-        $datos = $dir === 'asc'
-            ? $datos->sortBy($sortColumn)
-            : $datos->sortByDesc($sortColumn);
+        $datos = $this->obtenerMovimientosFiltrados($busqueda, $user_id, $sortColumn, $dir);
 
         $recordsFiltered = $datos->count();
         $recordsTotal = Movimiento::count();
 
-        // Paginación
-        $datos = $datos->slice($request->input('start'))->take($request->input('length'))->values();
+        // PAGINAR
+        $datos = $datos->slice($request->start)->take($request->length)->values();
 
         return response()->json([
             'data' => $datos,
@@ -135,6 +84,7 @@ class MovimientoController extends Controller
             'draw' => $request->draw,
         ]);
     }
+
 
 
 
@@ -338,5 +288,232 @@ class MovimientoController extends Controller
 
         return view('movimientos.show', compact('movimiento','origens','destinos','users'));
     }
+
+    private function obtenerMovimientosFiltrados($busqueda, $user_id, $sortColumn, $dir)
+    {
+        $movimientosQuery = Movimiento::with(['unidadMovimientos.unidad'])
+            ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
+            ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
+            ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
+            ->select(
+                'movimientos.id as id',
+                DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
+                'origen.nombre as origen_nombre',
+                'destino.nombre as destino_nombre',
+                'movimientos.fecha'
+            );
+
+        // FILTRO POR USUARIO
+        if (!empty($user_id) && $user_id != '-1') {
+            $movimientosQuery->where('movimientos.user_id', $user_id);
+        }
+
+        $movimientos = $movimientosQuery->get();
+
+        // MAPEO + CONCAT
+        $datos = $movimientos->map(function ($movimiento) {
+            return [
+                'id' => $movimiento->id,
+                'usuario_nombre' => $movimiento->usuario_nombre,
+                'origen_nombre' => $movimiento->origen_nombre,
+                'destino_nombre' => $movimiento->destino_nombre,
+                'fecha' => $movimiento->fecha,
+                'cuadros' => $movimiento->unidadMovimientos->pluck('unidad.cuadro')->filter()->implode(', '),
+                'motores' => $movimiento->unidadMovimientos->pluck('unidad.motor')->filter()->implode(', ')
+            ];
+        });
+
+        // BUSQUEDA
+        if (!empty($busqueda)) {
+            $busqueda = mb_strtolower($busqueda);
+
+            $datos = $datos->filter(function ($item) use ($busqueda) {
+                return str_contains(mb_strtolower($item['usuario_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['fecha']), $busqueda)
+                    || str_contains(mb_strtolower($item['cuadros']), $busqueda)
+                    || str_contains(mb_strtolower($item['motores']), $busqueda);
+            });
+        }
+
+        // ORDEN
+        $datos = $dir === 'asc'
+            ? $datos->sortBy($sortColumn)
+            : $datos->sortByDesc($sortColumn);
+
+        return $datos->values();
+    }
+
+
+    public function exportarXLS(Request $request)
+    {
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+
+        // MISMAS COLUMNAS Y ORDEN:
+        $sortColumn = 'id';
+        $dir = 'asc';
+
+        $datos = $this->obtenerMovimientosFiltrados($busqueda, $user_id, $sortColumn, $dir);
+
+        // Crear Excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setTitle("Movimientos");
+
+        // FILTROS
+        $sheet->setCellValue('A1', 'Filtros aplicados');
+        $sheet->setCellValue('A2', 'Búsqueda:');
+        $sheet->setCellValue('B2', $busqueda ?: 'Todos');
+
+        $sheet->setCellValue('A3', 'Usuario:');
+        $sheet->setCellValue('B3', $user_id ?: 'Todos');
+
+        // ENCABEZADOS
+        $headers = [
+            "Usuario", "Origen", "Destino", "Fecha", "Cuadros", "Motores"
+        ];
+
+        $row = 5;
+        $col = 1;
+
+        foreach ($headers as $h) {
+            $sheet->setCellValueByColumnAndRow($col, $row, $h);
+            $sheet->getStyleByColumnAndRow($col, $row)->getFont()->setBold(true);
+            $col++;
+        }
+
+        $row++;
+
+        // DATOS
+        foreach ($datos as $m) {
+            $sheet->setCellValue("A$row", $m['usuario_nombre']);
+            $sheet->setCellValue("B$row", $m['origen_nombre']);
+            $sheet->setCellValue("C$row", $m['destino_nombre']);
+            $sheet->setCellValue("G{$row}",
+                $m['fecha']
+                    ? \Carbon\Carbon::parse($m['fecha'])->format('d/m/Y')
+                    : '—'
+            );
+            $sheet->setCellValue("E$row", $m['cuadros']);
+            $sheet->setCellValue("F$row", $m['motores']);
+            $row++;
+        }
+
+        // AUTO SIZE
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // EXPORTAR
+        $fileName = "movimientos.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 0);
+
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+
+        // ===============================
+        //     NOMBRE DEL USUARIO
+        // ===============================
+        $usuarioFiltrado = "Todos";
+
+        if (!empty($user_id) && $user_id != "-1") {
+            $usuario = User::find($user_id);
+            if ($usuario) {
+                $usuarioFiltrado = $usuario->name;
+            } else {
+                $usuarioFiltrado = "Desconocido";
+            }
+        }
+
+        // ===============================
+        // MISMA QUERY QUE dataTable()
+        // ===============================
+        $movimientosQuery = Movimiento::with(['unidadMovimientos.unidad'])
+            ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
+            ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
+            ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
+            ->select(
+                'movimientos.id as id',
+                DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
+                'origen.nombre as origen_nombre',
+                'destino.nombre as destino_nombre',
+                'movimientos.fecha'
+            );
+
+        // FILTRAR POR USUARIO
+        if (!empty($user_id) && $user_id != '-1') {
+            $movimientosQuery->where('movimientos.user_id', $user_id);
+        }
+
+        $movimientos = $movimientosQuery->get();
+
+        // ===============================
+        // MAPEO EXACTO AL DATATABLE
+        // ===============================
+        $datos = $movimientos->map(function($movimiento) {
+            return [
+                'id' => $movimiento->id,
+                'usuario_nombre' => $movimiento->usuario_nombre,
+                'origen_nombre' => $movimiento->origen_nombre,
+                'destino_nombre' => $movimiento->destino_nombre,
+                'fecha' => $movimiento->fecha
+                    ? \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y')
+                    : '',
+                'cuadros' => $movimiento->unidadMovimientos->pluck('unidad.cuadro')->filter()->implode(', '),
+                'motores' => $movimiento->unidadMovimientos->pluck('unidad.motor')->filter()->implode(', ')
+            ];
+        });
+
+        // ===============================
+        // FILTRO DE BÚSQUEDA
+        // ===============================
+        if (!empty($busqueda)) {
+            $busqueda = mb_strtolower($busqueda);
+            $datos = $datos->filter(function($item) use ($busqueda) {
+                return str_contains(mb_strtolower($item['usuario_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
+                    || str_contains(mb_strtolower($item['fecha']), $busqueda)
+                    || str_contains(mb_strtolower($item['cuadros']), $busqueda)
+                    || str_contains(mb_strtolower($item['motores']), $busqueda);
+            });
+        }
+
+        // ===============================
+        // ENVIAR TODO AL PDF
+        // ===============================
+        $data = [
+            'movimientos' => $datos,
+            'busqueda' => $busqueda,
+            'usuarioFiltrado' => $usuarioFiltrado
+        ];
+
+        $pdf = PDF::loadView('movimientos.exportpdf', $data)
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('movimientos.exportpdf');
+    }
+
+
+
+
+
+
 
 }
