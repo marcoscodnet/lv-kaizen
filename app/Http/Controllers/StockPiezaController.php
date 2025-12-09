@@ -6,11 +6,15 @@ use App\Models\Pieza;
 use App\Models\Sucursal;
 use App\Models\StockPieza;
 use App\Models\TipoPieza;
+
 use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PDF;
 class StockPiezaController extends Controller
 {
     use SanitizesInput;
@@ -373,4 +377,194 @@ class StockPiezaController extends Controller
         return redirect()->route('unidads.index')
             ->with('success','Unidad eliminada con éxito');
     }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+        $sucursal_id = $request->sucursal_id;
+
+        $tipo_id = $request->tipo_id;
+
+        // ------------------------------
+        // OBTENER NOMBRES DE LOS FILTROS
+        // ------------------------------
+        $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
+            ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        $tipoNombre = ($tipo_id && $tipo_id != -1)
+            ? (TipoPieza::find($tipo_id)->nombre ?? '—')
+            : 'Todos';
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
+            ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
+            ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
+            ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
+        ;
+
+        if ($sucursal_id && $sucursal_id != '-1') {
+            $query->where('ubicacions.sucursal_id', $sucursal_id);
+        }
+
+
+        if (!empty($tipo_id) && $tipo_id != '-1') {
+            $query->where('piezas.tipo_pieza_id', $tipo_id);
+        }
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $piezas = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Stock Piezas");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+        $sheet->setCellValue('A1', 'Sucursal:');
+        $sheet->setCellValue('B1', $sucursalNombre);
+
+        $sheet->setCellValue('A2', 'Tipo:');
+        $sheet->setCellValue('B2', $tipoNombre);
+
+        $sheet->setCellValue('A3', 'Búsqueda:');
+        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Remito", "Código", "Tipo", "Descripción",
+            "Cant. inicial", "Cant. Actual", "Costo", "Precio mín."
+            , "Sucursal", "Proveedor", "Ingreso"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($piezas as $p) {
+            $sheet->setCellValue("A{$row}", $p->remito);
+            $sheet->setCellValue("B{$row}", $p->codigo);
+            $sheet->setCellValue("C{$row}", $p->tipo_nombre);
+            $sheet->setCellValue("D{$row}", $p->descripcion);
+            $sheet->setCellValue("E{$row}", $p->inicial);
+            $sheet->setCellValue("F{$row}", $p->cantidad);
+            $sheet->setCellValue("G{$row}", $p->costo);
+            $sheet->setCellValue("H{$row}", $p->precio_minimo);
+            $sheet->setCellValue("I{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("J{$row}", $p->proveedor);
+            // 🟢 Formato de fecha dd/mm/YYYY
+            $sheet->setCellValue("K{$row}",
+                $p->ingreso
+                    ? \Carbon\Carbon::parse($p->ingreso)->format('d/m/Y')
+                    : '—'
+            );
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "stock_piezas.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+        $sucursal_id = $request->sucursal_id;
+
+        $tipo_id = $request->tipo_id;
+        $sucursalNombre = Sucursal::find($sucursal_id)->nombre ?? 'Todas';
+
+        $tipoNombre = TipoPieza::find($tipo_id)->nombre ?? 'Todas';
+
+        // MISMA QUERY QUE EN dataTable
+        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
+            ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
+            ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
+            ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
+        ;
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('ubicacions.sucursal_id', $sucursal_id);
+        }
+
+
+
+        if (!empty($tipo_id) && $tipo_id != '-1') {
+            $query->where('piezas.tipo_pieza_id', $tipo_id);
+        }
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $piezas = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'piezas' => $piezas,
+            'busqueda' => $busqueda,
+            'sucursalNombre' => $sucursalNombre,
+            'tipoNombre' => $tipoNombre,
+        ];
+
+        $pdf = PDF::loadView('stockPiezas.pdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('stockPiezas.pdf');
+    }
+
 }

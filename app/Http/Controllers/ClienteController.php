@@ -451,9 +451,9 @@ class ClienteController extends Controller
         $row = $startRow + 1;
 
         foreach ($clientes as $p) {
-            $sheet->setCellValue("A{$row}", $p->nombre);
+            $sheet->setCellValue("A{$row}", $p->cliente_nombre);
             $sheet->setCellValue("B{$row}", $p->documento);
-            $sheet->setCellValue("C{$row}", $p->particular);
+            $sheet->setCellValue("C{$row}", $p->telefono);
             $sheet->setCellValue("D{$row}", $p->celular);
             $sheet->setCellValue("E{$row}", $p->localidad_nombre);
             $sheet->setCellValue("F{$row}", $p->provincia_nombre);

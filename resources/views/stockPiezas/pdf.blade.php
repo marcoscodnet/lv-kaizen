@@ -15,12 +15,14 @@
 <!-- Cabecera con imagen -->
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Unidades</h2>
+    <h2 style="margin-top: 10px;">Listado de Stock de Piezas</h2>
 </div>
 
 <!-- Filtros aplicados -->
 <p><strong>Filtros aplicados:</strong></p>
 <p>
+    <strong>Sucursal:</strong> {{ $sucursalNombre }} <br>
+    <strong>Tipo:</strong> {{ $tipoNombre }}<br>
     @if(!empty($busqueda))
         <strong>Búsqueda:</strong> {{ $busqueda }}<br>
     @endif
@@ -30,31 +32,34 @@
 <table>
     <thead>
     <tr>
+        <th>Remito</th>
+        <th>Código</th>
         <th>Tipo</th>
-        <th>Marca</th>
-        <th>Modelo</th>
-        <th>Color</th>
+        <th>Descripción</th>
+        <th>Cant. Inicial</th>
+        <th>Cant. Actual</th>
+        <th>Costo</th>
+        <th>Precio mín.</th>
         <th>Sucursal</th>
+        <th>Proveedor</th>
         <th>Ingreso</th>
-        <th>Año</th>
-        <th>Envío</th>
-        <th>Motor</th>
-        <th>Cuadro</th>
     </tr>
     </thead>
     <tbody>
-    @foreach($unidads as $p)
+    @foreach($piezas as $p)
         <tr>
-            <td>{{ $p->tipo_unidad_nombre }}</td>
-            <td>{{ $p->marca_nombre }}</td>
-            <td>{{ $p->modelo_nombre }}</td>
-            <td>{{ $p->color_nombre }}</td>
+            <td>{{ $p->remito }}</td>
+            <td>{{ $p->codigo }}</td>
+            <td>{{ $p->tipo_nombre }}</td>
+            <td>{{ $p->descripcion }}</td>
+
+            <td>{{ $p->inicial }}</td>
+            <td>{{ $p->cantidad }}</td>
+            <td>{{ $p->costo }}</td>
+            <td>{{ $p->precio_minimo }}</td>
             <td>{{ $p->sucursal_nombre }}</td>
+            <td>{{ $p->proveedor }}</td>
             <td>{{ $p->ingreso ? date('d/m/Y', strtotime($p->ingreso)) : '—' }}</td>
-            <td>{{ $p->year }}</td>
-            <td>{{ $p->envio }}</td>
-            <td>{{ $p->motor }}</td>
-            <td>{{ $p->cuadro }}</td>
         </tr>
     @endforeach
     </tbody>

@@ -425,12 +425,12 @@ class UnidadController extends Controller
             $sheet->setCellValue("D{$row}", $p->color_nombre);
             $sheet->setCellValue("E{$row}", $p->sucursal_nombre);
             // 🟢 Formato de fecha dd/mm/YYYY
-            $sheet->setCellValue("G{$row}",
+            $sheet->setCellValue("F{$row}",
                 $p->ingreso
                     ? \Carbon\Carbon::parse($p->ingreso)->format('d/m/Y')
                     : '—'
             );
-            $sheet->setCellValue("F{$row}", $p->year);
+            $sheet->setCellValue("G{$row}", $p->year);
 
             $sheet->setCellValue("H{$row}", $p->envio);
             $sheet->setCellValue("I{$row}", $p->motor);
@@ -439,7 +439,7 @@ class UnidadController extends Controller
         }
 
         // AutoSize de columnas
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'J') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

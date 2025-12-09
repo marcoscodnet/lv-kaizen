@@ -10,6 +10,7 @@ use App\Models\Parametro;
 use App\Models\Provincia;
 use App\Models\Sucursal;
 use App\Models\Unidad;
+use App\Models\User;
 use App\Models\Venta;
 use App\Models\Entidad;
 use App\Models\Documento;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 use Carbon\Carbon;
 use PDF;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
@@ -821,6 +824,290 @@ class VentaController extends Controller
 
         // Renderiza la vista de previsualización para HTML
         //return view('integrantes.alta', $data);
+    }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = [
+            'ventas.fecha',
+            'clientes.nombre',
+            'unidads.motor',
+            'modelos.nombre',
+            DB::raw("IFNULL(users.name, ventas.user_name)"),
+            'sucursals.nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
+            'ventas.forma'
+        ];
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+        $sucursal_id = $request->sucursdal_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+        $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
+            ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        $userNombre = ($user_id && $user_id != -1)
+            ? (User::find($user_id)->nombre ?? '—')
+            : 'Todos';
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Venta::select(
+            'ventas.id as id',
+            'ventas.fecha',
+            'clientes.nombre as cliente',
+            'unidads.motor',
+            'modelos.nombre as modelo',
+            DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
+            'sucursals.nombre as sucursal_nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+            'ventas.forma'
+        )
+            ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
+            ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
+            ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
+            ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
+            ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
+            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('ventas.sucursal_id', $sucursal_id);
+        }
+
+
+        if (!empty($user_id) && $user_id != '-1') {
+            $query->where('ventas.user_id', $user_id);
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('ventas.fecha', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('ventas.fecha', '<=', $fechaHasta);
+        }
+
+        // Aplicar búsqueda
+        if (!empty($busqueda)) {
+            $query->where(function ($query) use ($columnas, $busqueda) {
+                foreach ($columnas as $columna) {
+                    if ($columna) {
+                        $query->orWhere($columna, 'like', "%$busqueda%");
+                    }
+                }
+            });
+        }
+
+        $ventas = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Ventas");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+
+        $sheet->setCellValue('A1', 'Sucursal:');
+        $sheet->setCellValue('B1', $sucursalNombre);
+
+        $sheet->setCellValue('A2', 'Vendedor:');
+        $sheet->setCellValue('B2', $userNombre);
+
+        $sheet->setCellValue('A3', 'Desde:');
+        $sheet->setCellValue('B3', $fechaDesde
+            ? \Carbon\Carbon::parse($fechaDesde)->format('d/m/Y')
+            : '—');
+
+        $sheet->setCellValue('A4', 'Hasta:');
+        $sheet->setCellValue('B4', $fechaHasta
+            ? \Carbon\Carbon::parse($fechaHasta)->format('d/m/Y')
+            : '—');
+
+
+        $sheet->setCellValue('A5', 'Búsqueda:');
+        $sheet->setCellValue('B5', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+           "Fecha", "Cliente", "Nro. Motor", "Modelo", "Vendedor",
+             "Sucursal", "Estado", "Pago"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($ventas as $p) {
+
+            $sheet->setCellValue("A{$row}",
+                $p->fecha
+                    ? \Carbon\Carbon::parse($p->fecha)->format('d/m/Y')
+                    : '—'
+            );
+            $sheet->setCellValue("B{$row}", $p->cliente);
+            $sheet->setCellValue("C{$row}", $p->motor);
+            $sheet->setCellValue("D{$row}", $p->modelo);
+            $sheet->setCellValue("E{$row}", $p->usuario_nombre);
+            $sheet->setCellValue("F{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("G{$row}", $p->autorizacion);
+            $sheet->setCellValue("H{$row}", $p->forma);
+
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "ventas.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = [
+            'ventas.fecha',
+            'clientes.nombre',
+            'unidads.motor',
+            'modelos.nombre',
+            DB::raw("IFNULL(users.name, ventas.user_name)"),
+            'sucursals.nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
+            'ventas.forma'
+        ];
+
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+        $sucursal_id = $request->sucursdal_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+
+        $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
+            ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        // ===============================
+        //     NOMBRE DEL USUARIO
+        // ===============================
+        $usuarioFiltrado = "Todos";
+
+        if (!empty($user_id) && $user_id != "-1") {
+            $usuario = User::find($user_id);
+            if ($usuario) {
+                $usuarioFiltrado = $usuario->name;
+            } else {
+                $usuarioFiltrado = "Desconocido";
+            }
+        }
+
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = Venta::select(
+            'ventas.id as id',
+            'ventas.fecha',
+            'clientes.nombre as cliente',
+            'unidads.motor',
+            'modelos.nombre as modelo',
+            DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
+            'sucursals.nombre as sucursal_nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+            'ventas.forma'
+        )
+            ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
+            ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
+            ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
+            ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
+            ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
+            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+
+        if (!empty($sucursal_id) && $sucursal_id != '-1') {
+            $query->where('ventas.sucursal_id', $sucursal_id);
+        }
+
+
+        if (!empty($user_id) && $user_id != '-1') {
+            $query->where('ventas.user_id', $user_id);
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('ventas.fecha', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('ventas.fecha', '<=', $fechaHasta);
+        }
+
+        // Aplicar búsqueda
+        if (!empty($busqueda)) {
+            $query->where(function ($query) use ($columnas, $busqueda) {
+                foreach ($columnas as $columna) {
+                    if ($columna) {
+                        $query->orWhere($columna, 'like', "%$busqueda%");
+                    }
+                }
+            });
+        }
+
+        $ventas = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'ventas' => $ventas,
+            'busqueda' => $busqueda,
+            'usuarioFiltrado' => $usuarioFiltrado,
+            'sucursalNombre' => $sucursalNombre,
+            'fechaDesde' => $fechaDesde,
+            'fechaHasta' => $fechaHasta,
+        ];
+
+        $pdf = PDF::loadView('ventas.exportpdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('ventas.exportpdf');
     }
 
 }

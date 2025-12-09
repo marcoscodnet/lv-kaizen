@@ -333,8 +333,15 @@ class ProductoController extends Controller
 
     public function exportarXLS(Request $request)
     {
-        $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','productos.precio','productos.minimo',
-            DB::raw('COUNT(CASE WHEN v.id IS NULL THEN 1 END)'),DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")];
+        $columnas = [
+            'tipo_unidads.nombre',
+            'marcas.nombre',
+            'modelos.nombre',
+            'colors.nombre',
+            'productos.precio',
+            'productos.minimo',
+            DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")
+        ];
 
         $busqueda = $request->search;
         $discontinuo = $request->discontinuo;
@@ -481,8 +488,15 @@ class ProductoController extends Controller
         ini_set('memory_limit', '-1'); // ilimitado
         ini_set('max_execution_time', 0);
 
-        $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','productos.precio','productos.minimo',
-            DB::raw('COUNT(CASE WHEN v.id IS NULL THEN 1 END)'),DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")];
+        $columnas = [
+            'tipo_unidads.nombre',
+            'marcas.nombre',
+            'modelos.nombre',
+            'colors.nombre',
+            'productos.precio',
+            'productos.minimo',
+            DB::raw("CASE WHEN productos.discontinuo = 1 THEN 'SI' ELSE 'NO' END")
+        ];
 
         $busqueda = $request->search;
         $discontinuo = $request->discontinuo;

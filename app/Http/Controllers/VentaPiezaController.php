@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\StockPieza;
 use App\Models\Sucursal;
+use App\Models\User;
 use App\Models\VentaPieza;
 use App\Models\PiezaVentaPieza;
 use App\Http\Controllers\Controller;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Validator;
 use DB;
 use Carbon\Carbon;
 use PDF;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 class VentaPiezaController extends Controller
 {
     use SanitizesInput;
@@ -545,5 +549,265 @@ class VentaPiezaController extends Controller
 
         // Renderiza la vista de previsualización para HTML
         //return view('integrantes.alta', $data);
+    }
+
+    public function exportarXLS(Request $request)
+    {
+        $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        SELECT SUM(pvp.precio)
+        FROM pieza_venta_piezas pvp
+        WHERE pvp.venta_pieza_id = venta_piezas.id
+    ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+            DB::raw("(
+    SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
+    FROM pieza_venta_piezas pvp
+    INNER JOIN piezas p ON p.id = pvp.pieza_id
+    WHERE pvp.venta_pieza_id = venta_piezas.id
+) as piezas_codigos")
+
+        ]; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+
+        // ------------------------------
+        // OBTENER NOMBRES DE LOS FILTROS
+        // ------------------------------
+        $userNombre = ($user_id && $user_id != -1)
+            ? (User::find($user_id)->nombre ?? '—')
+            : 'Todos';
+
+
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+            SELECT SUM(pvp.precio)
+            FROM pieza_venta_piezas pvp
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
+            DB::raw("(
+    SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
+    FROM pieza_venta_piezas pvp
+    INNER JOIN piezas p ON p.id = pvp.pieza_id
+    WHERE pvp.venta_pieza_id = venta_piezas.id
+) as piezas_codigos")
+
+        )
+            ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
+
+            ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
+        ;
+
+        if (!empty($user_id) && $user_id != '-1') {
+            $query->where('venta_piezas.user_id', $user_id);
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('venta_piezas.fecha', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('venta_piezas.fecha', '<=', $fechaHasta);
+        }
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $piezas = $query->get();
+
+        // ===============================
+        //     📄 CREAR ARCHIVO XLSX
+        // ===============================
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Venta Piezas");
+
+        // ------------------------------
+        // FILTROS
+        // ------------------------------
+        $sheet->setCellValue('A1', 'Vendedor:');
+        $sheet->setCellValue('B1', $userNombre);
+
+        $sheet->setCellValue('A2', 'Desde:');
+        $sheet->setCellValue('B2', $fechaDesde
+            ? \Carbon\Carbon::parse($fechaDesde)->format('d/m/Y')
+            : '—');
+
+        $sheet->setCellValue('A3', 'Hasta:');
+        $sheet->setCellValue('B3', $fechaHasta
+            ? \Carbon\Carbon::parse($fechaHasta)->format('d/m/Y')
+            : '—');
+
+
+        $sheet->setCellValue('A4', 'Búsqueda:');
+        $sheet->setCellValue('B4', $busqueda ?: '—');
+
+        // Espacio antes de la tabla
+        $startRow = 5;
+
+        // ------------------------------
+        // ENCABEZADOS DE LA TABLA
+        // ------------------------------
+        $headers = [
+            "Fecha", "Cliente", "Pedido", "Destino",
+            "Monto", "Sucursal", "Vendedor", "Piezas"
+        ];
+
+        $col = 1;
+        foreach ($headers as $header) {
+            $sheet->setCellValueByColumnAndRow($col, $startRow, $header);
+            $sheet->getStyleByColumnAndRow($col, $startRow)->getFont()->setBold(true);
+            $col++;
+        }
+
+        // ------------------------------
+        // DATOS
+        // ------------------------------
+        $row = $startRow + 1;
+
+        foreach ($piezas as $p) {
+            // 🟢 Formato de fecha dd/mm/YYYY
+            $sheet->setCellValue("A{$row}",
+                $p->fecha
+                    ? \Carbon\Carbon::parse($p->fecha)->format('d/m/Y')
+                    : '—'
+            );
+
+            $sheet->setCellValue("B{$row}", $p->cliente);
+            $sheet->setCellValue("C{$row}", $p->pedido);
+            $sheet->setCellValue("D{$row}", $p->destino);
+            $sheet->setCellValue("E{$row}", $p->precio_total);
+            $sheet->setCellValue("F{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("G{$row}", $p->usuario_nombre);
+            $sheet->setCellValue("H{$row}", $p->piezas_codigos);
+
+
+            $row++;
+        }
+
+        // AutoSize de columnas
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // ------------------------------
+        // EXPORTAR
+        // ------------------------------
+        $fileName = "venta_piezas.xlsx";
+        $filePath = tempnam(sys_get_temp_dir(), $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $fileName)->deleteFileAfterSend(true);
+    }
+
+
+
+
+
+
+    public function exportarPDF(Request $request)
+    {
+        ini_set('memory_limit', '-1'); // ilimitado
+        ini_set('max_execution_time', 0);
+
+        $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        SELECT SUM(pvp.precio)
+        FROM pieza_venta_piezas pvp
+        WHERE pvp.venta_pieza_id = venta_piezas.id
+    ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+            DB::raw("(
+    SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
+    FROM pieza_venta_piezas pvp
+    INNER JOIN piezas p ON p.id = pvp.pieza_id
+    WHERE pvp.venta_pieza_id = venta_piezas.id
+) as piezas_codigos")
+
+        ]; // Define las columnas disponibles
+
+        $busqueda = $request->search;
+        $user_id = $request->user_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+
+        // ------------------------------
+        // OBTENER NOMBRES DE LOS FILTROS
+        // ------------------------------
+        $userNombre = ($user_id && $user_id != -1)
+            ? (User::find($user_id)->nombre ?? '—')
+            : 'Todos';
+
+
+
+        // ------------------------------
+        // MISMA QUERY QUE DATATABLE()
+        // ------------------------------
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+            SELECT SUM(pvp.precio)
+            FROM pieza_venta_piezas pvp
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
+            DB::raw("(
+    SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
+    FROM pieza_venta_piezas pvp
+    INNER JOIN piezas p ON p.id = pvp.pieza_id
+    WHERE pvp.venta_pieza_id = venta_piezas.id
+) as piezas_codigos")
+
+        )
+            ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
+
+            ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
+        ;
+
+        if (!empty($user_id) && $user_id != '-1') {
+            $query->where('venta_piezas.user_id', $user_id);
+        }
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('venta_piezas.fecha', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('venta_piezas.fecha', '<=', $fechaHasta);
+        }
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
+        $piezas = $query->get();
+
+        // Pasamos datos a la vista PDF
+        $data = [
+            'piezas' => $piezas,
+            'busqueda' => $busqueda,
+            'userNombre' => $userNombre,
+            'fechaDesde' => $fechaDesde,
+            'fechaHasta' => $fechaHasta,
+        ];
+
+        $pdf = PDF::loadView('ventaPiezas.exportpdf', $data)
+            ->setPaper('a4', 'landscape'); // opcional
+
+        return $pdf->download('ventaPiezas.exportpdf');
     }
 }

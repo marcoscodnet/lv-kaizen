@@ -561,6 +561,14 @@ class ServicioController extends Controller
         $fechaDesde = $request->desde;
         $fechaHasta = $request->hasta;
 
+        $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
+            ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        $userNombre = ($user_id && $user_id != -1)
+            ? (User::find($user_id)->nombre ?? '—')
+            : 'Todos';
+
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
@@ -605,6 +613,14 @@ class ServicioController extends Controller
             $query->whereDate('servicios.carga', '<=', $fechaHasta);
         }
 
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
         $servicios = $query->get();
 
         // ===============================
@@ -618,8 +634,25 @@ class ServicioController extends Controller
         // FILTROS
         // ------------------------------
 
-        $sheet->setCellValue('A3', 'Búsqueda:');
-        $sheet->setCellValue('B3', $busqueda ?: '—');
+        $sheet->setCellValue('A1', 'Sucursal:');
+        $sheet->setCellValue('B1', $sucursalNombre);
+
+        $sheet->setCellValue('A2', 'Vendedor:');
+        $sheet->setCellValue('B2', $userNombre);
+
+        $sheet->setCellValue('A3', 'Desde:');
+        $sheet->setCellValue('B3', $fechaDesde
+            ? \Carbon\Carbon::parse($fechaDesde)->format('d/m/Y')
+            : '—');
+
+        $sheet->setCellValue('A4', 'Hasta:');
+        $sheet->setCellValue('B4', $fechaHasta
+            ? \Carbon\Carbon::parse($fechaHasta)->format('d/m/Y')
+            : '—');
+
+
+        $sheet->setCellValue('A5', 'Búsqueda:');
+        $sheet->setCellValue('B5', $busqueda ?: '—');
 
         // Espacio antes de la tabla
         $startRow = 5;
@@ -646,26 +679,26 @@ class ServicioController extends Controller
 
         foreach ($servicios as $p) {
             $sheet->setCellValue("A{$row}", $p->id);
-            $sheet->setCellValue("G{$row}",
+            $sheet->setCellValue("B{$row}",
                 $p->carga
                     ? \Carbon\Carbon::parse($p->carga)->format('d/m/Y')
                     : '—'
             );
-            $sheet->setCellValue("B{$row}", $p->motor);
-            $sheet->setCellValue("C{$row}", $p->modelo);
-            $sheet->setCellValue("D{$row}", $p->chasis);
-            $sheet->setCellValue("E{$row}", $p->cliente);
-            $sheet->setCellValue("F{$row}", $p->mecanicos);
+            $sheet->setCellValue("C{$row}", $p->motor);
+            $sheet->setCellValue("D{$row}", $p->modelo);
+            $sheet->setCellValue("E{$row}", $p->chasis);
+            $sheet->setCellValue("F{$row}", $p->cliente);
+            $sheet->setCellValue("G{$row}", $p->mecanicos);
             $sheet->setCellValue("H{$row}", $p->monto);
-            $sheet->setCellValue("H{$row}", $p->tipo_servicio);
-            $sheet->setCellValue("H{$row}", $p->pagado);
-            $sheet->setCellValue("H{$row}", $p->sucursal_nombre);
-            $sheet->setCellValue("H{$row}", $p->usuario_nombre);
+            $sheet->setCellValue("I{$row}", $p->tipo_servicio);
+            $sheet->setCellValue("J{$row}", $p->pagado);
+            $sheet->setCellValue("K{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("L{$row}", $p->usuario_nombre);
             $row++;
         }
 
         // AutoSize de columnas
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'L') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -777,6 +810,14 @@ class ServicioController extends Controller
             $query->whereDate('servicios.carga', '<=', $fechaHasta);
         }
 
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($columnas, $busqueda) {
+                foreach ($columnas as $col) {
+                    $q->orWhere($col, 'like', "%$busqueda%");
+                }
+            });
+        }
+
         $servicios = $query->get();
 
         // Pasamos datos a la vista PDF
@@ -785,6 +826,8 @@ class ServicioController extends Controller
             'busqueda' => $busqueda,
             'usuarioFiltrado' => $usuarioFiltrado,
             'sucursalNombre' => $sucursalNombre,
+            'fechaDesde' => $fechaDesde,
+            'fechaHasta' => $fechaHasta,
         ];
 
         $pdf = PDF::loadView('servicios.exportpdf', $data)

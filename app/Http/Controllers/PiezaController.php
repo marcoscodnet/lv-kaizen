@@ -489,6 +489,7 @@ class PiezaController extends Controller
         $busqueda = $request->search;
         $sucursal_id = $request->sucursal_id;
         $ubicacion_id = $request->ubicacion_id;
+        $tipo_id = $request->tipo_id;
 
         // ------------------------------
         // OBTENER NOMBRES DE LOS FILTROS
@@ -500,6 +501,10 @@ class PiezaController extends Controller
         $ubicacionNombre = ($ubicacion_id && $ubicacion_id != -1)
             ? (Ubicacion::find($ubicacion_id)->nombre ?? '—')
             : 'Todas';
+
+        $tipoNombre = ($tipo_id && $tipo_id != -1)
+            ? (TipoPieza::find($tipo_id)->nombre ?? '—')
+            : 'Todos';
 
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
@@ -536,6 +541,10 @@ class PiezaController extends Controller
             $query->where('ubicacions.id', $ubicacion_id);
         }
 
+        if (!empty($tipo_id) && $tipo_id != '-1') {
+            $query->where('piezas.tipo_pieza_id', $tipo_id);
+        }
+
         if (!empty($busqueda)) {
             $query->where(function ($q) use ($columnas, $busqueda) {
                 foreach ($columnas as $col) {
@@ -562,8 +571,11 @@ class PiezaController extends Controller
         $sheet->setCellValue('A2', 'Ubicación:');
         $sheet->setCellValue('B2', $ubicacionNombre);
 
-        $sheet->setCellValue('A3', 'Búsqueda:');
-        $sheet->setCellValue('B3', $busqueda ?: '—');
+        $sheet->setCellValue('A3', 'Tipo:');
+        $sheet->setCellValue('B3', $tipoNombre);
+
+        $sheet->setCellValue('A4', 'Búsqueda:');
+        $sheet->setCellValue('B4', $busqueda ?: '—');
 
         // Espacio antes de la tabla
         $startRow = 5;
@@ -641,8 +653,10 @@ class PiezaController extends Controller
         $busqueda = $request->search;
         $sucursal_id = $request->sucursal_id;
         $ubicacion_id = $request->ubicacion_id;
+        $tipo_id = $request->tipo_id;
         $sucursalNombre = Sucursal::find($sucursal_id)->nombre ?? 'Todas';
         $ubicacionNombre = Ubicacion::find($ubicacion_id)->nombre ?? 'Todas';
+        $tipoNombre = TipoPieza::find($tipo_id)->nombre ?? 'Todas';
 
         // MISMA QUERY QUE EN dataTable
         $query = Pieza::select(
@@ -677,6 +691,10 @@ class PiezaController extends Controller
             $query->where('ubicacions.id', $ubicacion_id);
         }
 
+        if (!empty($tipo_id) && $tipo_id != '-1') {
+            $query->where('piezas.tipo_pieza_id', $tipo_id);
+        }
+
         if (!empty($busqueda)) {
             $query->where(function ($q) use ($columnas, $busqueda) {
                 foreach ($columnas as $col) {
@@ -693,6 +711,7 @@ class PiezaController extends Controller
             'busqueda' => $busqueda,
             'sucursalNombre' => $sucursalNombre,
             'ubicacionNombre' => $ubicacionNombre,
+            'tipoNombre' => $tipoNombre,
         ];
 
         $pdf = PDF::loadView('piezas.pdf', $data)

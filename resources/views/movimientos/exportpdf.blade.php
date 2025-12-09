@@ -14,12 +14,14 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            table-layout: fixed;
         }
 
         table th, table td {
             border: 1px solid #333;
             padding: 5px 6px;
             text-align: left;
+            word-wrap: break-word;
         }
 
         table th {
@@ -44,8 +46,12 @@
 </head>
 
 <body>
+<!-- Cabecera con imagen -->
+<div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
+    <h2 style="margin-top: 10px;">Listado de Movimientos</h2>
+</div>
 
-<h2>Listado de Movimientos</h2>
 
 {{-- ============================ --}}
 {{--        FILTROS APLICADOS     --}}

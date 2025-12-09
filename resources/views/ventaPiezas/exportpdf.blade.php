@@ -46,18 +46,20 @@
 </head>
 
 <body>
+<!-- Cabecera con imagen -->
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Servicios</h2>
+    <h2 style="margin-top: 10px;">Listado de Venta de Piezas</h2>
 </div>
+
 
 {{-- ============================ --}}
 {{--        FILTROS APLICADOS     --}}
 {{-- ============================ --}}
 
 <div class="filtros">
-    <p><strong>Vendedor:</strong> {{ $usuarioFiltrado }}</p>
-    <p><strong>Sucursal:</strong> {{ $sucursalNombre }}</p>
+    <p><strong>Vendedor:</strong> {{ $userNombre }}</p>
+
     <p><strong>Fecha desde:</strong> {{ $fechaDesde ? date('d/m/Y', strtotime($fechaDesde)) : '—' }}</p>
     <p><strong>Fecha hasta:</strong> {{ $fechaHasta ? date('d/m/Y', strtotime($fechaHasta)) : '—' }}</p>
     <p><strong>Búsqueda:</strong> {{ $busqueda ?: '—' }}</p>
@@ -69,43 +71,34 @@
 <table>
     <thead>
     <tr>
-
-        <th>Nro.</th>
         <th>Fecha</th>
-        <th>Nro. motor</th>
-        <th>Modelo</th>
-        <th>Chasis</th>
         <th>Cliente</th>
-        <th>Técnico</th>
+        <th>Pedido</th>
+        <th>Destino</th>
         <th>Monto</th>
-        <th>Servicio</th>
-        <th>Cerrado</th>
         <th>Sucursal</th>
         <th>Vendedor</th>
+        <th>Piezas</th>
     </tr>
     </thead>
 
     <tbody>
-    @forelse ($servicios as $p)
+    @forelse ($piezas as $p)
         <tr>
-            <td>{{ $p->id }}</td>
-            <td>{{ $p->carga ? date('d/m/Y', strtotime($p->carga)) : '—' }}</td>
-            <td>{{ $p->motor }}</td>
-            <td>{{ $p->modelo }}</td>
-            <td>{{ $p->chasis }}</td>
+            <td>{{ $p->fecha ? date('d/m/Y', strtotime($p->fecha)) : '—' }}</td>
             <td>{{ $p->cliente }}</td>
-            <td>{{ $p->mecanicos }}</td>
-            <td>{{ $p->monto }}</td>
+            <td>{{ $p->pedido }}</td>
+            <td>{{ $p->destino }}</td>
+            <td>{{ $p->precio_total }}</td>
 
-            <td>{{ $p->tipo_servicio }}</td>
-            <td>{{ $p->pagado }}</td>
             <td>{{ $p->sucursal_nombre }}</td>
             <td>{{ $p->usuario_nombre }}</td>
+            <td>{{ $p->piezas_codigos }}</td>
         </tr>
     @empty
         <tr>
-            <td colspan="12" style="text-align: center; padding: 20px;">
-                No se encontraron servicios con los filtros aplicados.
+            <td colspan="8" style="text-align: center; padding: 20px;">
+                No se encontraron ventas con los filtros aplicados.
             </td>
         </tr>
     @endforelse
@@ -114,3 +107,5 @@
 
 </body>
 </html>
+
+

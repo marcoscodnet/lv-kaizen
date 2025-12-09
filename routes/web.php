@@ -120,7 +120,11 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('/piezas/ajax-store', [PiezaController::class, 'ajaxStore'])->name('piezas.ajaxStore');
 
 
+    Route::get('/stockPiezas/exportar', [StockPiezaController::class, 'exportarXLS'])
+        ->name('stockPiezas.exportarXLS');
 
+    Route::get('/stockPiezas/exportarPDF', [StockPiezaController::class, 'exportarPDF'])
+        ->name('stockPiezas.exportarPDF');
 
     Route::resource('stockPiezas', StockPiezaController::class);
     Route::post('stockPieza-datatable', [StockPiezaController::class, 'dataTable'])->name('stockPiezas.dataTable');
@@ -150,9 +154,23 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('movimiento-datatable', [MovimientoController::class, 'dataTable'])->name('movimientos.dataTable');
     Route::get('movimiento-pdf', [MovimientoController::class, 'generatePDF'])->name('movimientos.pdf');
 
+    Route::get('/ventaPiezas/exportar', [VentaPiezaController::class, 'exportarXLS'])
+        ->name('ventaPiezas.exportarXLS');
+
+    Route::get('/ventaPiezas/exportarPDF', [VentaPiezaController::class, 'exportarPDF'])
+        ->name('ventaPiezas.exportarPDF');
+
+
     Route::resource('ventaPiezas', VentaPiezaController::class);
     Route::post('ventaPieza-datatable', [VentaPiezaController::class, 'dataTable'])->name('ventaPiezas.dataTable');
     Route::get('ventaPieza-pdf', [VentaPiezaController::class, 'generatePDF'])->name('ventaPiezas.pdf');
+
+
+    Route::get('/ventas/exportar', [VentaController::class, 'exportarXLS'])
+        ->name('ventas.exportarXLS');
+
+    Route::get('/ventas/exportarPDF', [VentaController::class, 'exportarPDF'])
+        ->name('ventas.exportarPDF');
 
     Route::get('/ventas/unidads', [VentaController::class, 'unidads'])->name('ventas.unidads');
     Route::resource('ventas', VentaController::class);

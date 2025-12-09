@@ -262,21 +262,21 @@ class PedidoController extends Controller
         $row = $startRow + 1;
 
         foreach ($pedidos as $p) {
-            $sheet->setCellValue("G{$row}",
+            $sheet->setCellValue("A{$row}",
                 $p->fecha
                     ? \Carbon\Carbon::parse($p->fecha)->format('d/m/Y')
                     : '—'
             );
-            $sheet->setCellValue("A{$row}", $p->pieza_codigo);
-            $sheet->setCellValue("B{$row}", $p->nueva);
-            $sheet->setCellValue("C{$row}", $p->observacion);
-            $sheet->setCellValue("D{$row}", $p->estado);
+            $sheet->setCellValue("B{$row}", $p->pieza_codigo);
+            $sheet->setCellValue("C{$row}", $p->nueva);
+            $sheet->setCellValue("D{$row}", $p->observacion);
+            $sheet->setCellValue("E{$row}", $p->estado);
 
             $row++;
         }
 
         // AutoSize de columnas
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'E') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

@@ -285,10 +285,12 @@
         function exportarExcel() {
             let sucursal = $('#filtroSucursal').val();
             let ubicacion = $('#filtroUbicacion').val();
+            let tipo = $('#filtroTipo').val();
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
             let url = "{{ route('piezas.exportarXLS') }}"
                 + "?sucursal_id=" + sucursal
                 + "&ubicacion_id=" + ubicacion
+                + "&tipo_id=" + tipo
                 + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
 
             window.location.href = url;
@@ -297,11 +299,13 @@
         function exportarPDF() {
             let sucursal = $('#filtroSucursal').val();
             let ubicacion = $('#filtroUbicacion').val();
+            let tipo = $('#filtroTipo').val();
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
 
             let url = "{{ route('piezas.exportarPDF') }}"
                 + "?sucursal_id=" + sucursal
                 + "&ubicacion_id=" + ubicacion
+                + "&tipo_id=" + tipo
                 + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
 
             window.location.href = url;

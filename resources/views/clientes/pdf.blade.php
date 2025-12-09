@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #222; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed;}
+        th, td { border: 1px solid #222; padding: 5px; word-wrap: break-word;}
         th { background: #f0f0f0; }
         h3 { margin: 0; padding: 0; }
     </style>
@@ -43,9 +43,9 @@
     <tbody>
     @foreach($clientes as $p)
         <tr>
-            <td>{{ $p->nombre }}</td>
+            <td>{{ $p->cliente_nombre }}</td>
             <td>{{ $p->documento }}</td>
-            <td>{{ $p->particular }}</td>
+            <td>{{ $p->telefono }}</td>
             <td>{{ $p->celular }}</td>
             <td>{{ $p->localidad_nombre }}</td>
             <td>{{ $p->provincia_nombre }}</td>

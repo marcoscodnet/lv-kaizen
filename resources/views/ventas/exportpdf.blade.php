@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Servicios</title>
+    <title>Ventas</title>
 
     <style>
         body {
@@ -48,7 +48,7 @@
 <body>
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Servicios</h2>
+    <h2 style="margin-top: 10px;">Listado de Ventas</h2>
 </div>
 
 {{-- ============================ --}}
@@ -70,42 +70,39 @@
     <thead>
     <tr>
 
-        <th>Nro.</th>
+
         <th>Fecha</th>
+        <th>Cliente</th>
         <th>Nro. motor</th>
         <th>Modelo</th>
-        <th>Chasis</th>
-        <th>Cliente</th>
-        <th>Técnico</th>
-        <th>Monto</th>
-        <th>Servicio</th>
-        <th>Cerrado</th>
-        <th>Sucursal</th>
         <th>Vendedor</th>
+        <th>Sucursal</th>
+        <th>Estado</th>
+        <th>Pago</th>
+
     </tr>
     </thead>
 
     <tbody>
-    @forelse ($servicios as $p)
+    @forelse ($ventas as $p)
         <tr>
-            <td>{{ $p->id }}</td>
-            <td>{{ $p->carga ? date('d/m/Y', strtotime($p->carga)) : '—' }}</td>
+
+            <td>{{ $p->fecha ? date('d/m/Y', strtotime($p->fecha)) : '—' }}</td>
+            <td>{{ $p->cliente }}</td>
             <td>{{ $p->motor }}</td>
             <td>{{ $p->modelo }}</td>
-            <td>{{ $p->chasis }}</td>
-            <td>{{ $p->cliente }}</td>
-            <td>{{ $p->mecanicos }}</td>
-            <td>{{ $p->monto }}</td>
-
-            <td>{{ $p->tipo_servicio }}</td>
-            <td>{{ $p->pagado }}</td>
-            <td>{{ $p->sucursal_nombre }}</td>
             <td>{{ $p->usuario_nombre }}</td>
+            <td>{{ $p->sucursal_nombre }}</td>
+            <td>{{ $p->autorizacion }}</td>
+            <td>{{ $p->forma }}</td>
+
+
+
         </tr>
     @empty
         <tr>
-            <td colspan="12" style="text-align: center; padding: 20px;">
-                No se encontraron servicios con los filtros aplicados.
+            <td colspan="8" style="text-align: center; padding: 20px;">
+                No se encontraron ventas con los filtros aplicados.
             </td>
         </tr>
     @endforelse
@@ -114,3 +111,4 @@
 
 </body>
 </html>
+

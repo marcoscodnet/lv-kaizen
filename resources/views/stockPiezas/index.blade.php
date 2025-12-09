@@ -22,6 +22,20 @@
                             <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
 
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarExcel()">
+                            <span class="fas fa-file-excel"></span>
+                            <span class="d-none d-sm-inline-block ms-2">Excel</span>
+                        </a>
+
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
+                           href="#"
+                           onclick="exportarPDF()">
+                            <span class="fas fa-file-pdf"></span>
+                            <span class="d-none d-sm-inline-block ms-2">PDF</span>
+                        </a>
+
                     </div>
                 </div>
             </div>
@@ -261,6 +275,34 @@
                 table.ajax.reload();
             });
         });
+
+        function exportarExcel() {
+            let sucursal = $('#filtroSucursal').val();
+
+            let tipo = $('#filtroTipo').val();
+            let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
+            let url = "{{ route('stockPiezas.exportarXLS') }}"
+                + "?sucursal_id=" + sucursal
+
+                + "&tipo_id=" + tipo
+                + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+
+            window.location.href = url;
+        }
+
+        function exportarPDF() {
+            let sucursal = $('#filtroSucursal').val();
+            let tipo = $('#filtroTipo').val();
+            let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
+
+            let url = "{{ route('stockPiezas.exportarPDF') }}"
+                + "?sucursal_id=" + sucursal
+
+                + "&tipo_id=" + tipo
+                + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+
+            window.location.href = url;
+        }
 
     </script>
 @endsection

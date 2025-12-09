@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; table-layout: fixed;}
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #222; padding: 5px; }
+        th, td { border: 1px solid #222; padding: 5px; word-wrap: break-word;}
         th { background: #f0f0f0; }
         h3 { margin: 0; padding: 0; }
     </style>
@@ -23,6 +23,7 @@
 <p>
     <strong>Sucursal:</strong> {{ $sucursalNombre }} <br>
     <strong>Ubicación:</strong> {{ $ubicacionNombre }}<br>
+    <strong>Tipo:</strong> {{ $tipoNombre }}<br>
     @if(!empty($busqueda))
         <strong>Búsqueda:</strong> {{ $busqueda }}<br>
     @endif
