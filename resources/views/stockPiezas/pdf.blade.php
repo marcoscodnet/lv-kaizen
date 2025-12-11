@@ -58,7 +58,7 @@
             <td>{{ $p->costo }}</td>
             <td>{{ $p->precio_minimo }}</td>
             <td>{{ $p->sucursal_nombre }}</td>
-            <td>{{ $p->proveedor }}</td>
+            <td>{{ $p->proveedor_nombre }}</td>
             <td>{{ $p->ingreso ? date('d/m/Y', strtotime($p->ingreso)) : '—' }}</td>
         </tr>
     @endforeach

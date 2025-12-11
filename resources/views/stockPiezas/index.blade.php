@@ -189,7 +189,7 @@
                     { data: 'costo', name: 'costo' },
                     { data: 'precio_minimo', name: 'precio_minimo' },
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
-                    { data: 'proveedor', name: 'proveedor' },
+                    { data: 'proveedor_nombre', name: 'proveedor_nombre' },
                     {
                         data: 'ingreso',
                         name: 'ingreso',

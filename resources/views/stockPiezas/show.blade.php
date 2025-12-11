@@ -90,14 +90,13 @@
                             <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="proveedor">Proveedor</label>
-                                    <select name="proveedor" id="proveedor" class="form-control" required disabled>
+                                    <select name="proveedor_id" id="proveedor_id" class="form-control" required disabled>
                                         <option value="">
                                             Seleccionar...
                                         </option>
-                                        @foreach (config('proveedores') as $key => $label)
-                                            <option value="{{ $key }}" {{ old('proveedor', $stockPieza->proveedor ?? '') == $key ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
+
+                                        @foreach($proveedors as $proveedorId => $proveedor)
+                                            <option value="{{ $proveedorId }}" {{ old('proveedor_id', $stockPieza->proveedor_id) == $proveedorId ? 'selected' : '' }}>{{ $proveedor }}</option>
                                         @endforeach
                                     </select>
                                 </div>

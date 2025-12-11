@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pieza;
+use App\Models\Proveedor;
 use App\Models\Sucursal;
 use App\Models\StockPieza;
 use App\Models\TipoPieza;
-
 use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -48,16 +48,17 @@ class StockPiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','proveedors.nombre','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $sucursal_id = $request->input('sucursal_id');
         $tipo_id = $request->input('tipo_id');
-        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
+        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','proveedors.nombre as proveedor_nombre','stock_piezas.ingreso')
             ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
             ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
             ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('proveedors', 'stock_piezas.proveedor_id', '=', 'proveedors.id')
             ;
 
 
@@ -138,7 +139,8 @@ class StockPiezaController extends Controller
             ->prepend('', ''); // si necesitas un vacío al principio
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
-        return view('stockPiezas.create', compact('piezas','sucursals','tipos'));
+        $proveedors = Proveedor::orderBy('nombre')->pluck('nombre', 'id');
+        return view('stockPiezas.create', compact('piezas','sucursals','tipos','proveedors'));
     }
 
     public function store(Request $request)
@@ -242,7 +244,8 @@ class StockPiezaController extends Controller
             })
             ->prepend('', ''); // si necesitas un vacío al principio
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('stockPiezas.edit', compact('stockPieza','piezas','sucursals'));
+        $proveedors = Proveedor::orderBy('nombre')->pluck('nombre', 'id');
+        return view('stockPiezas.edit', compact('stockPieza','piezas','sucursals','proveedors'));
 
     }
 
@@ -357,7 +360,8 @@ class StockPiezaController extends Controller
             })
             ->prepend('', ''); // si necesitas un vacío al principio
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('stockPiezas.show', compact('stockPieza','piezas','sucursals'));
+        $proveedors = Proveedor::orderBy('nombre')->pluck('nombre', 'id');
+        return view('stockPiezas.show', compact('stockPieza','piezas','sucursals','proveedors'));
 
     }
 
@@ -380,7 +384,7 @@ class StockPiezaController extends Controller
 
     public function exportarXLS(Request $request)
     {
-        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','proveedors.nombre','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
 
         $busqueda = $request->search;
         $sucursal_id = $request->sucursal_id;
@@ -401,10 +405,11 @@ class StockPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
+        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','proveedors.nombre as proveedor_nombre','stock_piezas.ingreso')
             ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
             ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
             ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('proveedors', 'stock_piezas.proveedor_id', '=', 'proveedors.id')
         ;
 
         if ($sucursal_id && $sucursal_id != '-1') {
@@ -479,7 +484,7 @@ class StockPiezaController extends Controller
             $sheet->setCellValue("G{$row}", $p->costo);
             $sheet->setCellValue("H{$row}", $p->precio_minimo);
             $sheet->setCellValue("I{$row}", $p->sucursal_nombre);
-            $sheet->setCellValue("J{$row}", $p->proveedor);
+            $sheet->setCellValue("J{$row}", $p->proveedor_nombre);
             // 🟢 Formato de fecha dd/mm/YYYY
             $sheet->setCellValue("K{$row}",
                 $p->ingreso
@@ -516,7 +521,7 @@ class StockPiezaController extends Controller
         ini_set('memory_limit', '-1'); // ilimitado
         ini_set('max_execution_time', 0);
 
-        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','stock_piezas.proveedor','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','proveedors.nombre','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
 
         $busqueda = $request->search;
         $sucursal_id = $request->sucursal_id;
@@ -527,10 +532,11 @@ class StockPiezaController extends Controller
         $tipoNombre = TipoPieza::find($tipo_id)->nombre ?? 'Todas';
 
         // MISMA QUERY QUE EN dataTable
-        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','stock_piezas.proveedor','stock_piezas.ingreso')
+        $query = StockPieza::select('stock_piezas.id as id','stock_piezas.remito','piezas.codigo','tipo_piezas.nombre as tipo_nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre as sucursal_nombre','proveedors.nombre as procveedor_nombre','stock_piezas.ingreso')
             ->leftJoin('piezas', 'stock_piezas.pieza_id', '=', 'piezas.id')
             ->leftJoin('tipo_piezas', 'piezas.tipo_pieza_id', '=', 'tipo_piezas.id')
             ->leftJoin('sucursals', 'stock_piezas.sucursal_id', '=', 'sucursals.id')
+            ->leftJoin('proveedors', 'stock_piezas.proveedor_id', '=', 'proveedors.id')
         ;
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
