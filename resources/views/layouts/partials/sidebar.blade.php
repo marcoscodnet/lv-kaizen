@@ -153,7 +153,12 @@
                                 </div>
                             </a>
                         @endcan
-
+                        @can('proveedor-listar')
+                            <a class="nav-link" href="{{ route('proveedors.index') }}" role="button">
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-truck"></span></span><span class="nav-link-text ps-1">Proveedores</span>
+                                </div>
+                            </a>
+                        @endcan
                         @can('unidad-listar')
                             <a class="nav-link" href="{{ route('unidads.index') }}" role="button">
                                 <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-motorcycle"></span></span><span class="nav-link-text ps-1">Unidades</span>

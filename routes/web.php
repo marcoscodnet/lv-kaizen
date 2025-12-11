@@ -27,6 +27,7 @@ use App\Http\Controllers\ConceptoController;
 use App\Http\Controllers\CajaController;
 use App\Http\Controllers\MovimientoCajaController;
 use App\Http\Controllers\UbicacionController;
+use App\Http\Controllers\ProveedorController;
 use App\Exports\PiezasExport;
 
 /*
@@ -74,6 +75,17 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('cliente-datatable', [ClienteController::class, 'dataTable'])->name('clientes.dataTable');
     Route::post('/clientes/quickstore', [ClienteController::class, 'quickStore'])->name('clientes.quickstore');
     Route::get('/clientes/{id}/json', [ClienteController::class, 'showJson'])->name('clientes.showJson');
+
+    Route::get('/proveedors/exportar', [ProveedorController::class, 'exportarXLS'])
+        ->name('proveedors.exportarXLS');
+
+    Route::get('/proveedors/exportarPDF', [ProveedorController::class, 'exportarPDF'])
+        ->name('proveedors.exportarPDF');
+
+    Route::resource('proveedors', ProveedorController::class);
+    Route::post('proveedor-datatable', [ProveedorController::class, 'dataTable'])->name('proveedors.dataTable');
+    Route::post('/proveedors/quickstore', [ProveedorController::class, 'quickStore'])->name('proveedors.quickstore');
+    Route::get('/proveedors/{id}/json', [ProveedorController::class, 'showJson'])->name('proveedors.showJson');
 
 
     Route::resource('parametros', ParametroController::class);

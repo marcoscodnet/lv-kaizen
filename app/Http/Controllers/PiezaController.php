@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PDF;
+use Illuminate\Database\QueryException;
 class PiezaController extends Controller
 {
     use SanitizesInput;
@@ -208,14 +209,23 @@ class PiezaController extends Controller
             $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
         }
 
-        // 1. Crear la pieza
-        $pieza = Pieza::create($input);
+        try {
+            // 1. Crear la pieza
+            $pieza = Pieza::create($input);
 
-        // 2. Asociar ubicación si se seleccionó
-        if ($request->filled('ubicacion_id')) {
-            $pieza->ubicacions()->attach($request->ubicacion_id);
+            // 2. Asociar ubicación si se seleccionó
+            if ($request->filled('ubicacion_id')) {
+                $pieza->ubicacions()->attach($request->ubicacion_id);
+            }
+        } catch (QueryException $e) {
+            if ($e->errorInfo[1] == 1062) {
+                return back()
+                    ->with('error', 'El código ingresado ya existe. Debe ser único.')
+                    ->withInput();
+            }
+
+            throw $e;
         }
-
         return redirect()->route('piezas.index')
             ->with('success','Pieza creada con éxito');
     }
@@ -332,20 +342,30 @@ class PiezaController extends Controller
 
                 $input['foto'] = 'piezas/'.$fileName;
             }
-            $pieza->update($input);
+            try{
+                $pieza->update($input);
 
-            // -----------------------------
-            //    GUARDAR UBICACIONES
-            // -----------------------------
+                // -----------------------------
+                //    GUARDAR UBICACIONES
+                // -----------------------------
 
-            // ubicacion_id[] viene del formulario
-            $ubicaciones = $request->input('ubicacion_id', []);
+                // ubicacion_id[] viene del formulario
+                $ubicaciones = $request->input('ubicacion_id', []);
 
-            // Eliminar vacíos ("" o null)
-            $ubicaciones = array_filter($ubicaciones);
+                // Eliminar vacíos ("" o null)
+                $ubicaciones = array_filter($ubicaciones);
 
-            // Solo guarda ubicacion_id
-            $pieza->ubicacions()->sync($ubicaciones);
+                // Solo guarda ubicacion_id
+                $pieza->ubicacions()->sync($ubicaciones);
+            } catch (QueryException $e) {
+                if ($e->errorInfo[1] == 1062) {
+                    return back()
+                        ->with('error', 'El código ingresado ya existe. No puede duplicarse.')
+                        ->withInput();
+                }
+
+                throw $e;
+            }
         }
         // Si solo puede modificar descripción
         elseif ($request->user()->can('pieza-modificar-descripcion')) {

@@ -17,11 +17,11 @@ class PermissionsSeeder extends Seeder
         SqlLogger::startLogging();
 
         $permissions = [
-            'ubicacion-listar',
-            'ubicacion-crear',
-            'ubicacion-editar',
-            'ubicacion-eliminar',
-            'ubicacion-ver',
+            'proveedor-listar',
+            'proveedor-crear',
+            'proveedor-editar',
+            'proveedor-eliminar',
+            'proveedor-ver',
         ];
 
         foreach ($permissions as $permission) {
