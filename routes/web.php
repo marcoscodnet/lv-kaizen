@@ -29,6 +29,7 @@ use App\Http\Controllers\MovimientoCajaController;
 use App\Http\Controllers\UbicacionController;
 use App\Http\Controllers\ProveedorController;
 use App\Exports\PiezasExport;
+use App\Http\Controllers\MovimientoPiezaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -269,7 +270,15 @@ Route::group(['middleware' => ['auth']], function() {
     });
 
 
+    Route::get('/movimientoPiezas/exportar', [MovimientoPiezaController::class, 'exportarXLS'])
+        ->name('movimientoPiezas.exportarXLS');
 
+    Route::get('/movimientoPiezas/exportarPDF', [MovimientoPiezaController::class, 'exportarPDF'])
+        ->name('movimientoPiezas.exportarPDF');
+
+    Route::resource('movimientoPiezas', MovimientoPiezaController::class);
+    Route::post('movimientoPieza-datatable', [MovimientoPiezaController::class, 'dataTable'])->name('movimientoPiezas.dataTable');
+    Route::get('movimientoPieza-pdf', [MovimientoPiezaController::class, 'generatePDF'])->name('movimientoPiezas.pdf');
 
 
 

@@ -2,37 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MovimientoPieza;
 
-use App\Models\Producto;
 use App\Models\Sucursal;
-use App\Models\Movimiento;
-use App\Models\Unidad;
+use App\Models\Pieza;
+use App\Models\PiezaMovimiento;
 use App\Models\User;
-use App\Models\UnidadMovimiento;
-use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use DB;
-use PDF;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class MovimientoController extends Controller
+class MovimientoPiezaController extends Controller
 {
-    use SanitizesInput;
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     function __construct()
     {
-        $this->middleware('permission:unidad-movimiento-listar|unidad-movimiento-crear|unidad-movimiento-editar|unidad-movimiento-eliminar', ['only' => ['index','store']]);
-        $this->middleware('permission:unidad-movimiento-crear', ['only' => ['create','store']]);
-        $this->middleware('permission:unidad-movimiento-editar', ['only' => ['edit','update']]);
-        $this->middleware('permission:unidad-movimiento-eliminar', ['only' => ['destroy']]);
+        $this->middleware('permission:pieza-movimiento-listar|pieza-movimiento-crear|pieza-movimiento-editar|pieza-movimiento-eliminar', ['only' => ['index','store']]);
+        $this->middleware('permission:pieza-movimiento-crear', ['only' => ['create','store']]);
+        $this->middleware('permission:pieza-movimiento-editar', ['only' => ['edit','update']]);
+        $this->middleware('permission:pieza-movimiento-eliminar', ['only' => ['destroy']]);
     }
 
     /**
@@ -45,8 +33,8 @@ class MovimientoController extends Controller
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('Todos', '-1');
-        $movimientos = Movimiento::all();
-        return view ('movimientos.index',compact('movimientos','users'));
+        $movimientos = MovimientoPieza::all();
+        return view ('movimientoPiezas.index',compact('movimientos','users'));
     }
 
 
@@ -73,7 +61,7 @@ class MovimientoController extends Controller
         $datos = $this->obtenerMovimientosFiltrados($busqueda, $user_id, $sortColumn, $dir);
 
         $recordsFiltered = $datos->count();
-        $recordsTotal = Movimiento::count();
+        $recordsTotal = MovimientoPieza::count();
 
         // PAGINAR
         $datos = $datos->slice($request->start)->take($request->length)->values();
@@ -98,10 +86,10 @@ class MovimientoController extends Controller
     {
 
 
-        $productos = Producto::with(['tipoUnidad', 'marca', 'modelo', 'color'])
+        $productos = Producto::with(['tipoPieza', 'marca', 'modelo', 'color'])
             ->get()
             ->mapWithKeys(function ($producto) {
-                $texto = ($producto->tipoUnidad->nombre ?? '') . ' - '
+                $texto = ($producto->tipoPieza->nombre ?? '') . ' - '
                     . ($producto->marca->nombre ?? '') . ' - '
                     . ($producto->modelo->nombre ?? '') . ' - '
                     . ($producto->color->nombre ?? '');
@@ -112,7 +100,7 @@ class MovimientoController extends Controller
         $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $destinos = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('movimientos.create', compact('productos','origens','destinos'));
+        return view('movimientoPiezas.create', compact('productos','origens','destinos'));
     }
 
     public function store(Request $request)
@@ -121,8 +109,8 @@ class MovimientoController extends Controller
             'sucursal_origen_id' => 'required',
             'sucursal_destino_id' => 'required',
             'fecha' => 'required|date',
-            'unidad_id' => 'required|array|min:1',
-            'unidad_id.*' => 'required|distinct',
+            'pieza_id' => 'required|array|min:1',
+            'pieza_id.*' => 'required|distinct',
         ];
 
 
@@ -131,10 +119,10 @@ class MovimientoController extends Controller
             'sucursal_origen_id.required' => 'El campo Origen es obligatorio.',
             'sucursal_destino_id.required' => 'El campo Destino es obligatorio.',
             'fecha.required' => 'La fecha es obligatoria.',
-            'unidad_id.required' => 'Debe agregar al menos una unidad.',
-            'unidad_id.min' => 'Debe agregar al menos una unidad.',
-            'unidad_id.*.required' => 'Debe seleccionar una unidad para cada producto.',
-            'unidad_id.*.distinct' => 'No puede repetir unidades.',
+            'pieza_id.required' => 'Debe agregar al menos una pieza.',
+            'pieza_id.min' => 'Debe agregar al menos una pieza.',
+            'pieza_id.*.required' => 'Debe seleccionar una pieza para cada producto.',
+            'pieza_id.*.distinct' => 'No puede repetir piezas.',
         ];
 
 
@@ -157,22 +145,22 @@ class MovimientoController extends Controller
         DB::beginTransaction();
         $ok=1;
         try {
-            $movimiento = Movimiento::create($input);
+            $movimiento = MovimientoPieza::create($input);
 
             $lastid=$movimiento->id;
-            if(count($request->unidad_id) > 0)
+            if(count($request->pieza_id) > 0)
             {
-                foreach($request->unidad_id as $item=>$v){
+                foreach($request->pieza_id as $item=>$v){
 
                     $data2=array(
-                        'movimiento_id'=>$lastid,
-                        'unidad_id'=>$request->unidad_id[$item]
+                        'movimientoPieza_id'=>$lastid,
+                        'pieza_id'=>$request->pieza_id[$item]
                     );
                     try {
-                        UnidadMovimiento::create($data2);
+                        PiezaMovimiento::create($data2);
 
-                        // Actualizar sucursal_id de la unidad
-                        Unidad::where('id', $request->unidad_id[$item])
+                        // Actualizar sucursal_id de la pieza
+                        Pieza::where('id', $request->pieza_id[$item])
                             ->update(['sucursal_id' => $request->sucursal_destino_id]);
 
                     }catch(QueryException $ex){
@@ -198,7 +186,7 @@ class MovimientoController extends Controller
             $respuestaMSJ=$error;
         }
 
-        return redirect()->route('movimientos.index')->with($respuestaID,$respuestaMSJ);
+        return redirect()->route('movimientoPiezas.index')->with($respuestaID,$respuestaMSJ);
 
 
 
@@ -208,15 +196,15 @@ class MovimientoController extends Controller
     {
         DB::beginTransaction();
         try {
-            $movimiento = Movimiento::findOrFail($id);
+            $movimiento = MovimientoPieza::findOrFail($id);
 
             // Obtenés la sucursal origen desde el movimiento
             $sucursalOrigen = $movimiento->sucursal_origen_id;
 
-            // Revertir todas las unidades que participaron en el movimiento
-            foreach ($movimiento->unidadMovimientos as $um) {
-                // Revertir la unidad a la sucursal original
-                Unidad::where('id', $um->unidad_id)->update([
+            // Revertir todas las piezas que participaron en el movimiento
+            foreach ($movimiento->piezaMovimientos as $um) {
+                // Revertir la pieza a la sucursal original
+                Pieza::where('id', $um->pieza_id)->update([
                     'sucursal_id' => $sucursalOrigen
                 ]);
 
@@ -228,7 +216,7 @@ class MovimientoController extends Controller
             $movimiento->delete();
 
             DB::commit();
-            return redirect()->route('movimientos.index')->with('success', 'Movimiento eliminado y unidades revertidas a su sucursal original.');
+            return redirect()->route('movimientoPiezas.index')->with('success', 'Movimiento eliminado y piezas revertidas a su sucursal original.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Error al eliminar movimiento: ' . $e->getMessage());
@@ -237,13 +225,13 @@ class MovimientoController extends Controller
 
     public function generatePDF(Request $request,$attach = false)
     {
-        $movimientoId = $request->query('movimiento_id');
-        $movimiento = Movimiento::find($movimientoId);
+        $movimientoId = $request->query('movimientoPieza_id');
+        $movimiento = MovimientoPieza::find($movimientoId);
 
 
 
-        $template = 'movimientos.pdf';
-        $unidadMovimientos = $movimiento->unidadMovimientos()->get();
+        $template = 'movimientoPiezas.pdf';
+        $piezaMovimientos = $movimiento->piezaMovimientos()->get();
 
 
 
@@ -252,7 +240,7 @@ class MovimientoController extends Controller
             'fecha' => $movimiento->fecha,
             'origen' => $movimiento->sucursalOrigen,
             'destino' => $movimiento->sucursalDestino,
-            'unidades' => $unidadMovimientos,
+            'piezas' => $piezaMovimientos,
         ];
         //dd($data);
 
@@ -261,7 +249,7 @@ class MovimientoController extends Controller
 
         $pdf = PDF::loadView($template, $data);
 
-        $pdfPath = 'Movimiento_' . $movimientoId . '.pdf';
+        $pdfPath = 'Movimiento_pieza_' . $movimientoId . '.pdf';
 
         if ($attach) {
             $fullPath = public_path('/temp/' . $pdfPath);
@@ -278,7 +266,7 @@ class MovimientoController extends Controller
 
     public function show($id)
     {
-        $movimiento = Movimiento::find($id);
+        $movimiento = MovimientoPieza::find($id);
 
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
@@ -287,26 +275,26 @@ class MovimientoController extends Controller
         $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $destinos = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('movimientos.show', compact('movimiento','origens','destinos','users'));
+        return view('movimientoPiezas.show', compact('movimiento','origens','destinos','users'));
     }
 
     private function obtenerMovimientosFiltrados($busqueda, $user_id, $sortColumn, $dir)
     {
-        $movimientosQuery = Movimiento::with(['unidadMovimientos.unidad'])
-            ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
-            ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
-            ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
+        $movimientosQuery = MovimientoPieza::with(['piezaMovimientos.pieza'])
+            ->leftJoin('sucursals as origen', 'movimiento_piezas.sucursal_origen_id', '=', 'origen.id')
+            ->leftJoin('sucursals as destino', 'movimiento_piezas.sucursal_destino_id', '=', 'destino.id')
+            ->leftJoin('users', 'movimiento_piezas.user_id', '=', 'users.id')
             ->select(
-                'movimientos.id as id',
-                DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
+                'movimiento_piezas.id as id',
+                DB::raw("IFNULL(users.name, movimiento_piezas.user_name) as usuario_nombre"),
                 'origen.nombre as origen_nombre',
                 'destino.nombre as destino_nombre',
-                'movimientos.fecha'
+                'movimiento_piezas.fecha'
             );
 
         // FILTRO POR USUARIO
         if (!empty($user_id) && $user_id != '-1') {
-            $movimientosQuery->where('movimientos.user_id', $user_id);
+            $movimientosQuery->where('movimiento_piezas.user_id', $user_id);
         }
 
         $movimientos = $movimientosQuery->get();
@@ -319,8 +307,7 @@ class MovimientoController extends Controller
                 'origen_nombre' => $movimiento->origen_nombre,
                 'destino_nombre' => $movimiento->destino_nombre,
                 'fecha' => $movimiento->fecha,
-                'cuadros' => $movimiento->unidadMovimientos->pluck('unidad.cuadro')->filter()->implode(', '),
-                'motores' => $movimiento->unidadMovimientos->pluck('unidad.motor')->filter()->implode(', ')
+                'piezas' => $movimiento->piezaMovimientos->pluck('pieza.codigo')->filter()->implode(', ')
             ];
         });
 
@@ -376,7 +363,7 @@ class MovimientoController extends Controller
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        $sheet->setTitle("Movimientos");
+        $sheet->setTitle("Movimientos de piezas");
 
         // FILTROS
         $sheet->setCellValue('A1', 'Filtros aplicados');
@@ -423,7 +410,7 @@ class MovimientoController extends Controller
         }
 
         // EXPORTAR
-        $fileName = "movimientos_unidades.xlsx";
+        $fileName = "movimientos_piezas.xlsx";
         $filePath = tempnam(sys_get_temp_dir(), $fileName);
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
@@ -459,21 +446,21 @@ class MovimientoController extends Controller
         // ===============================
         // MISMA QUERY QUE dataTable()
         // ===============================
-        $movimientosQuery = Movimiento::with(['unidadMovimientos.unidad'])
-            ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
-            ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
-            ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
+        $movimientosQuery = MovimientoPieza::with(['piezaMovimientos.pieza'])
+            ->leftJoin('sucursals as origen', 'movimiento_piezas.sucursal_origen_id', '=', 'origen.id')
+            ->leftJoin('sucursals as destino', 'movimiento_piezas.sucursal_destino_id', '=', 'destino.id')
+            ->leftJoin('users', 'movimiento_piezas.user_id', '=', 'users.id')
             ->select(
-                'movimientos.id as id',
-                DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
+                'movimiento_piezas.id as id',
+                DB::raw("IFNULL(users.name, movimiento_piezas.user_name) as usuario_nombre"),
                 'origen.nombre as origen_nombre',
                 'destino.nombre as destino_nombre',
-                'movimientos.fecha'
+                'movimiento_piezas.fecha'
             );
 
         // FILTRAR POR USUARIO
         if (!empty($user_id) && $user_id != '-1') {
-            $movimientosQuery->where('movimientos.user_id', $user_id);
+            $movimientosQuery->where('movimiento_piezas.user_id', $user_id);
         }
 
         $movimientos = $movimientosQuery->get();
@@ -490,8 +477,7 @@ class MovimientoController extends Controller
                 'fecha' => $movimiento->fecha
                     ? \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y')
                     : '',
-                'cuadros' => $movimiento->unidadMovimientos->pluck('unidad.cuadro')->filter()->implode(', '),
-                'motores' => $movimiento->unidadMovimientos->pluck('unidad.motor')->filter()->implode(', ')
+                'pieas' => $movimiento->piezaMovimientos->pluck('pieza.codigo')->filter()->implode(', ')
             ];
         });
 
@@ -519,10 +505,10 @@ class MovimientoController extends Controller
             'usuarioFiltrado' => $usuarioFiltrado
         ];
 
-        $pdf = PDF::loadView('movimientos.exportpdf', $data)
+        $pdf = PDF::loadView('movimientoPiezas.exportpdf', $data)
             ->setPaper('a4', 'landscape');
 
-        return $pdf->download('movimientos.exportpdf');
+        return $pdf->download('movimientoPiezas.exportpdf');
     }
 
 

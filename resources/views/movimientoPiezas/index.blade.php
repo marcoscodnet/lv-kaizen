@@ -12,12 +12,12 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-exchange-alt" aria-hidden="true"></i><span class="ms-2">Movimientos de unidades</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-exchange-alt" aria-hidden="true"></i><span class="ms-2">Movimientos de piezas</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
-                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('movimientos.create') }}">
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('movimientoPiezas.create') }}">
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
@@ -76,8 +76,8 @@
                         <th scope="col">Destino</th>
 
                         <th scope="col">Envío</th>
-                        <th>Cuadros</th>
-                        <th>Motores</th>
+                        <th>Piezas</th>
+
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -128,7 +128,7 @@
                 scrollX: true,
                 paging : true,
                 "ajax": {
-                    "url": "{{ route('movimientos.dataTable') }}",
+                    "url": "{{ route('movimientoPiezas.dataTable') }}",
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
@@ -166,8 +166,8 @@
                         }
                     },
 
-                    { data: 'cuadros', name: 'cuadros' , orderable: false},
-                    { data: 'motores', name: 'motores' , orderable: false},
+                    { data: 'piezas', name: 'piezas' , orderable: false},
+
                     // Actions column
                     {
                         "data": "id",
@@ -177,17 +177,14 @@
                             // Construir HTML para las acciones
                             var actionsHtml = '<div>';
 
-                            @can('unidad-movimiento-ver')
+                            @can('pieza-movimiento-ver')
 
-                                actionsHtml += '<a href="{{ route("movimientos.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
+                                actionsHtml += '<a href="{{ route("movimientoPiezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
                             @endcan
-                                @can('imprimir-remito')
-                                actionsHtml += '<a href="{{ route("movimientos.pdf") }}?movimiento_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 
-                            @endcan
                             // Agregar formulario de eliminación si el movimiento tiene permiso
-                            @can('unidad-movimiento-eliminar')
-                                actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('movimientos.destroy', '') }}/' + row.id + '" style="display: none">';
+                            @can('pieza-movimiento-eliminar')
+                                actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('movimientoPiezas.destroy', '') }}/' + row.id + '" style="display: none">';
                             actionsHtml += '{{ csrf_field() }}';
                             actionsHtml += '{{ method_field('DELETE') }}';
                             actionsHtml += '</form>';
@@ -231,7 +228,7 @@
             let usuario = $('#filtroUsuario').val();
 
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
-            let url = "{{ route('movimientos.exportarXLS') }}"
+            let url = "{{ route('movimientoPiezas.exportarXLS') }}"
                 + "?user_id=" + usuario
 
                 + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
@@ -244,7 +241,7 @@
 
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
 
-            let url = "{{ route('movimientos.exportarPDF') }}"
+            let url = "{{ route('movimientoPiezas.exportarPDF') }}"
                 + "?user_id=" + usuario
 
                 + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
