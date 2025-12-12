@@ -21,7 +21,10 @@
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nuevo</span>
                         </a>
-
+                        <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2" href="{{ route('stockPiezas.masivo') }}">
+                            <span class="fas fa-layer-group"></span>
+                            <span class="d-none d-sm-inline-block ms-2">Carga masiva</span>
+                        </a>
                         <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
                            href="#"
                            onclick="exportarExcel()">

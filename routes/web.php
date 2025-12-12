@@ -131,6 +131,10 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('/api/piezas/{id}', [PiezaController::class, 'getDatos'])->name('api.piezas.getDatos');
     Route::post('/piezas/ajax-store', [PiezaController::class, 'ajaxStore'])->name('piezas.ajaxStore');
 
+    Route::get('/stockPiezas/masivo', [StockPiezaController::class, 'createMasivo'])->name('stockPiezas.masivo');
+
+    Route::post('/stockPiezas/store-masivo', [StockPiezaController::class, 'storeMasivo'])
+        ->name('stockPiezas.storeMasivo');
 
     Route::get('/stockPiezas/exportar', [StockPiezaController::class, 'exportarXLS'])
         ->name('stockPiezas.exportarXLS');

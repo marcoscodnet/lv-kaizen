@@ -7,7 +7,14 @@
 
     <div class="card mb-3">
         <div class="card-header">
-            <h5>Crear piezas masivamente</h5>
+            <div class="row flex-between-end">
+                <div class="col-auto align-self-center">
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-cogs" aria-hidden="true"></i><span class="ms-2">Carga masiva de piezas</span></h5>
+                </div>
+                <div class="col-auto ms-auto">
+
+                </div>
+            </div>
         </div>
         <div class="card-body">
             <!-- Video de la cámara -->
@@ -29,7 +36,7 @@
                         <th>Tipo</th>
                         <th>Descripción</th>
                         <th>Foto</th>
-                        <th>Eliminar</th>
+                        <th><button type="button" id="agregar-fila" class="btn btn-success"><i class="fa fa-plus"></i></button></th>
                     </tr>
                     </thead>
                     <tbody id="piezas-masivo-body">
@@ -51,13 +58,13 @@
                                 <button type="button" class="btn btn-sm btn-secondary asignar-foto">Asignar foto</button>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-danger eliminar-fila">Eliminar</button>
+                                <button type="button" class="btn btn-sm btn-danger eliminar-fila"><i class="fa fa-times text-white"></i></button>
                             </td>
                         </tr>
                     @endfor
                     </tbody>
                 </table>
-                <button type="button" id="agregar-fila" class="btn btn-secondary">Agregar fila</button>
+
                 <button type="submit" class="btn btn-primary">Guardar</button>
                 <a href='{{ route('piezas.index') }}' class="btn btn-warning">Volver</a>
             </form>
@@ -97,7 +104,7 @@
                 <button type="button" class="btn btn-sm btn-secondary asignar-foto">Asignar foto</button>
             </td>
             <td>
-                <button type="button" class="btn btn-sm btn-danger eliminar-fila">Eliminar</button>
+                <button type="button" class="btn btn-sm btn-danger eliminar-fila"><i class="fa fa-times text-white"></i></button>
             </td>
         </tr>`;
                 $('#piezas-masivo-body').append(row);

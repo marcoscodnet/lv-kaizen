@@ -374,13 +374,42 @@ class StockPiezaController extends Controller
      */
     public function destroy($id)
     {
+        DB::beginTransaction();
+        $ok = 1;
 
+        try {
+            $stockPieza = StockPieza::findOrFail($id);
+            $pieza_id = $stockPieza->pieza_id;
 
-        Unidad::find($id)->delete();
+            // eliminar registro
+            $stockPieza->delete();
 
-        return redirect()->route('unidads.index')
-            ->with('success','Unidad eliminada con éxito');
+            // recalcular stock total de la pieza
+            $stockTotal = StockPieza::where('pieza_id', $pieza_id)->sum('cantidad');
+
+            // actualizar pieza
+            $pieza = Pieza::find($pieza_id);
+            if ($pieza) {
+                $pieza->stock_actual = $stockTotal;
+                $pieza->save();
+            }
+
+        } catch (\Exception $e) {
+            $ok = 0;
+            $error = $e->getMessage();
+        }
+
+        if ($ok) {
+            DB::commit();
+            return redirect()->route('stockPiezas.index')
+                ->with('success', 'Stock Pieza eliminado con éxito');
+        } else {
+            DB::rollback();
+            return redirect()->route('stockPiezas.index')
+                ->with('error', $error);
+        }
     }
+
 
     public function exportarXLS(Request $request)
     {
@@ -572,5 +601,90 @@ class StockPiezaController extends Controller
 
         return $pdf->download('stockPiezas.pdf');
     }
+
+    public function createMasivo()
+    {
+        $piezas = Pieza::get()
+            ->mapWithKeys(function ($pieza) {
+                $texto = ($pieza->codigo ?? '') . ' - '
+                    . ($pieza->descripcion ?? '') ;
+
+                return [$pieza->id => $texto];
+            })
+            ->prepend('', ''); // si necesitas un vacío al principio
+        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
+        $proveedors = Proveedor::orderBy('nombre')->pluck('nombre', 'id');
+        return view('stockPiezas.masivo', compact('piezas','sucursals','tipos','proveedors'));
+    }
+
+    public function storeMasivo(Request $request)
+    {
+        $rules = [
+            'rows'                            => 'required|array|min:1',
+            'rows.*.pieza_id'                 => 'required|integer|exists:piezas,id',
+            'rows.*.sucursal_id'              => 'required|integer|exists:sucursals,id',
+            'rows.*.proveedor_id'             => 'nullable|integer|exists:proveedors,id',
+            'rows.*.cantidad'                 => 'required|numeric|min:1',
+
+        ];
+
+        $messages = [
+            'rows.*.pieza_id.required'   => 'El campo Pieza es obligatorio.',
+            'rows.*.sucursal_id.required'=> 'El campo Sucursal es obligatorio.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::beginTransaction();
+        $ok = 1;
+
+        try {
+
+            foreach ($request->rows as $row) {
+
+                // Limpieza
+                $input = $this->sanitizeInput($row);
+
+                // Inicial es igual a la cantidad ingresada
+                $input['inicial'] = $input['cantidad'];
+
+                // Crear stock pieza
+                $stockPieza = StockPieza::create($input);
+
+                // Recalcular stock total por pieza
+                $stockTotal = StockPieza::where('pieza_id', $row['pieza_id'])
+                    ->sum('cantidad');
+
+                // Actualizar pieza
+                $pieza = Pieza::findOrFail($row['pieza_id']);
+                $pieza->stock_actual  = $stockTotal;
+
+                $pieza->save();
+            }
+
+        } catch (\Exception $ex) {
+            $ok = 0;
+            $error = $ex->getMessage();
+        }
+
+        if ($ok) {
+            DB::commit();
+            return redirect()->route('stockPiezas.index')
+                ->with('success', 'Stock cargado satisfactoriamente');
+        } else {
+            DB::rollback();
+            return redirect()->route('stockPiezas.index')
+                ->with('error', $error);
+        }
+    }
+
+
 
 }

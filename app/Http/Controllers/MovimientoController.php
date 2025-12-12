@@ -29,10 +29,10 @@ class MovimientoController extends Controller
      */
     function __construct()
     {
-        $this->middleware('permission:movimiento-listar|movimiento-crear|movimiento-editar|movimiento-eliminar', ['only' => ['index','store']]);
-        $this->middleware('permission:movimiento-crear', ['only' => ['create','store']]);
-        $this->middleware('permission:movimiento-editar', ['only' => ['edit','update']]);
-        $this->middleware('permission:movimiento-eliminar', ['only' => ['destroy']]);
+        $this->middleware('permission:unidad-movimiento-listar|unidad-movimiento-crear|unidad-movimiento-editar|unidad-movimiento-eliminar', ['only' => ['index','store']]);
+        $this->middleware('permission:unidad-movimiento-crear', ['only' => ['create','store']]);
+        $this->middleware('permission:unidad-movimiento-editar', ['only' => ['edit','update']]);
+        $this->middleware('permission:unidad-movimiento-eliminar', ['only' => ['destroy']]);
     }
 
     /**

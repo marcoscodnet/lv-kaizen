@@ -222,9 +222,9 @@
 
 
 
-                        @can('movimiento-listar')
+                        @can('unidad-movimiento-listar')
                             <a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos Unidades</span>
                                 </div>
                             </a>
                         @endcan

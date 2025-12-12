@@ -87,7 +87,7 @@
                             <div class="col-12 col-md-4">
                                 <div class="form-group">
                                     <label for="proveedor">Proveedor</label>
-                                    <select name="proveedor_id" id="proveedor_id" class="form-control">
+                                    <select name="proveedor_id" id="proveedor_id" class="form-control js-example-basic-single">
                                         <option value="">
                                             Seleccionar...
                                         </option>
