@@ -21,6 +21,6 @@ class MovimientoPieza extends Model
 
     public function piezaMovimientos()
     {
-        return $this->hasMany(PiezaMovimiento::class, 'movimiento_id');
+        return $this->hasMany(PiezaMovimiento::class, 'movimientoPieza_id');
     }
 }

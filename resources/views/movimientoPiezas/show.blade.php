@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-exchange-alt" aria-hidden="true"></i><span class="ms-2">Ver movimiento de unidades</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-exchange-alt" aria-hidden="true"></i><span class="ms-2">Ver movimiento de piezas</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('movimientos.store') }}" method="post" >
+            <form role="form" action="{{ route('movimientoPiezas.store') }}" method="post" >
                 {{ csrf_field() }}
                 <div class="tab-content">
                     <div class="box-body">
@@ -80,9 +80,9 @@
                                 <thead>
 
                                 <th>Código</th>
-                                <th>Producto</th>
-                                <th>Motor</th>
-                                <th>Cuadro</th>
+                                <th>Pieza</th>
+                                <th>Cantidad</th>
+
 
 
 
@@ -92,21 +92,19 @@
 
 
 
-                                @foreach($movimiento->unidadMovimientos as $unidadMovimiento)
+                                @foreach($movimiento->piezaMovimientos as $piezaMovimiento)
 
                                     <tr>
                                         <td>
-                                            {{$unidadMovimiento->unidad->id}}
+                                            {{$piezaMovimiento->pieza->codigo}}
                                         </td>
                                         <td>
-                                            {{$unidadMovimiento->unidad->producto->tipoUnidad->nombre}} - {{$unidadMovimiento->unidad->producto->marca->nombre}} - {{$unidadMovimiento->unidad->producto->modelo->nombre}} - {{$unidadMovimiento->unidad->producto->color->nombre}}
+                                            {{$piezaMovimiento->pieza->descripcion}}
                                         </td>
                                         <td>
-                                            {{$unidadMovimiento->unidad->motor }}
+                                            {{$piezaMovimiento->cantidad }}
                                         </td>
-                                        <td>
-                                            {{$unidadMovimiento->unidad->cuadro}}
-                                        </td>
+
                                     </tr>
                                 @endforeach
                                 </tbody>

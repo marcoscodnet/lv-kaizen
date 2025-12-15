@@ -181,7 +181,10 @@
 
                                 actionsHtml += '<a href="{{ route("movimientoPiezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
                             @endcan
+                                @can('imprimir-remito')
+                                actionsHtml += '<a href="{{ route("movimientoPiezas.pdf") }}?movimientoPieza_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 
+                            @endcan
                             // Agregar formulario de eliminación si el movimiento tiene permiso
                             @can('pieza-movimiento-eliminar')
                                 actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('movimientoPiezas.destroy', '') }}/' + row.id + '" style="display: none">';
@@ -198,7 +201,7 @@
                     },
                     { data: 'id', name: 'id', visible: false }, // Columna oculta para ordenar
                 ],
-                order: [[7, 'desc']], // Ordenar por la columna oculta 'id' descendente
+                order: [[6, 'desc']], // Ordenar por la columna oculta 'id' descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

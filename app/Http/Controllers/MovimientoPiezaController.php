@@ -6,15 +6,19 @@ use App\Models\MovimientoPieza;
 
 use App\Models\Sucursal;
 use App\Models\Pieza;
+use App\Models\StockPieza;
 use App\Models\PiezaMovimiento;
 use App\Models\User;
+use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-
+use PDF;
+use DB;
 class MovimientoPiezaController extends Controller
 {
+    use SanitizesInput;
     function __construct()
     {
         $this->middleware('permission:pieza-movimiento-listar|pieza-movimiento-crear|pieza-movimiento-editar|pieza-movimiento-eliminar', ['only' => ['index','store']]);
@@ -49,8 +53,7 @@ class MovimientoPiezaController extends Controller
             'destino_nombre',
             'fecha',
             'id',
-            'cuadros',
-            'motores',
+            'piezas',
             'id'
         ];
 
@@ -86,21 +89,18 @@ class MovimientoPiezaController extends Controller
     {
 
 
-        $productos = Producto::with(['tipoPieza', 'marca', 'modelo', 'color'])
-            ->get()
-            ->mapWithKeys(function ($producto) {
-                $texto = ($producto->tipoPieza->nombre ?? '') . ' - '
-                    . ($producto->marca->nombre ?? '') . ' - '
-                    . ($producto->modelo->nombre ?? '') . ' - '
-                    . ($producto->color->nombre ?? '');
+        $piezas = Pieza::get()
+            ->mapWithKeys(function ($pieza) {
+                $texto = ($pieza->codigo ?? '') . ' - '
+                    . ($pieza->descripcion ?? '') ;
 
-                return [$producto->id => $texto];
+                return [$pieza->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
         $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $destinos = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('movimientoPiezas.create', compact('productos','origens','destinos'));
+        return view('movimientoPiezas.create', compact('piezas','origens','destinos'));
     }
 
     public function store(Request $request)
@@ -111,6 +111,8 @@ class MovimientoPiezaController extends Controller
             'fecha' => 'required|date',
             'pieza_id' => 'required|array|min:1',
             'pieza_id.*' => 'required|distinct',
+            'cantidad' => 'required|array',
+            'cantidad.*' => 'required|integer|min:1',
         ];
 
 
@@ -136,6 +138,24 @@ class MovimientoPiezaController extends Controller
                 ->withInput();
         }
 
+        foreach ($request->pieza_id as $index => $piezaId) {
+
+            $cantidadSolicitada = $request->cantidad[$index];
+
+            $stockDisponible = StockPieza::where('pieza_id', $piezaId)
+                ->where('sucursal_id', $request->sucursal_origen_id)
+                ->sum('cantidad');
+
+            if ($stockDisponible < $cantidadSolicitada) {
+                return redirect()->back()
+                    ->withErrors([
+                        'stock' => 'Stock insuficiente para la pieza ID '.$piezaId.
+                            '. Disponible: '.$stockDisponible.
+                            ', solicitado: '.$cantidadSolicitada
+                    ])
+                    ->withInput();
+            }
+        }
 
         $input = $this->sanitizeInput($request->all());
         // Obtener el ID del usuario autenticado
@@ -150,19 +170,49 @@ class MovimientoPiezaController extends Controller
             $lastid=$movimiento->id;
             if(count($request->pieza_id) > 0)
             {
-                foreach($request->pieza_id as $item=>$v){
+                foreach ($request->pieza_id as $item => $piezaId) {
 
-                    $data2=array(
-                        'movimientoPieza_id'=>$lastid,
-                        'pieza_id'=>$request->pieza_id[$item]
-                    );
+                    $cantidad = $request->cantidad[$item];
                     try {
-                        PiezaMovimiento::create($data2);
+                        // 1️⃣ Guardar detalle del movimiento
+                        PiezaMovimiento::create([
+                            'movimientoPieza_id' => $lastid,
+                            'pieza_id' => $piezaId,
+                            'cantidad' => $cantidad
+                        ]);
 
-                        // Actualizar sucursal_id de la pieza
-                        Pieza::where('id', $request->pieza_id[$item])
-                            ->update(['sucursal_id' => $request->sucursal_destino_id]);
+                        // 2️⃣ DESCONTAR STOCK EN ORIGEN (FIFO)
+                        $restante = $cantidad;
 
+                        $stocksOrigen = StockPieza::where('pieza_id', $piezaId)
+                            ->where('sucursal_id', $request->sucursal_origen_id)
+                            ->where('cantidad', '>', 0)
+                            ->orderBy('id')
+                            ->lockForUpdate()
+                            ->get();
+
+                        foreach ($stocksOrigen as $stock) {
+                            if ($restante <= 0) break;
+
+                            if ($stock->cantidad <= $restante) {
+                                $restante -= $stock->cantidad;
+                                $stock->cantidad = 0;
+                            } else {
+                                $stock->cantidad -= $restante;
+                                $restante = 0;
+                            }
+
+                            $stock->save();
+                        }
+
+                        // 3️⃣ AGREGAR STOCK EN DESTINO
+                        StockPieza::create([
+                            'pieza_id'     => $piezaId,
+                            'sucursal_id'  => $request->sucursal_destino_id,
+                            'cantidad'     => $cantidad,
+                            'ingreso'      => $request->fecha,
+                            'inicial'      => 0
+                        ]);
                     }catch(QueryException $ex){
                         $error = $ex->getMessage();
                         $ok=0;
@@ -195,33 +245,82 @@ class MovimientoPiezaController extends Controller
     public function destroy($id)
     {
         DB::beginTransaction();
+
         try {
-            $movimiento = MovimientoPieza::findOrFail($id);
+            $movimiento = MovimientoPieza::with('piezaMovimientos')->findOrFail($id);
 
-            // Obtenés la sucursal origen desde el movimiento
-            $sucursalOrigen = $movimiento->sucursal_origen_id;
+            $sucursalOrigen  = $movimiento->sucursal_origen_id;
+            $sucursalDestino = $movimiento->sucursal_destino_id;
 
-            // Revertir todas las piezas que participaron en el movimiento
-            foreach ($movimiento->piezaMovimientos as $um) {
-                // Revertir la pieza a la sucursal original
-                Pieza::where('id', $um->pieza_id)->update([
-                    'sucursal_id' => $sucursalOrigen
+            foreach ($movimiento->piezaMovimientos as $pm) {
+
+                $piezaId  = $pm->pieza_id;
+                $cantidad = $pm->cantidad;
+
+                // ============================
+                // 1️⃣ RESTAR STOCK DESTINO
+                // ============================
+                $stocksDestino = StockPieza::where('pieza_id', $piezaId)
+                    ->where('sucursal_id', $sucursalDestino)
+                    ->orderBy('id') // FIFO
+                    ->get();
+
+                $restante = $cantidad;
+
+                foreach ($stocksDestino as $stock) {
+                    if ($restante <= 0) break;
+
+                    if ($stock->cantidad <= $restante) {
+                        $restante -= $stock->cantidad;
+                        $stock->delete();
+                    } else {
+                        $stock->cantidad -= $restante;
+                        $stock->save();
+                        $restante = 0;
+                    }
+                }
+
+                if ($restante > 0) {
+                    throw new \Exception('Stock inconsistente al revertir la pieza ID ' . $piezaId);
+                }
+
+                // ============================
+                // 2️⃣ SUMAR STOCK ORIGEN
+                // ============================
+                StockPieza::create([
+                    'pieza_id'    => $piezaId,
+                    'sucursal_id' => $sucursalOrigen,
+                    'cantidad'    => $cantidad,
+                    'ingreso'     => $movimiento->fecha,
+                    'inicial'     => 0
                 ]);
 
-                // Eliminar el registro intermedio
-                $um->delete();
+                // ============================
+                // 3️⃣ ELIMINAR DETALLE
+                // ============================
+                $pm->delete();
             }
 
-            // Finalmente, eliminar el movimiento
+            // ============================
+            // 4️⃣ ELIMINAR MOVIMIENTO
+            // ============================
             $movimiento->delete();
 
             DB::commit();
-            return redirect()->route('movimientoPiezas.index')->with('success', 'Movimiento eliminado y piezas revertidas a su sucursal original.');
+
+            return redirect()
+                ->route('movimientoPiezas.index')
+                ->with('success', 'Movimiento eliminado y stock revertido correctamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Error al eliminar movimiento: ' . $e->getMessage());
+
+            return redirect()
+                ->back()
+                ->with('error', 'Error al eliminar movimiento: ' . $e->getMessage());
         }
     }
+
 
     public function generatePDF(Request $request,$attach = false)
     {
@@ -285,11 +384,10 @@ class MovimientoPiezaController extends Controller
             ->leftJoin('sucursals as destino', 'movimiento_piezas.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimiento_piezas.user_id', '=', 'users.id')
             ->select(
-                'movimiento_piezas.id as id',
-                DB::raw("IFNULL(users.name, movimiento_piezas.user_name) as usuario_nombre"),
+                'movimiento_piezas.*',
+                'users.name as usuario_nombre',
                 'origen.nombre as origen_nombre',
-                'destino.nombre as destino_nombre',
-                'movimiento_piezas.fecha'
+                'destino.nombre as destino_nombre'
             );
 
         // FILTRO POR USUARIO
@@ -299,6 +397,8 @@ class MovimientoPiezaController extends Controller
 
         $movimientos = $movimientosQuery->get();
 
+
+
         // MAPEO + CONCAT
         $datos = $movimientos->map(function ($movimiento) {
             return [
@@ -307,7 +407,17 @@ class MovimientoPiezaController extends Controller
                 'origen_nombre' => $movimiento->origen_nombre,
                 'destino_nombre' => $movimiento->destino_nombre,
                 'fecha' => $movimiento->fecha,
-                'piezas' => $movimiento->piezaMovimientos->pluck('pieza.codigo')->filter()->implode(', ')
+                'piezas' => $movimiento->piezaMovimientos
+                    ->map(function ($pm) {
+                        // Verifica si la pieza está disponible
+                        if (!$pm->pieza) {
+                            return null;
+                        }
+                        // Devuelve el código de la pieza y la cantidad
+                        return $pm->pieza->codigo . ' (' . $pm->cantidad . ')';
+                    })
+                    ->filter() // Elimina los valores nulos
+                    ->implode(', ') // Concatena las piezas con una coma
             ];
         });
 
@@ -320,8 +430,7 @@ class MovimientoPiezaController extends Controller
                     || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['fecha']), $busqueda)
-                    || str_contains(mb_strtolower($item['cuadros']), $busqueda)
-                    || str_contains(mb_strtolower($item['motores']), $busqueda);
+                    || str_contains(mb_strtolower($item['piezas']), $busqueda);
             });
         }
 
@@ -375,10 +484,10 @@ class MovimientoPiezaController extends Controller
 
         // ENCABEZADOS
         $headers = [
-            "Usuario", "Origen", "Destino", "Fecha", "Cuadros", "Motores"
+            "Usuario", "Origen", "Destino", "Fecha", "Piezas"
         ];
 
-        $row = 5;
+        $row = 4;
         $col = 1;
 
         foreach ($headers as $h) {
@@ -399,13 +508,12 @@ class MovimientoPiezaController extends Controller
                     ? \Carbon\Carbon::parse($m['fecha'])->format('d/m/Y')
                     : '—'
             );
-            $sheet->setCellValue("E$row", $m['cuadros']);
-            $sheet->setCellValue("F$row", $m['motores']);
+            $sheet->setCellValue("E$row", $m['piezas']);
             $row++;
         }
 
         // AUTO SIZE
-        foreach (range('A', 'F') as $col) {
+        foreach (range('A', 'E') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -451,11 +559,10 @@ class MovimientoPiezaController extends Controller
             ->leftJoin('sucursals as destino', 'movimiento_piezas.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimiento_piezas.user_id', '=', 'users.id')
             ->select(
-                'movimiento_piezas.id as id',
-                DB::raw("IFNULL(users.name, movimiento_piezas.user_name) as usuario_nombre"),
+                'movimiento_piezas.*',
+                'users.name as usuario_nombre',
                 'origen.nombre as origen_nombre',
-                'destino.nombre as destino_nombre',
-                'movimiento_piezas.fecha'
+                'destino.nombre as destino_nombre'
             );
 
         // FILTRAR POR USUARIO
@@ -466,9 +573,9 @@ class MovimientoPiezaController extends Controller
         $movimientos = $movimientosQuery->get();
 
         // ===============================
-        // MAPEO EXACTO AL DATATABLE
-        // ===============================
-        $datos = $movimientos->map(function($movimiento) {
+// MAPEO EXACTO AL DATATABLE
+// ===============================
+        $datos = $movimientos->map(function ($movimiento) {
             return [
                 'id' => $movimiento->id,
                 'usuario_nombre' => $movimiento->usuario_nombre,
@@ -477,9 +584,18 @@ class MovimientoPiezaController extends Controller
                 'fecha' => $movimiento->fecha
                     ? \Carbon\Carbon::parse($movimiento->fecha)->format('d/m/Y')
                     : '',
-                'pieas' => $movimiento->piezaMovimientos->pluck('pieza.codigo')->filter()->implode(', ')
+                'piezas' => $movimiento->piezaMovimientos
+                    ->map(function ($pm) {
+                        if (!$pm->pieza) {
+                            return null;
+                        }
+                        return $pm->pieza->codigo . ' (' . $pm->cantidad . ')';
+                    })
+                    ->filter()
+                    ->implode(', ')
             ];
         });
+
 
         // ===============================
         // FILTRO DE BÚSQUEDA
@@ -491,8 +607,7 @@ class MovimientoPiezaController extends Controller
                     || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['fecha']), $busqueda)
-                    || str_contains(mb_strtolower($item['cuadros']), $busqueda)
-                    || str_contains(mb_strtolower($item['motores']), $busqueda);
+                    || str_contains(mb_strtolower($item['piezas']), $busqueda);
             });
         }
 

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Movimientos de unidades</title>
+    <title>Movimientos de piezas</title>
 
     <style>
         body {
@@ -49,7 +49,7 @@
 <!-- Cabecera con imagen -->
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Movimientos de Unidades</h2>
+    <h2 style="margin-top: 10px;">Listado de Movimientos de Piezas</h2>
 </div>
 
 
@@ -73,8 +73,8 @@
         <th>Origen</th>
         <th>Destino</th>
         <th>Fecha</th>
-        <th>Cuadros</th>
-        <th>Motores</th>
+        <th>Piezas</th>
+
     </tr>
     </thead>
 
@@ -86,12 +86,12 @@
             <td>{{ $m['origen_nombre'] }}</td>
             <td>{{ $m['destino_nombre'] }}</td>
             <td>{{ $m['fecha'] }}</td>
-            <td>{{ $m['cuadros'] }}</td>
-            <td>{{ $m['motores'] }}</td>
+            <td>{{ $m['piezas'] }}</td>
+
         </tr>
     @empty
         <tr>
-            <td colspan="7" style="text-align: center; padding: 20px;">
+            <td colspan="5" style="text-align: center; padding: 20px;">
                 No se encontraron movimientos con los filtros aplicados.
             </td>
         </tr>

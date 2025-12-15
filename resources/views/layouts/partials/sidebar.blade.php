@@ -223,7 +223,7 @@
 
                         @can('pieza-movimiento-listar')
                             <a class="nav-link" href="{{ route('movimientoPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos Piezaes</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos Piezas</span>
                                 </div>
                             </a>
                         @endcan

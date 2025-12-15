@@ -161,12 +161,12 @@
 
     <table>
         <tr style="background-color: #999999;">
-            <th>Código</th><th>Producto</th><th>Motor</th><th>Cuadro</th>
+            <th>Código</th><th>Pieza</th><th>Cantidad</th>
         </tr>
-        @foreach($unidades as $unidadMovimiento)
+        @foreach($piezas as $piezaMovimiento)
             <tr>
-                <td>{{$unidadMovimiento->unidad->id}}</td><td>{{$unidadMovimiento->unidad->producto->tipoUnidad->nombre}} - {{$unidadMovimiento->unidad->producto->marca->nombre}} - {{$unidadMovimiento->unidad->producto->modelo->nombre}} - {{$unidadMovimiento->unidad->producto->color->nombre}}</td>
-                <td>{{$unidadMovimiento->unidad->motor }}</td><td>{{$unidadMovimiento->unidad->cuadro}}</td>
+                <td>{{$piezaMovimiento->pieza->codigo}}</td><td>{{$piezaMovimiento->pieza->descripcion}}</td>
+                <td>{{$piezaMovimiento->cantidad}}</td>
             </tr>
         @endforeach
     </table>
@@ -232,12 +232,12 @@
 
     <table>
         <tr style="background-color: #999999;">
-            <th>Código</th><th>Producto</th><th>Motor</th><th>Cuadro</th>
+            <th>Código</th><th>Pieza</th><th>Cantidad</th>
         </tr>
-        @foreach($unidades as $unidadMovimiento)
+        @foreach($piezas as $piezaMovimiento)
             <tr>
-                <td>{{$unidadMovimiento->unidad->id}}</td><td>{{$unidadMovimiento->unidad->producto->tipoUnidad->nombre}} - {{$unidadMovimiento->unidad->producto->marca->nombre}} - {{$unidadMovimiento->unidad->producto->modelo->nombre}} - {{$unidadMovimiento->unidad->producto->color->nombre}}</td>
-                <td>{{$unidadMovimiento->unidad->motor }}</td><td>{{$unidadMovimiento->unidad->cuadro}}</td>
+                <td>{{$piezaMovimiento->pieza->codigo}}</td><td>{{$piezaMovimiento->pieza->descripcion}}</td>
+                <td>{{$piezaMovimiento->cantidad}}</td>
             </tr>
         @endforeach
     </table>

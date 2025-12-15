@@ -9,11 +9,11 @@ class PiezaMovimiento extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['unidad_id', 'movimientoPieza_id'];
+    protected $fillable = ['unidad_id', 'movimientoPieza_id','cantidad'];
 
 
-    public function unidad() {
-        return $this->belongsTo('App\Models\Unidad');
+    public function pieza() {
+        return $this->belongsTo('App\Models\Pieza');
     }
 
     public function movimientoPieza() {

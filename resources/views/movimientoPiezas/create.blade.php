@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('movimientos.store') }}" method="post" >
+            <form role="form" action="{{ route('movimientoPiezas.store') }}" method="post" >
                 {{ csrf_field() }}
                 <div class="tab-content">
                     <div class="box-body">
@@ -61,24 +61,58 @@
 
                             <table class="table">
                                 <thead>
-
-                                <th>Producto</th>
-                                <th>Unidad</th>
-
-                                <th><a href="#" class="addRowProducto btn btn-success btn-sm">
-                                        <i class="fa fa-plus"></i>
-                                    </a></th>
-
+                                <tr>
+                                    <th>Pieza</th>
+                                    <th>Cantidad</th>
+                                    <th>
+                                        <a href="#" class="addRowPieza btn btn-success btn-sm">
+                                            <i class="fa fa-plus"></i>
+                                        </a>
+                                    </th>
+                                </tr>
                                 </thead>
 
-                                <tbody id="cuerpoProducto">
+                                <tbody id="cuerpoPieza">
+                                <tbody id="cuerpoPieza">
+                                @php
+                                    $oldPiezas = old('pieza_id', []);
+                                    $oldCantidades = old('cantidad', []);
+                                @endphp
 
+                                @if(count($oldPiezas))
+                                    @foreach($oldPiezas as $i => $piezaId)
+                                        <tr>
+                                            <td style="width:50%;">
+                                                <select name="pieza_id[]" class="form-control js-example-basic-single" required>
+                                                    <option value="">Seleccionar...</option>
+                                                    @foreach($piezas as $id => $pieza)
+                                                        <option value="{{ $id }}" {{ $piezaId == $id ? 'selected' : '' }}>
+                                                            {{ $pieza }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
 
+                                            <td style="width:30%;">
+                                                <input type="number"
+                                                       name="cantidad[]"
+                                                       class="form-control"
+                                                       min="1"
+                                                       value="{{ $oldCantidades[$i] ?? '' }}"
+                                                       required>
+                                            </td>
+
+                                            <td>
+                                                <a href="#" class="btn btn-danger btn-sm removePieza">
+                                                    <i class="fa fa-times text-white"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                                 </tbody>
 
-
-
-
+                                </tbody>
                             </table>
                         </div>
 
@@ -148,100 +182,62 @@
     <!-- page script -->
     <script>
         $(document).ready(function () {
-
-            const sucursalSelect = $('select[name="sucursal_origen_id"]');
-            const agregarBtn = $('.addRowProducto');
-            const cuerpoProducto = $('#cuerpoProducto');
-
-            function actualizarEstado() {
-                const sucursalId = sucursalSelect.val();
-                cuerpoProducto.empty();
-                if (!sucursalId) {
-                    agregarBtn.addClass('disabled').css('pointer-events', 'none').attr('aria-disabled', 'true');
-                } else {
-                    agregarBtn.removeClass('disabled').css('pointer-events', 'auto').removeAttr('aria-disabled');
-                }
-            }
-
-            sucursalSelect.on('change', function() {
-
-                actualizarEstado();
+            $('.js-example-basic-single').select2({
+                language: 'es',
+                width: '100%'
             });
 
-            // Inicialmente
-            actualizarEstado();
-            // Renderizás el HTML de Blade en una variable JS:
-            var selectProducto = `{!! '<select name="producto_id[]" class="form-control js-example-basic-single selectProducto">' !!}
-            @foreach($productos as $productoId => $producto)
-            {!! '<option value="'.$productoId.'">'.$producto.'</option>' !!}
+
+            // Select de piezas renderizado desde Blade
+            var selectPieza = `{!! '<select name="pieza_id[]" class="form-control js-example-basic-single" required>' !!}
+            <option value="">Seleccionar...</option>
+@foreach($piezas as $piezaId => $pieza)
+            {!! '<option value="'.$piezaId.'">'.$pieza.'</option>' !!}
             @endforeach
             {!! '</select>' !!}`;
 
-            $('.addRowProducto').on('click',function(e){
+            // Agregar fila
+            $('.addRowPieza').on('click', function(e){
                 e.preventDefault();
-                addRowProducto();
+                addRowPieza();
             });
-            function addRowProducto()
+
+            function addRowPieza()
             {
+                var tr = `
+            <tr>
+                <td style="width:50%;">${selectPieza}</td>
+                <td style="width:30%;">
+                    <input type="number" name="cantidad[]" class="form-control" min="1" required>
+                </td>
+                <td>
+                    <a href="#" class="btn btn-danger btn-sm removePieza">
+                        <i class="fa fa-times text-white"></i>
+                    </a>
+                </td>
+            </tr>
+        `;
 
-                var tr='<tr>'+
-                    '<td style="width:40%;">' + selectProducto + '</td>' +
+                $('#cuerpoPieza').append(tr);
 
-                    '<td style="width:40%;"><select name="unidad_id[]" class="form-control js-example-basic-single unidadSelect"><option value="">Seleccionar...</option></select></td>' +
-                    '<td><a href="#" class="btn btn-danger btn-sm removeProducto"><i class="fa fa-times text-white"></i></a></td>'+
-
-                    '</tr>';
-                $('#cuerpoProducto').append(tr);
+                // Inicializar Select2 en los nuevos selects
                 $('.js-example-basic-single').select2({
-                language: 'es'});
-            };
-            $('body').on('click', '.removeProducto', function(e){
+                    language: 'es'
+                });
+            }
 
-                var confirmDelete = confirm('¿Estás seguro?');
+            // Eliminar fila
+            $('body').on('click', '.removePieza', function(e){
+                e.preventDefault();
 
-                if (confirmDelete) {
-                    $(this).parent().parent().remove();
-                }
-
-            });
-            const unidadUrlTemplate = @json(route('api.unidads.getUnidadsPorProducto', ['productoId' => 'PRODUCTO_ID']));
-// AJAX: Cargar unidades al seleccionar producto
-            $('body').on('change', '.selectProducto', function() {
-                var productoId = $(this).val();
-                var unidadSelect = $(this).closest('tr').find('.unidadSelect');
-                var sucursalOrigenId = $('select[name="sucursal_origen_id"]').val();
-                unidadSelect.empty();
-                unidadSelect.append('<option value="">Cargando...</option>');
-
-                if (productoId && sucursalOrigenId) {
-                    let url = unidadUrlTemplate.replace('PRODUCTO_ID', productoId);
-                    url += `?sucursal_origen_id=${sucursalOrigenId}`;
-
-                    $.ajax({
-                        url: url,
-                        method: 'GET',
-                        success: function(data) {
-                            unidadSelect.empty();
-                            unidadSelect.append('<option value="">Seleccionar..</option>');
-                            data.forEach(function(unidad) {
-                                unidadSelect.append('<option value="' + unidad.id + '">' + unidad.texto + '</option>');
-                            });
-                        },
-                        error: function() {
-                            unidadSelect.empty();
-                            unidadSelect.append('<option value="">Error al cargar unidades</option>');
-                        }
-                    });
-                } else {
-                    unidadSelect.empty();
-                    unidadSelect.append('<option value="">Seleccionar...</option>');
+                if (confirm('¿Eliminar fila?')) {
+                    $(this).closest('tr').remove();
                 }
             });
-
 
         });
-
     </script>
+
 
 
 @endsection
