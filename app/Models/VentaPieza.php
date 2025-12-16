@@ -9,7 +9,7 @@ class VentaPieza extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['precio','precio_minimo','cliente','documento','telefono','moto','sucursal_id','pedido','user_id','user_name','fecha','descripcion','destino'];
+    protected $fillable = ['precio','precio_minimo','cliente','documento','telefono','moto','sucursal_id','pedido','user_id','user_name','fecha','descripcion','destino','cliente_id'];
 
 
 
@@ -20,6 +20,10 @@ class VentaPieza extends Model
 
     public function sucursal() {
         return $this->belongsTo('App\Models\Sucursal', 'sucursal_id');
+    }
+
+    public function cliente() {
+        return $this->belongsTo('App\Models\Cliente', 'cliente_id');
     }
 
     public function piezas()

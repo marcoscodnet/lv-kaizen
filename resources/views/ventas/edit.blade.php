@@ -419,7 +419,7 @@
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
     <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
-
+    <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
     <script>
         function actualizarTotales() {
             let totalMonto = 0;
@@ -484,6 +484,27 @@
                     $(this).select2('destroy'); // destruir si ya estaba inicializado
                 }
                 $(this).select2({ width: '100%'});
+            });
+
+            $('#cliente_id').select2({
+                minimumInputLength: 3,
+                language: 'es',
+                ajax: {
+                    url: '{{ route("cliente.search") }}',
+                    type: "get",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { search: params.term };
+                    },
+                    processResults: function (response) {
+                        // response viene en formato [{id:..., text:...}, ...]
+                        // Agregar opción "nuevo cliente" al final
+                        response.push({ id: 'nuevo', text: '✅ Nuevo cliente' });
+                        return { results: response };
+                    },
+                    cache: true
+                }
             });
 
             // Select2 para clientes con búsqueda AJAX

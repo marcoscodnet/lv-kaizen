@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Provincia;
 use App\Models\StockPieza;
 use App\Models\Sucursal;
 use App\Models\User;
@@ -53,7 +54,7 @@ class VentaPiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente)"),'venta_piezas.pedido','venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -72,7 +73,7 @@ class VentaPiezaController extends Controller
         $user_id = $request->input('user_id');
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente) as cliente"),'venta_piezas.pedido','venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -88,6 +89,7 @@ class VentaPiezaController extends Controller
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
 
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
+            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
         ;
 
 
@@ -177,7 +179,8 @@ class VentaPiezaController extends Controller
             ->prepend('', '');
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('ventaPiezas.create', compact('users','stockPiezasJson','sucursals'));
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('ventaPiezas.create', compact('users','stockPiezasJson','sucursals','provincias'));
     }
 
     public function store(Request $request)
@@ -201,15 +204,15 @@ class VentaPiezaController extends Controller
         // Validaciones condicionales según destino
         switch ($request->input('destino')) {
             case 'Salón':
-                $rules['cliente'] = 'required';
-                $rules['documento'] = 'required';
+                $rules['cliente_id'] = 'required';
+                /*$rules['documento'] = 'required';
                 $rules['telefono'] = 'required';
-                $rules['moto'] = 'required';
+                $rules['moto'] = 'required';*/
 
-                $messages['cliente.required'] = 'El campo Cliente es obligatorio.';
-                $messages['documento.required'] = 'El campo Documento es obligatorio.';
+                $messages['cliente_id.required'] = 'El campo Cliente es obligatorio.';
+                /*$messages['documento.required'] = 'El campo Documento es obligatorio.';
                 $messages['telefono.required'] = 'El campo Teléfono es obligatorio.';
-                $messages['moto.required'] = 'El campo Moto es obligatorio.';
+                $messages['moto.required'] = 'El campo Moto es obligatorio.';*/
                 break;
 
             case 'Sucursal':
@@ -251,10 +254,11 @@ class VentaPiezaController extends Controller
             $venta->user_id = $input['user_id'];
             $venta->fecha = $input['fecha'];
             $venta->destino = $input['destino'];
-            $venta->cliente = $input['cliente'] ?? null;
+            /*$venta->cliente = $input['cliente'] ?? null;
             $venta->documento = $input['documento'] ?? null;
             $venta->telefono = $input['telefono'] ?? null;
-            $venta->moto = $input['moto'] ?? null;
+            $venta->moto = $input['moto'] ?? null;*/
+            $venta->cliente_id = $input['cliente_id'] ?? null;
             $venta->sucursal_id = $input['sucursal_id'] ?? null;
             $venta->pedido = $input['pedido'] ?? null;
             $venta->save();
@@ -328,15 +332,16 @@ class VentaPiezaController extends Controller
 
         switch ($request->input('destino')) {
             case 'Salón':
-                $rules['cliente'] = 'required';
+                /*$rules['cliente'] = 'required';
                 $rules['documento'] = 'required';
-                $rules['telefono'] = 'required';
-                $rules['moto'] = 'required';
+                $rules['telefono'] = 'required';*/
+                $rules['cliente_id'] = 'required';
+                //$rules['moto'] = 'required';
 
-                $messages['cliente.required'] = 'El campo Cliente es obligatorio.';
-                $messages['documento.required'] = 'El campo Documento es obligatorio.';
+                $messages['cliente_id.required'] = 'El campo Cliente es obligatorio.';
+                /*$messages['documento.required'] = 'El campo Documento es obligatorio.';
                 $messages['telefono.required'] = 'El campo Teléfono es obligatorio.';
-                $messages['moto.required'] = 'El campo Moto es obligatorio.';
+                $messages['moto.required'] = 'El campo Moto es obligatorio.';*/
                 break;
 
             case 'Sucursal':
@@ -404,8 +409,8 @@ class VentaPiezaController extends Controller
             ->prepend('', '');
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-
-        return view('ventaPiezas.edit', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals'));
+        $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('ventaPiezas.edit', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals','provincias'));
     }
 
 

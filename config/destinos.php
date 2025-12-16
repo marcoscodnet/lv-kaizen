@@ -2,6 +2,6 @@
 
 return [
     'Salón' => 'Salón',
-    'Sucursal' => 'Sucursal',
+    /*'Sucursal' => 'Sucursal',*/
     'Taller' => 'Taller',
 ];
