@@ -9,7 +9,7 @@ class PiezaMovimiento extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['unidad_id', 'movimientoPieza_id','cantidad'];
+    protected $fillable = ['unidad_id', 'movimientoPieza_id','cantidad','pieza_id'];
 
 
     public function pieza() {

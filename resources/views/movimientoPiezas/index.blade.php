@@ -77,7 +77,7 @@
 
                         <th scope="col">Envío</th>
                         <th>Piezas</th>
-
+                        <th scope="col">Estado</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -115,8 +115,9 @@
     <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
     <!-- page script -->
-    <!-- page script -->
     <script>
+        const USER_SUCURSAL_ID = {{ auth()->user()->sucursal_id }};
+        const ACEPTAR_URL = "{{ url('/movimientoPiezas') }}";
         $(document).ready(function() {
             $('.js-example-basic-single').select2({
                 language: 'es'});
@@ -167,7 +168,7 @@
                     },
 
                     { data: 'piezas', name: 'piezas' , orderable: false},
-
+                    { data: 'estado_texto', name: 'estado_texto' },
                     // Actions column
                     {
                         "data": "id",
@@ -185,6 +186,29 @@
                                 actionsHtml += '<a href="{{ route("movimientoPiezas.pdf") }}?movimientoPieza_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 
                             @endcan
+                            // ============================
+                            // BOTÓN ACEPTAR ✔️
+                            // ============================
+
+                            @can('pieza-movimiento-aceptar')
+                            if (
+                                row.estado === 'PENDIENTE' &&
+                                row.sucursal_destino_id == USER_SUCURSAL_ID
+                            ) {
+                                actionsHtml += `
+                                            <form method="POST"
+                                                  action="${ACEPTAR_URL}/${row.id}/aceptar"
+                                                  style="display:inline"
+                                                  onsubmit="return confirm('¿Aceptar movimiento?')">
+                                                @csrf
+                                                <button class="btn btn-link p-0" title="Aceptar">
+                                                    <span class="fas fa-check text-500"></span>
+                                                </button>
+                            </form>`;
+                            }
+                            @endcan
+
+
                             // Agregar formulario de eliminación si el movimiento tiene permiso
                             @can('pieza-movimiento-eliminar')
                                 actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('movimientoPiezas.destroy', '') }}/' + row.id + '" style="display: none">';
@@ -226,6 +250,9 @@
                 table.ajax.reload(); // Recargar la tabla cuando cambie el filtro de período
             });
         });
+
+
+
 
         function exportarExcel() {
             let usuario = $('#filtroUsuario').val();

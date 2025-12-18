@@ -144,7 +144,7 @@
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
 
-                                <a href='{{ route('movimientos.index') }}' class="btn btn-warning">Volver</a>
+                                <a href='{{ route('movimientoPiezas.index') }}' class="btn btn-warning">Volver</a>
                             </div>
                         </div>
                     </div>

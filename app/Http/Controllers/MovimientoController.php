@@ -171,10 +171,6 @@ class MovimientoController extends Controller
                     try {
                         UnidadMovimiento::create($data2);
 
-                        // Actualizar sucursal_id de la unidad
-                        Unidad::where('id', $request->unidad_id[$item])
-                            ->update(['sucursal_id' => $request->sucursal_destino_id]);
-
                     }catch(QueryException $ex){
                         $error = $ex->getMessage();
                         $ok=0;
@@ -296,9 +292,11 @@ class MovimientoController extends Controller
             ->leftJoin('sucursals as origen', 'movimientos.sucursal_origen_id', '=', 'origen.id')
             ->leftJoin('sucursals as destino', 'movimientos.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimientos.user_id', '=', 'users.id')
+            ->leftJoin('users as acepta', 'movimientos.user_acepta_id', '=', 'acepta.id')
             ->select(
-                'movimientos.id as id',
+                'movimientos.*',
                 DB::raw("IFNULL(users.name, movimientos.user_name) as usuario_nombre"),
+                'acepta.name as acepta_nombre',
                 'origen.nombre as origen_nombre',
                 'destino.nombre as destino_nombre',
                 'movimientos.fecha'
@@ -313,8 +311,23 @@ class MovimientoController extends Controller
 
         // MAPEO + CONCAT
         $datos = $movimientos->map(function ($movimiento) {
+            // =========================
+            // TEXTO DE ESTADO
+            // =========================
+            $estadoTexto = ucfirst(strtolower($movimiento->estado));
+
+            if ($movimiento->estado === 'Aceptado' && $movimiento->user_acepta) {
+                $fecha = \Carbon\Carbon::parse($movimiento->aceptado)
+                    ->format('d/m/Y');
+
+                $estadoTexto = "Aceptado ({$movimiento->acepta_nombre} {$fecha})";
+            }
+
             return [
                 'id' => $movimiento->id,
+                'sucursal_destino_id' => $movimiento->sucursal_destino_id,
+                'estado' => $movimiento->estado,
+                'estado_texto' => $estadoTexto,
                 'usuario_nombre' => $movimiento->usuario_nombre,
                 'origen_nombre' => $movimiento->origen_nombre,
                 'destino_nombre' => $movimiento->destino_nombre,
@@ -526,6 +539,30 @@ class MovimientoController extends Controller
     }
 
 
+    public function aceptar(Movimiento $movimiento)
+    {
+        if ($movimiento->estado !== 'Pendiente') {
+            return back()->with('error', 'El movimiento ya fue procesado');
+        }
+
+        DB::transaction(function () use ($movimiento) {
+
+            foreach ($movimiento->unidadMovimientos as $um) {
+                Unidad::where('id', $um->unidad_id)
+                    ->update([
+                        'sucursal_id' => $movimiento->sucursal_destino_id
+                    ]);
+            }
+
+            $movimiento->update([
+                'estado'       => 'Aceptado',
+                'aceptado_por' => auth()->id(),
+                'aceptado_at'  => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Movimiento aceptado correctamente');
+    }
 
 
 

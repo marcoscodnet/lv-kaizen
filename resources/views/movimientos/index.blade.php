@@ -78,6 +78,7 @@
                         <th scope="col">Envío</th>
                         <th>Cuadros</th>
                         <th>Motores</th>
+                        <th>Estado</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -117,6 +118,8 @@
     <!-- page script -->
     <!-- page script -->
     <script>
+        const USER_SUCURSAL_ID = {{ auth()->user()->sucursal_id }};
+        const ACEPTAR_URL = "{{ url('/movimientos') }}";
         $(document).ready(function() {
             $('.js-example-basic-single').select2({
                 language: 'es'});
@@ -168,6 +171,7 @@
 
                     { data: 'cuadros', name: 'cuadros' , orderable: false},
                     { data: 'motores', name: 'motores' , orderable: false},
+                    { data: 'estado_texto', name: 'estado_texto' },
                     // Actions column
                     {
                         "data": "id",
@@ -184,6 +188,24 @@
                                 @can('imprimir-remito')
                                 actionsHtml += '<a href="{{ route("movimientos.pdf") }}?movimiento_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';
 
+                            @endcan
+
+                                @can('unidad-movimiento-aceptar')
+                            if (
+                                row.estado === 'Pendiente' &&
+                                row.sucursal_destino_id == USER_SUCURSAL_ID
+                            ) {
+                                actionsHtml += `
+                                            <form method="POST"
+                                                  action="${ACEPTAR_URL}/${row.id}/aceptar"
+                                                  style="display:inline"
+                                                  onsubmit="return confirm('¿Aceptar movimiento?')">
+                                                @csrf
+                                <button class="btn btn-link p-0" title="Aceptar">
+                                    <span class="fas fa-check text-500"></span>
+                                </button>
+            </form>`;
+                            }
                             @endcan
                             // Agregar formulario de eliminación si el movimiento tiene permiso
                             @can('unidad-movimiento-eliminar')

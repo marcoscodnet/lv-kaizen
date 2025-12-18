@@ -7,6 +7,8 @@ use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use App\Models\Ubicacion;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
 
 class UbicacionController extends Controller
 {
@@ -56,13 +58,20 @@ class UbicacionController extends Controller
     public function store(Request $request)
     {
         $rules = [
-            'nombre' => 'required',
+            'nombre' => [
+                'required',
+                Rule::unique('ubicacions')
+                    ->where(function ($query) use ($request) {
+                        return $query->where('sucursal_id', $request->sucursal_id);
+                    }),
+            ],
             'sucursal_id' => 'required',
         ];
 
         // Definir los mensajes de error personalizados
         $messages = [
             'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
+            'nombre.unique' => 'Ya existe una ubicación con ese nombre para la sucursal seleccionada.',
         ];
 
         // Crear el validador con las reglas y mensajes
@@ -117,13 +126,21 @@ class UbicacionController extends Controller
     public function update(Request $request, $id)
     {
         $rules = [
-            'nombre' => 'required',
+            'nombre' => [
+                'required',
+                Rule::unique('ubicacions')
+                    ->where(function ($query) use ($request) {
+                        return $query->where('sucursal_id', $request->sucursal_id);
+                    })
+                    ->ignore($id),
+            ],
             'sucursal_id' => 'required',
         ];
 
         // Definir los mensajes de error personalizados
         $messages = [
             'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
+            'nombre.unique' => 'Ya existe una ubicación con ese nombre para la sucursal seleccionada.',
         ];
 
         // Crear el validador con las reglas y mensajes

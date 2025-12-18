@@ -161,6 +161,12 @@ Route::group(['middleware' => ['auth']], function() {
             ->get();
     });
 
+    Route::post(
+        '/movimientos/{movimiento}/aceptar',
+        [MovimientoController::class, 'aceptar']
+    )->name('movimientos.aceptar');
+
+
     Route::get('/movimientos/exportar', [MovimientoController::class, 'exportarXLS'])
         ->name('movimientos.exportarXLS');
 
@@ -268,6 +274,11 @@ Route::group(['middleware' => ['auth']], function() {
         // Acreditar
         Route::post('acreditar/{movimiento}', [MovimientoCajaController::class, 'acreditar'])->name('acreditar');
     });
+
+    Route::post(
+        '/movimientoPiezas/{movimiento}/aceptar',
+        [MovimientoPiezaController::class, 'aceptar']
+    )->name('movimientoPiezas.aceptar');
 
 
     Route::get('/movimientoPiezas/exportar', [MovimientoPiezaController::class, 'exportarXLS'])

@@ -165,6 +165,7 @@ class MovimientoPiezaController extends Controller
         DB::beginTransaction();
         $ok=1;
         try {
+            $input['estado'] = 'PENDIENTE';
             $movimiento = MovimientoPieza::create($input);
 
             $lastid=$movimiento->id;
@@ -181,38 +182,7 @@ class MovimientoPiezaController extends Controller
                             'cantidad' => $cantidad
                         ]);
 
-                        // 2️⃣ DESCONTAR STOCK EN ORIGEN (FIFO)
-                        $restante = $cantidad;
 
-                        $stocksOrigen = StockPieza::where('pieza_id', $piezaId)
-                            ->where('sucursal_id', $request->sucursal_origen_id)
-                            ->where('cantidad', '>', 0)
-                            ->orderBy('id')
-                            ->lockForUpdate()
-                            ->get();
-
-                        foreach ($stocksOrigen as $stock) {
-                            if ($restante <= 0) break;
-
-                            if ($stock->cantidad <= $restante) {
-                                $restante -= $stock->cantidad;
-                                $stock->cantidad = 0;
-                            } else {
-                                $stock->cantidad -= $restante;
-                                $restante = 0;
-                            }
-
-                            $stock->save();
-                        }
-
-                        // 3️⃣ AGREGAR STOCK EN DESTINO
-                        StockPieza::create([
-                            'pieza_id'     => $piezaId,
-                            'sucursal_id'  => $request->sucursal_destino_id,
-                            'cantidad'     => $cantidad,
-                            'ingreso'      => $request->fecha,
-                            'inicial'      => 0
-                        ]);
                     }catch(QueryException $ex){
                         $error = $ex->getMessage();
                         $ok=0;
@@ -383,9 +353,11 @@ class MovimientoPiezaController extends Controller
             ->leftJoin('sucursals as origen', 'movimiento_piezas.sucursal_origen_id', '=', 'origen.id')
             ->leftJoin('sucursals as destino', 'movimiento_piezas.sucursal_destino_id', '=', 'destino.id')
             ->leftJoin('users', 'movimiento_piezas.user_id', '=', 'users.id')
+            ->leftJoin('users as acepta', 'movimiento_piezas.user_acepta_id', '=', 'acepta.id')
             ->select(
                 'movimiento_piezas.*',
                 'users.name as usuario_nombre',
+                'acepta.name as acepta_nombre',
                 'origen.nombre as origen_nombre',
                 'destino.nombre as destino_nombre'
             );
@@ -401,8 +373,23 @@ class MovimientoPiezaController extends Controller
 
         // MAPEO + CONCAT
         $datos = $movimientos->map(function ($movimiento) {
+            // =========================
+            // TEXTO DE ESTADO
+            // =========================
+            $estadoTexto = ucfirst(strtolower($movimiento->estado));
+
+            if ($movimiento->estado === 'Aceptado' && $movimiento->user_acepta) {
+                $fecha = \Carbon\Carbon::parse($movimiento->aceptado)
+                    ->format('d/m/Y');
+
+                $estadoTexto = "Aceptado ({$movimiento->acepta_nombre} {$fecha})";
+            }
+
             return [
                 'id' => $movimiento->id,
+                'sucursal_destino_id' => $movimiento->sucursal_destino_id,
+                'estado' => $movimiento->estado,
+                'estado_texto' => $estadoTexto,
                 'usuario_nombre' => $movimiento->usuario_nombre,
                 'origen_nombre' => $movimiento->origen_nombre,
                 'destino_nombre' => $movimiento->destino_nombre,
@@ -626,6 +613,93 @@ class MovimientoPiezaController extends Controller
         return $pdf->download('movimientoPiezas.exportpdf');
     }
 
+
+    public function aceptar(MovimientoPieza $movimiento)
+    {
+        // 🔐 Permiso
+        if (!auth()->user()->can('pieza-movimiento-aceptar')) {
+            abort(403);
+        }
+
+        // 🧠 Estado
+        if ($movimiento->estado !== 'PENDIENTE') {
+            return back()->with('error', 'El movimiento ya fue procesado');
+        }
+
+        // 🏢 Sucursal destino
+        if (auth()->user()->sucursal_id !== $movimiento->sucursal_destino_id) {
+            abort(403, 'No pertenece a la sucursal destino');
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            foreach ($movimiento->piezaMovimientos as $detalle) {
+
+                $piezaId  = $detalle->pieza_id;
+                $cantidad = $detalle->cantidad;
+
+                // ==========================
+                // 1️⃣ DESCONTAR STOCK ORIGEN (FIFO)
+                // ==========================
+                $restante = $cantidad;
+
+                $stocksOrigen = StockPieza::where('pieza_id', $piezaId)
+                    ->where('sucursal_id', $movimiento->sucursal_origen_id)
+                    ->where('cantidad', '>', 0)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($stocksOrigen as $stock) {
+                    if ($restante <= 0) break;
+
+                    if ($stock->cantidad <= $restante) {
+                        $restante -= $stock->cantidad;
+                        $stock->cantidad = 0;
+                    } else {
+                        $stock->cantidad -= $restante;
+                        $restante = 0;
+                    }
+
+                    $stock->save();
+                }
+
+                if ($restante > 0) {
+                    throw new \Exception('Stock insuficiente para la pieza ID '.$piezaId);
+                }
+
+                // ==========================
+                // 2️⃣ AGREGAR STOCK DESTINO
+                // ==========================
+                StockPieza::create([
+                    'pieza_id'    => $piezaId,
+                    'sucursal_id' => $movimiento->sucursal_destino_id,
+                    'cantidad'    => $cantidad,
+                    'ingreso'     => now(),
+                    'inicial'     => 0,
+                ]);
+            }
+
+            // ==========================
+            // 3️⃣ ACTUALIZAR ESTADO
+            // ==========================
+            $movimiento->update([
+                'estado'            => 'Aceptado',
+                'fecha_aceptado'    => now(),
+                'usuario_acepta_id' => auth()->id(),
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Movimiento aceptado correctamente');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
+    }
 
 
 
