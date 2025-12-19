@@ -165,7 +165,7 @@ class MovimientoPiezaController extends Controller
         DB::beginTransaction();
         $ok=1;
         try {
-            $input['estado'] = 'PENDIENTE';
+            /*$input['estado'] = 'PENDIENTE';*/
             $movimiento = MovimientoPieza::create($input);
 
             $lastid=$movimiento->id;
@@ -219,6 +219,34 @@ class MovimientoPiezaController extends Controller
         try {
             $movimiento = MovimientoPieza::with('piezaMovimientos')->findOrFail($id);
 
+            // ============================
+            // 1️⃣ SI ESTÁ PENDIENTE
+            // ============================
+            if ($movimiento->estado === 'Pendiente') {
+
+                // Eliminar detalles
+                $movimiento->piezaMovimientos()->delete();
+
+                // Eliminar movimiento
+                $movimiento->delete();
+
+                DB::commit();
+
+                return redirect()
+                    ->route('movimientoPiezas.index')
+                    ->with('success', 'Movimiento pendiente eliminado (no afectaba stock).');
+            }
+
+            // ============================
+            // 2️⃣ SI NO ES ACEPTADO → ERROR
+            // ============================
+            if ($movimiento->estado !== 'aceptado') {
+                throw new \Exception('Estado de movimiento inválido.');
+            }
+
+            // ============================
+            // 3️⃣ REVERTIR STOCK (ACEPTADO)
+            // ============================
             $sucursalOrigen  = $movimiento->sucursal_origen_id;
             $sucursalDestino = $movimiento->sucursal_destino_id;
 
@@ -227,12 +255,12 @@ class MovimientoPiezaController extends Controller
                 $piezaId  = $pm->pieza_id;
                 $cantidad = $pm->cantidad;
 
-                // ============================
-                // 1️⃣ RESTAR STOCK DESTINO
-                // ============================
+                // 🔻 RESTAR DESTINO (FIFO)
                 $stocksDestino = StockPieza::where('pieza_id', $piezaId)
                     ->where('sucursal_id', $sucursalDestino)
-                    ->orderBy('id') // FIFO
+                    ->where('cantidad', '>', 0)
+                    ->orderBy('id')
+                    ->lockForUpdate()
                     ->get();
 
                 $restante = $cantidad;
@@ -251,12 +279,12 @@ class MovimientoPiezaController extends Controller
                 }
 
                 if ($restante > 0) {
-                    throw new \Exception('Stock inconsistente al revertir la pieza ID ' . $piezaId);
+                    throw new \Exception(
+                        'Stock inconsistente al revertir la pieza ID ' . $piezaId
+                    );
                 }
 
-                // ============================
-                // 2️⃣ SUMAR STOCK ORIGEN
-                // ============================
+                // 🔺 SUMAR ORIGEN
                 StockPieza::create([
                     'pieza_id'    => $piezaId,
                     'sucursal_id' => $sucursalOrigen,
@@ -265,9 +293,7 @@ class MovimientoPiezaController extends Controller
                     'inicial'     => 0
                 ]);
 
-                // ============================
-                // 3️⃣ ELIMINAR DETALLE
-                // ============================
+                // borrar detalle
                 $pm->delete();
             }
 
@@ -280,7 +306,7 @@ class MovimientoPiezaController extends Controller
 
             return redirect()
                 ->route('movimientoPiezas.index')
-                ->with('success', 'Movimiento eliminado y stock revertido correctamente.');
+                ->with('success', 'Movimiento aceptado eliminado y stock revertido.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -290,6 +316,7 @@ class MovimientoPiezaController extends Controller
                 ->with('error', 'Error al eliminar movimiento: ' . $e->getMessage());
         }
     }
+
 
 
     public function generatePDF(Request $request,$attach = false)
@@ -622,7 +649,7 @@ class MovimientoPiezaController extends Controller
         }
 
         // 🧠 Estado
-        if ($movimiento->estado !== 'PENDIENTE') {
+        if ($movimiento->estado !== 'Pendiente') {
             return back()->with('error', 'El movimiento ya fue procesado');
         }
 
