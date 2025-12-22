@@ -192,7 +192,7 @@
 
                             @can('pieza-movimiento-aceptar')
                             if (
-                                row.estado === 'PENDIENTE' &&
+                                row.estado === 'Pendiente' &&
                                 row.sucursal_destino_id == USER_SUCURSAL_ID
                             ) {
                                 actionsHtml += `
