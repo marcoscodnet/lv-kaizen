@@ -223,9 +223,14 @@
                     },
                     { data: 'id', name: 'id', visible: false }, // Columna oculta para ordenar
                 ],
-                order: [[7, 'desc']], // Ordenar por la columna oculta 'id' descendente
+                order: [[6, 'desc']], // Ordenar por la columna oculta 'id' descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
+                },
+                rowCallback: function (row, data) {
+                    if (data.estado_texto === 'Pendiente') {
+                        $(row).addClass('row-pendiente');
+                    }
                 },
                 stateSave: true,
                 // Guardar y restaurar el filtro externo

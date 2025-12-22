@@ -12,3 +12,6 @@ select.form-control {
 #example1 td:last-child a {
     margin-right: 0.1rem;  /* separa los iconos/botones */
 }
+.row-pendiente {
+    background-color: #f8d7da !important;
+}
