@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUbicacionsTable extends Migration
+class AddUbicacionToPiezasTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,9 @@ class CreateUbicacionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('ubicacions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sucursal_id')->constrained('sucursals');
-            $table->string('nombre');
-            $table->timestamps();
+        Schema::table('piezas', function (Blueprint $table) {
+            $table->unsignedBigInteger('ubicacion_id')->nullable();
+            $table->foreign('ubicacion_id')->references('id')->on('ubicacions');
         });
     }
 
@@ -28,6 +26,8 @@ class CreateUbicacionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ubicacions');
+        Schema::table('piezas', function (Blueprint $table) {
+            //
+        });
     }
 }
