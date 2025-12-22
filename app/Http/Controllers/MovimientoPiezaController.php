@@ -52,8 +52,9 @@ class MovimientoPiezaController extends Controller
             'origen_nombre',
             'destino_nombre',
             'fecha',
-            'id',
             'piezas',
+            'estado_orden', // 👈 esta manda el orden
+            'estado',
             'id'
         ];
 
@@ -411,12 +412,13 @@ class MovimientoPiezaController extends Controller
 
                 $estadoTexto = "Aceptado ({$movimiento->acepta_nombre} {$fecha})";
             }
-
+            $estadoOrden = $movimiento->estado === 'Pendiente' ? 0 : 1;
             return [
                 'id' => $movimiento->id,
                 'sucursal_destino_id' => $movimiento->sucursal_destino_id,
                 'estado' => $movimiento->estado,
                 'estado_texto' => $estadoTexto,
+                'estado_orden' => $estadoOrden,   // 👈 NUEVO
                 'usuario_nombre' => $movimiento->usuario_nombre,
                 'origen_nombre' => $movimiento->origen_nombre,
                 'destino_nombre' => $movimiento->destino_nombre,
@@ -444,6 +446,7 @@ class MovimientoPiezaController extends Controller
                     || str_contains(mb_strtolower($item['origen_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['fecha']), $busqueda)
+                    || str_contains(mb_strtolower($item['estado']), $busqueda)
                     || str_contains(mb_strtolower($item['piezas']), $busqueda);
             });
         }

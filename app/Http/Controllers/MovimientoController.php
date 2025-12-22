@@ -60,15 +60,16 @@ class MovimientoController extends Controller
             'origen_nombre',
             'destino_nombre',
             'fecha',
-            'id',
             'cuadros',
             'motores',
+            'estado_orden', // 👈 esta manda el orden
+            'estado',
             'id'
         ];
 
         $colIndex = $request->input('order.0.column', 0);
         $dir = $request->input('order.0.dir', 'asc');
-        $sortColumn = $columnsMap[$colIndex] ?? 'id';
+        $sortColumn = $columnsMap[$colIndex] ?? 'estado';
 
         $datos = $this->obtenerMovimientosFiltrados($busqueda, $user_id, $sortColumn, $dir);
 
@@ -322,12 +323,13 @@ class MovimientoController extends Controller
 
                 $estadoTexto = "Aceptado ({$movimiento->acepta_nombre} {$fecha})";
             }
-
+            $estadoOrden = $movimiento->estado === 'Pendiente' ? 0 : 1;
             return [
                 'id' => $movimiento->id,
                 'sucursal_destino_id' => $movimiento->sucursal_destino_id,
                 'estado' => $movimiento->estado,
                 'estado_texto' => $estadoTexto,
+                'estado_orden' => $estadoOrden,   // 👈 NUEVO
                 'usuario_nombre' => $movimiento->usuario_nombre,
                 'origen_nombre' => $movimiento->origen_nombre,
                 'destino_nombre' => $movimiento->destino_nombre,
@@ -347,6 +349,7 @@ class MovimientoController extends Controller
                     || str_contains(mb_strtolower($item['destino_nombre']), $busqueda)
                     || str_contains(mb_strtolower($item['fecha']), $busqueda)
                     || str_contains(mb_strtolower($item['cuadros']), $busqueda)
+                    || str_contains(mb_strtolower($item['estado']), $busqueda)
                     || str_contains(mb_strtolower($item['motores']), $busqueda);
             });
         }
