@@ -412,7 +412,7 @@ class MovimientoPiezaController extends Controller
 
                 $estadoTexto = "Aceptado ({$movimiento->acepta_nombre} {$fecha})";
             }
-            $estadoOrden = $movimiento->estado === 'Pendiente' ? 0 : 1;
+            $estadoOrden = $movimiento->estado === 'Pendiente' ? 1 : 0;
             return [
                 'id' => $movimiento->id,
                 'sucursal_destino_id' => $movimiento->sucursal_destino_id,
