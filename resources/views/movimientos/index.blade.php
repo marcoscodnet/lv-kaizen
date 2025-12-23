@@ -120,6 +120,7 @@
     <script>
         const USER_SUCURSAL_ID = {{ auth()->user()->sucursal_id }};
         const ACEPTAR_URL = "{{ url('/movimientos') }}";
+        const ES_ADMIN = @json(auth()->user()->hasRole('Administrador'));
         $(document).ready(function() {
             $('.js-example-basic-single').select2({
                 language: 'es'});
@@ -192,8 +193,12 @@
 
                                 @can('unidad-movimiento-aceptar')
                             if (
-                                row.estado === 'Pendiente' &&
-                                row.sucursal_destino_id == USER_SUCURSAL_ID
+                                row.estado &&
+                                row.estado.toLowerCase().trim() === 'pendiente' &&
+                                (
+                                    Number(row.sucursal_destino_id) === Number(USER_SUCURSAL_ID)
+                                    || ES_ADMIN
+                                )
                             ) {
                                 actionsHtml += `
                                             <form method="POST"

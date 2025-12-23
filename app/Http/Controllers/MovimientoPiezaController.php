@@ -656,8 +656,11 @@ class MovimientoPiezaController extends Controller
             return back()->with('error', 'El movimiento ya fue procesado');
         }
 
-        // 🏢 Sucursal destino
-        if (auth()->user()->sucursal_id !== $movimiento->sucursal_destino_id) {
+        // 🏢 Sucursal destino (excepto admin)
+        if (
+            auth()->user()->sucursal_id !== $movimiento->sucursal_destino_id &&
+            !auth()->user()->hasRole('Administrador')
+        ) {
             abort(403, 'No pertenece a la sucursal destino');
         }
 
