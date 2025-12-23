@@ -65,7 +65,7 @@
         </div>
         <div class="card-body pt-0">
             <div class="tab-content table-responsive">
-                <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
+                <table id="example1" class="table table-bordered table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
 
@@ -228,8 +228,8 @@
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
                 rowCallback: function (row, data) {
-                    if (data.estado_texto === 'Pendiente') {
-                        $(row).addClass('row-pendiente');
+                    if (data.estado === 'Pendiente') {
+                        $('td', row).css('background-color', '#f8d7da');
                     }
                 },
                 stateSave: true,

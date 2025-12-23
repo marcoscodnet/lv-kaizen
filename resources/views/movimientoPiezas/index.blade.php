@@ -65,7 +65,7 @@
         </div>
         <div class="card-body pt-0">
             <div class="tab-content table-responsive">
-                <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
+                <table id="example1" class="table table-bordered table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
 
@@ -122,12 +122,14 @@
             $('.js-example-basic-single').select2({
                 language: 'es'});
             var table = $('#example1').DataTable({
+                stripeClasses: [],
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
                 "autoWidth": false, // Desactiva el ajuste automático del anchos
                 responsive: true,
                 scrollX: true,
                 paging : true,
+
                 "ajax": {
                     "url": "{{ route('movimientoPiezas.dataTable') }}",
                     "type": "POST",
@@ -229,12 +231,12 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+
                 rowCallback: function (row, data) {
-                    if (data.estado_texto === 'Pendiente') {
-                        $(row).addClass('row-pendiente');
+                    if (data.estado === 'Pendiente') {
+                        $('td', row).css('background-color', '#f8d7da');
                     }
                 },
-
                 stateSave: true,
                 // Guardar y restaurar el filtro externo
                 stateSaveParams: function (settings, data) {
