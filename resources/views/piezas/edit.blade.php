@@ -306,6 +306,41 @@
                 addRowUbicacion(); // una fila vacía
             }
 
+
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const captureButton = document.getElementById("capture");
+            const photo = document.getElementById("photo");
+            const fotoInput = document.getElementById("foto");
+
+            // Solicitar acceso a la cámara
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    alert("No se pudo acceder a la cámara: " + err.name + " - " + err.message);
+                    console.error("Error cámara:", err);
+                });
+
+            // Capturar imagen
+            captureButton.addEventListener("click", function() {
+                const context = canvas.getContext("2d");
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convertir a Base64
+                const dataUrl = canvas.toDataURL("image/png");
+
+                // Mostrar vista previa
+                photo.setAttribute("src", dataUrl);
+                photo.style.display = "block";
+
+                // Guardar en input hidden
+                fotoInput.value = dataUrl;
+            });
         });
     </script>
 

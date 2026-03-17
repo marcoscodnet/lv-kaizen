@@ -193,7 +193,7 @@ class PiezaController extends Controller
             'tipo_pieza_id' => 'required',
         ]);
 
-        $input = $this->sanitizeInput($request->all());
+
 
         // Si se capturó foto desde la cámara
         if ($request->filled('foto')) {
@@ -208,6 +208,8 @@ class PiezaController extends Controller
 
             $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
         }
+
+        $input = $this->sanitizeInput($request->all());
 
         try {
             // 1. Crear la pieza
@@ -239,7 +241,7 @@ class PiezaController extends Controller
             'tipo_pieza_id' => 'required',
         ]);
 
-        $input = $this->sanitizeInput($request->all());
+
 // Si se capturó foto desde la cámara
         if ($request->filled('foto')) {
             $data = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('foto'));
@@ -253,6 +255,7 @@ class PiezaController extends Controller
 
             $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
         }
+        $input = $this->sanitizeInput($request->all());
         $pieza = Pieza::create($input);
 
         // Devolver JSON
@@ -328,7 +331,7 @@ class PiezaController extends Controller
                 'tipo_pieza_id' => 'required|integer|exists:tipo_piezas,id',
             ]);
 
-            $input = $this->sanitizeInput($request->all());
+
             // Manejar la foto si viene en base64
             if ($request->filled('foto')) {
                 $data = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('foto'));
@@ -342,6 +345,8 @@ class PiezaController extends Controller
 
                 $input['foto'] = 'piezas/'.$fileName;
             }
+
+            $input = $this->sanitizeInput($request->all());
             try{
                 $pieza->update($input);
 
