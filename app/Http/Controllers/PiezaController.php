@@ -203,13 +203,19 @@ class PiezaController extends Controller
             $fileName = 'pieza_' . time() . '.png';
             $filePath = 'images/piezas/'.$fileName;
 
-            // Guardar directamente en public
             file_put_contents(public_path($filePath), $image);
 
-            $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
+            // Guardamos la ruta en $input
+            $input['foto'] = 'piezas/'.$fileName;
         }
 
+// Limpiar y preparar el resto de datos
         $input = $this->sanitizeInput($request->all());
+
+// Mantener la ruta de la foto si se cargó
+        if (isset($filePath)) {
+            $input['foto'] = 'piezas/'.$fileName;
+        }
 
         try {
             // 1. Crear la pieza
@@ -256,6 +262,12 @@ class PiezaController extends Controller
             $input['foto'] = 'piezas/'.$fileName; // se guarda la ruta en DB
         }
         $input = $this->sanitizeInput($request->all());
+
+        // Mantener la ruta de la foto si se cargó
+        if (isset($filePath)) {
+            $input['foto'] = 'piezas/'.$fileName;
+        }
+
         $pieza = Pieza::create($input);
 
         // Devolver JSON
@@ -347,6 +359,12 @@ class PiezaController extends Controller
             }
 
             $input = $this->sanitizeInput($request->all());
+
+            // Mantener la ruta de la foto si se cargó
+            if (isset($filePath)) {
+                $input['foto'] = 'piezas/'.$fileName;
+            }
+
             try{
                 $pieza->update($input);
 
