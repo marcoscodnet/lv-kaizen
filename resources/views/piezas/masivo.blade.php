@@ -122,9 +122,35 @@
             const video = document.getElementById("video");
             const canvas = document.getElementById("canvas");
 
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => { video.srcObject = stream; })
-                .catch(err => { alert("No se pudo acceder a la cámara: " + err.message); });
+            // Solicitar acceso a la cámara en alta calidad
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    aspectRatio: 1.7777777778, // 16:9
+                    frameRate: { ideal: 30 }
+                },
+                audio: false
+            })
+                .then(stream => {
+
+                    const video = document.getElementById('video');
+
+                    video.srcObject = stream;
+
+                    // IMPORTANTE: esperar a que el video cargue
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        console.log("Resolución real:", video.videoWidth, video.videoHeight);
+                    };
+
+                })
+                .catch(err => {
+
+                    alert("No se pudo acceder a la cámara:\n" + err.name + "\n" + err.message);
+                    console.error("Error cámara:", err);
+
+                });
 
             let capturedData = '';
 

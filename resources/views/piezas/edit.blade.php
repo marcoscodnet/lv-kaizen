@@ -315,15 +315,34 @@
             const photo = document.getElementById("photo");
             const fotoInput = document.getElementById("foto");
 
-            // Solicitar acceso a la cámara
-            navigator.mediaDevices.getUserMedia({ video: true })
+            /// Solicitar acceso a la cámara en alta calidad
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    aspectRatio: 1.7777777778, // 16:9
+                    frameRate: { ideal: 30 }
+                },
+                audio: false
+            })
                 .then(stream => {
+
                     const video = document.getElementById('video');
+
                     video.srcObject = stream;
+
+                    // IMPORTANTE: esperar a que el video cargue
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        console.log("Resolución real:", video.videoWidth, video.videoHeight);
+                    };
+
                 })
                 .catch(err => {
-                    alert("No se pudo acceder a la cámara: " + err.name + " - " + err.message);
+
+                    alert("No se pudo acceder a la cámara:\n" + err.name + "\n" + err.message);
                     console.error("Error cámara:", err);
+
                 });
 
             // Capturar imagen
