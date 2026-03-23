@@ -559,15 +559,28 @@
                 if (piezaId && stockPiezas[piezaId]) {
                     const opciones = stockPiezas[piezaId];
 
-                    sucursalSelect.append('<option value="">Seleccionar...</option>');
-                    opciones.forEach(op => {
-                        sucursalSelect.append('<option value="' + op.sucursal_id + '">' + op.sucursal_nombre + '</option>');
+                    // Verificar rol del usuario desde Laravel
+                    const esAdministrador = {{ auth()->user()->hasRole('Administrador') ? 'true' : 'false' }};
+                    const sucursalUsuarioId = {{ auth()->user()->sucursal_id }};
+
+                    let opcionesFiltradas = opciones;
+
+                    // Si NO es administrador, filtramos por la sucursal del usuario
+                    if (!esAdministrador) {
+                        opcionesFiltradas = opciones.filter(op => op.sucursal_id == sucursalUsuarioId);
+                    }
+
+                    // Agregar las opciones filtradas al select
+                    opcionesFiltradas.forEach(opcion => {
+                        sucursalSelect.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
                     });
 
-                    // Mostramos los datos de la primera sucursal por defecto
-                    const first = opciones[0];
-                    costoInput.val(first.costo);
-                    precioMinimoInput.val(first.precio_minimo);
+                    // Completar costo y precio mínimo con la primera opción disponible
+                    if (opcionesFiltradas.length > 0) {
+                        const primeraOpcion = opcionesFiltradas[0];
+                        costoInput.val(primeraOpcion.costo);
+                        precioMinimoInput.val(primeraOpcion.precio_minimo);
+                    }
                 }
             });
 

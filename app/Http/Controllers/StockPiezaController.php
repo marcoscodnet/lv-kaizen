@@ -148,7 +148,7 @@ class StockPiezaController extends Controller
         $rules = [
             'pieza_id' => 'required',
             'sucursal_id' => 'required',
-            'proveedor' => 'required',
+            'proveedor_id' => 'required',
 
             'precio' => 'nullable|numeric', // puede ser vacío, o un número (decimal)
             'minimo' => 'nullable|integer', // puede ser vacío, o un entero
@@ -261,7 +261,7 @@ class StockPiezaController extends Controller
         $rules = [
 
             'sucursal_id' => 'required',
-            'proveedor' => 'required',
+            'proveedor_id' => 'required',
 
             'precio' => 'nullable|numeric', // puede ser vacío, o un número (decimal)
             'minimo' => 'nullable|integer', // puede ser vacío, o un entero
