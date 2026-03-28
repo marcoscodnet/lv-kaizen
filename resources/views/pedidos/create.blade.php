@@ -61,7 +61,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-12 col-lg-2">
+                            <div class="col-12 col-lg-1">
                                 <div class="form-group">
                                     <label for="cantidad">Cantidad</label>
                                     <input type="number" class="form-control" id="cantidad" name="cantidad" placeholder="Cantidad"  value="{{ old('cantidad') }}"required>
@@ -87,18 +87,18 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-lg-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="minimo">$ Mínimo</label>
-                                    <input type="number" step="0.01" class="form-control" id="minimo" name="minimo" placeholder="$ Mínimo"  value="{{ old('minimo') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="minimo" name="minimo" placeholder="$ Mínimo"  value="{{ old('minimo') }}">
                                 </div>
                             </div>
 
 
-                            <div class="col-12 col-lg-2">
+                            <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="senia">Seña</label>
-                                    <input type="number" step="0.01" class="form-control" id="senia" name="senia" placeholder="Seña"  value="{{ old('senia') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="senia" name="senia" placeholder="Seña"  value="{{ old('senia') }}">
                                 </div>
                             </div>
                         </div>
@@ -164,10 +164,17 @@
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
 
     <!-- page script -->
     <script>
         $(document).ready(function () {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             $('.js-example-basic-single').select2({
                 language: 'es'}
             );

@@ -97,16 +97,16 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" name="costo[]" class="form-control" value="{{ old('costo.' . $i) }}">
+                                            <input type="text" name="costo[]" class="form-control formato-numero" value="{{ old('costo.' . $i) }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="precio_minimo[]" class="form-control" value="{{ old('precio_minimo.' . $i) }}">
+                                            <input type="text" name="precio_minimo[]" class="form-control formato-numero" value="{{ old('precio_minimo.' . $i) }}">
                                         </td>
                                         <td>
                                             <input type="number" name="cantidad[]" class="form-control" value="{{ old('cantidad.' . $i) }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="precio[]" class="form-control" value="{{ old('precio.' . $i) }}">
+                                            <input type="text" name="precio[]" class="form-control formato-numero" value="{{ old('precio.' . $i) }}">
                                         </td>
                                         <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
                                     </tr>
@@ -449,12 +449,20 @@
     <script src="{{ asset('assets/js/combo-provincia-localidad-modal.js') }}"></script>
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
 
     <!-- page script -->
     <script>
+
         const stockPiezas = @json($stockPiezasJson);
         var localidadUrl = "{{ url('localidads') }}";
         $(document).ready(function () {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             function toggleDivs() {
                 const valor = $('#destino').val();
 
@@ -519,22 +527,28 @@
             function addRowPieza() {
                 const tr = `
             <tr>
-                <td style="width: 25%;">${piezaSelectHtml}</td>
-                <td style="width: 20%;">
+                <td style="width: 22%;">${piezaSelectHtml}</td>
+                <td style="width: 18%;">
                     <select name="sucursal_id_item[]" class="form-control sucursalSelect">
                         <option value="">Seleccionar...</option>
                     </select>
                 </td>
-                <td><input type="number" name="costo[]" class="form-control costo" readonly></td>
-                <td><input type="number" name="precio_minimo[]" class="form-control precio_minimo" readonly></td>
-                <td><input type="number" name="cantidad[]" class="form-control cantidad" required></td>
-                <td><input type="number" name="precio[]" class="form-control precio" required></td>
+                <td style="width: 12%;"><input type="text" name="costo[]" class="form-control formato-numero costo" readonly></td>
+                <td style="width: 12%;"><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo" readonly></td>
+                <td style="width: 8%;"><input type="number" name="cantidad[]" class="form-control cantidad" required></td>
+                <td style="width: 14%;"><input type="text" name="precio[]" class="form-control formato-numero precio" required></td>
                 <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
             </tr>
         `;
                 const $row = $(tr).appendTo('#cuerpoPieza');
 
                 initSimpleSelects($row); // 👈 clave
+                new AutoNumeric.multiple($row.find('.formato-numero').get(), {
+                    digitGroupSeparator: '.',
+                    decimalCharacter: ',',
+                    decimalPlaces: 2,
+                    unformatOnSubmit: true
+                });
             }
 
             $('body').on('click', '.removeRow', function (e) {

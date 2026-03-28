@@ -178,7 +178,7 @@
                     { data: 'cliente', name: 'cliente' },
                     { data: 'pedido', name: 'pedido' },
                     { data: 'destino', name: 'destino' },
-                    { data: 'precio_total', name: 'precio_total' },
+                    { data: 'precio_total', name: 'precio_total', render: formatCurrency },
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'usuario_nombre', name: 'usuario_nombre' },
                     { data: 'piezas_codigos', name: 'piezas_codigos' },
@@ -252,6 +252,17 @@
                 table.ajax.reload();
             });
         });
+
+        function formatCurrency(data, type){
+            if (type === 'display' || type === 'filter') {
+                if (!data) return '';
+                return '$' + parseFloat(data).toLocaleString('es-AR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            return data;
+        }
 
         function exportarExcel() {
 

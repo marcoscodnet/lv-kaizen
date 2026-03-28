@@ -61,13 +61,13 @@
                             <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
-                                    <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $stockPieza->costo }}@endif" disabled>
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="costo" name="costo" placeholder="Costo" value="@if (old('costo')){{ old('costo') }}@else{{ $stockPieza->costo }}@endif" disabled>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-2">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $stockPieza->precio_minimo }}@endif" disabled>
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="@if (old('precio_minimo')){{ old('precio_minimo') }}@else{{ $stockPieza->precio_minimo }}@endif" disabled>
                                 </div>
                             </div>
 
@@ -139,6 +139,6 @@
 
 @endsection
 @section('footerSection')
-
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
 
 @endsection

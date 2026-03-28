@@ -178,7 +178,7 @@
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label>Importe</label>
-                                                    <input type="number" name="monto[]" class="form-control"
+                                                    <input type="text" name="monto[]" class="form-control formato-numero"
                                                            value="{{ old('monto.'.$i, $pago->monto) }}" required disabled>
                                                 </div>
                                                 <div class="col-md-2">
@@ -188,7 +188,7 @@
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label>Acreditado</label>
-                                                    <input type="number" name="pagado[]" class="form-control"
+                                                    <input type="text" name="pagado[]" class="form-control formato-numero"
                                                            value="{{ old('pagado.'.$i, $pago->pagado) }}" disabled>
                                                 </div>
                                                 <div class="col-md-2">
@@ -223,11 +223,11 @@
                         <div class="row mb-3">
                             <div class="col-md-3">
                                 <label>Importe total</label>
-                                <input type="text" id="totalMonto" name="totalMonto" class="form-control" value="0" readonly disabled>
+                                <input type="text" id="totalMonto" name="totalMonto" class="form-control formato-numero" value="0" readonly disabled>
                             </div>
                             <div class="col-md-3">
                                 <label>Importe Acreditado</label>
-                                <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control" value="0" readonly disabled>
+                                <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control formato-numero" value="0" readonly disabled>
                             </div>
                         </div>
 
@@ -249,26 +249,40 @@
 @endsection
 
 @section('footerSection')
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
 <script>
     function actualizarTotales() {
         let totalMonto = 0;
         let totalAcreditado = 0;
 
         $('input[name="monto[]"]').each(function() {
-            let val = parseFloat($(this).val());
+            let val = $(this).val()
+                .replace(/\./g,'')
+                .replace(',','.');
+            val = parseFloat(val);
             if (!isNaN(val)) totalMonto += val;
         });
 
         $('input[name="pagado[]"]').each(function() {
-            let val = parseFloat($(this).val());
+            let val = $(this).val()
+                .replace(/\./g,'')
+                .replace(',','.');
+            val = parseFloat(val);
             if (!isNaN(val)) totalAcreditado += val;
         });
 
-        $('#totalMonto').val(totalMonto.toFixed(2));
-        $('#totalAcreditado').val(totalAcreditado.toFixed(2));
+        // VOLVER a formato-numero usando AutoNumeric
+        AutoNumeric.getAutoNumericElement('#totalMonto').set(totalMonto);
+        AutoNumeric.getAutoNumericElement('#totalAcreditado').set(totalAcreditado);
     }
 
     $(document).ready(function () {
+        new AutoNumeric.multiple('.formato-numero', {
+            digitGroupSeparator: '.',
+            decimalCharacter: ',',
+            decimalPlaces: 2,
+            unformatOnSubmit: true
+        });
         actualizarTotales();
     })
 

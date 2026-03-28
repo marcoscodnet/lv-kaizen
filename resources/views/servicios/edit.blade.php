@@ -221,7 +221,7 @@
                                     <div class="col-lg-2">
                                         <div class="form-group">
                                             <label for="monto">Precio</label>
-                                            <input type="number" class="form-control" id="monto" name="monto"
+                                            <input type="text" class="form-control formato-numero" id="monto" name="monto"
                                                    value="{{ old('monto',$servicio->monto) }}" required>
                                         </div>
                                     </div>
@@ -416,32 +416,21 @@
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
     <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
-        function actualizarTotales() {
-            let totalMonto = 0;
-            let totalAcreditado = 0;
 
-            $('input[name="monto[]"]').each(function() {
-                let val = parseFloat($(this).val());
-                if (!isNaN(val)) totalMonto += val;
-            });
-
-            $('input[name="pagado[]"]').each(function() {
-                let val = parseFloat($(this).val());
-                if (!isNaN(val)) totalAcreditado += val;
-            });
-
-            $('#totalMonto').val(totalMonto.toFixed(2));
-            $('#totalAcreditado').val(totalAcreditado.toFixed(2));
-        }
 
 
         var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
 
             // Select2 para clientes con búsqueda AJAX
             $('#cliente_id').on('select2:select', function (e) {

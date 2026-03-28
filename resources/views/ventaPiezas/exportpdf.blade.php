@@ -89,8 +89,8 @@
             <td>{{ $p->cliente }}</td>
             <td>{{ $p->pedido }}</td>
             <td>{{ $p->destino }}</td>
-            <td>{{ $p->precio_total }}</td>
 
+            <td>${{ number_format($p->precio_total, 2, ',', '.') }}</td>
             <td>{{ $p->sucursal_nombre }}</td>
             <td>{{ $p->usuario_nombre }}</td>
             <td>{{ $p->piezas_codigos }}</td>

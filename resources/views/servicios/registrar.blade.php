@@ -233,7 +233,7 @@
                                     <div class="col-lg-2">
                                         <div class="form-group">
                                             <label for="monto">Precio</label>
-                                            <input type="number" class="form-control" id="monto" name="monto"
+                                            <input type="text" class="form-control formato-numero" id="monto" name="monto"
                                                    value="{{ old('monto') }}" required>
                                         </div>
                                     </div>
@@ -426,7 +426,7 @@
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
     <script src="{{ asset('assets/js/combo-provincia-localidad-modal.js') }}"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
 
 
@@ -435,7 +435,12 @@
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             // Inicializar Select2 básico
             $('.js-example-basic-single').each(function () {
                 if ($(this).hasClass("select2-hidden-accessible")) {

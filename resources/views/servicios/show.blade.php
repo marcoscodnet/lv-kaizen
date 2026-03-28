@@ -219,7 +219,7 @@
                                     <div class="col-lg-2">
                                         <div class="form-group">
                                             <label for="monto">Precio</label>
-                                            <input type="number" class="form-control" id="monto" name="monto"
+                                            <input type="text" class="form-control formato-numero" id="monto" name="monto"
                                                    value="{{ old('monto',$servicio->monto) }}" disabled>
                                         </div>
                                     </div>
@@ -266,9 +266,16 @@
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
     <script src="{{ asset('assets/js/combo-provincia-localidad.js') }}"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
-
+        $(document).ready(function () {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
+        });
     </script>
 
 

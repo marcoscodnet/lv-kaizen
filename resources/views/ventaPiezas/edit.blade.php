@@ -109,16 +109,16 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" name="costo[]" class="form-control" value="{{ $costo }}">
+                                            <input type="text" name="costo[]" class="form-control formato-numero" value="{{ $costo }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="precio_minimo[]" class="form-control" value="{{ $precioMinimo }}">
+                                            <input type="text" name="precio_minimo[]" class="form-control formato-numero" value="{{ $precioMinimo }}">
                                         </td>
                                         <td>
                                             <input type="number" name="cantidad[]" class="form-control" value="{{ $cantidad }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="precio[]" class="form-control" value="{{ $precio }}">
+                                            <input type="text" name="precio[]" class="form-control formato-numero" value="{{ $precio }}">
                                         </td>
                                         <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
                                     </tr>
@@ -465,12 +465,19 @@
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
 
     <!-- page script -->
     <script>
         const stockPiezas = @json($stockPiezasJson);
         var localidadUrl = "{{ url('localidads') }}";
         $(document).ready(function () {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             function toggleDivs() {
                 const valor = $('#destino').val();
 
@@ -523,16 +530,22 @@
                         <option value="">Seleccionar...</option>
                     </select>
                 </td>
-                <td><input type="number" name="costo[]" class="form-control costo" readonly></td>
-                <td><input type="number" name="precio_minimo[]" class="form-control precio_minimo" readonly></td>
+                <td><input type="text" name="costo[]" class="form-control formato-numero costo" readonly></td>
+                <td><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo" readonly></td>
                 <td><input type="number" name="cantidad[]" class="form-control cantidad" required></td>
-                <td><input type="number" name="precio[]" class="form-control precio" required></td>
+                <td><input type="text" name="precio[]" class="form-control formato-numero precio" required></td>
                 <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
             </tr>
         `;
                 const $row = $(tr).appendTo('#cuerpoPieza');
 
                 initSimpleSelects($row); // 👈 clave
+                new AutoNumeric.multiple($row.find('.formato-numero').get(), {
+                    digitGroupSeparator: '.',
+                    decimalCharacter: ',',
+                    decimalPlaces: 2,
+                    unformatOnSubmit: true
+                });
             }
 
             $('body').on('click', '.removeRow', function (e) {

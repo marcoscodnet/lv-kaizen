@@ -120,10 +120,11 @@
     <!-- daterangepicker -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.min.js"></script>
 
-    <!-- page script -->
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <!-- page script -->
     <script>
         $(document).ready(function() {
+
             var table = $('#example1').DataTable({
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
@@ -131,6 +132,18 @@
                 responsive: true,
                 scrollX: true,
                 paging : true,
+                drawCallback: function () {
+                    $('.formato-numero').each(function () {
+                        if (!AutoNumeric.getAutoNumericElement(this)) {
+                            new AutoNumeric(this, {
+                                digitGroupSeparator: '.',
+                                decimalCharacter: ',',
+                                decimalPlaces: 2,
+                                unformatOnSubmit: true
+                            });
+                        }
+                    });
+                },
                 "ajax": {
                     "url": "{{ route('productos.dataTable') }}",
                     "type": "POST",
@@ -160,7 +173,7 @@
 
                                 // Si el usuario tiene permiso se genera el input
                                 @can('producto-editar')
-                                    return '<input type="text" class="form-control form-control-sm input-precio" ' +
+                                    return '<input type="text" class="form-control form-control-sm input-precio formato-numero" ' +
                                     'data-id="' + row.id + '" ' +
                                     'value="' + valor + '">';
                                 @else

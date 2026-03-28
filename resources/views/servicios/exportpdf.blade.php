@@ -95,10 +95,9 @@
             <td>{{ $p->chasis }}</td>
             <td>{{ $p->cliente }}</td>
             <td>{{ $p->mecanicos }}</td>
-            <td>{{ $p->monto }}</td>
-
+            <td>${{ number_format($p->monto, 2, ',', '.') }}</td>
             <td>{{ $p->tipo_servicio }}</td>
-            <td>{{ $p->pagado }}</td>
+            <td>${{ number_format($p->pagado, 2, ',', '.') }}</td>
             <td>{{ $p->sucursal_nombre }}</td>
             <td>{{ $p->usuario_nombre }}</td>
         </tr>

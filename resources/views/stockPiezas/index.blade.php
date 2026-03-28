@@ -189,8 +189,8 @@
                     { data: 'descripcion', name: 'descripcion' },
                     { data: 'inicial', name: 'inicial' },
                     { data: 'cantidad', name: 'cantidad' },
-                    { data: 'costo', name: 'costo' },
-                    { data: 'precio_minimo', name: 'precio_minimo' },
+                    { data: 'costo', name: 'costo', render: formatCurrency },
+                    { data: 'precio_minimo', name: 'precio_minimo' , render: formatCurrency},
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'proveedor_nombre', name: 'proveedor_nombre' },
                     {
@@ -278,6 +278,17 @@
                 table.ajax.reload();
             });
         });
+
+        function formatCurrency(data, type){
+            if (type === 'display' || type === 'filter') {
+                if (!data) return '';
+                return '$' + parseFloat(data).toLocaleString('es-AR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            return data;
+        }
 
         function exportarExcel() {
             let sucursal = $('#filtroSucursal').val();

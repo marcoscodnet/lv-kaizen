@@ -217,9 +217,9 @@
                     { data: 'chasis', name: 'chasis' },
                     { data: 'cliente', name: 'cliente' },
                     { data: 'mecanicos', name: 'mecanicos' },
-                    { data: 'monto', name: 'monto' },
+                    { data: 'monto', name: 'monto', render: formatCurrency },
                     { data: 'tipo_servicio', name: 'tipo_servicio' },
-                    { data: 'pagado', name: 'pagado' },
+                    { data: 'pagado', name: 'pagado'},
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'usuario_nombre', name: 'usuario_nombre' },
 
@@ -297,7 +297,16 @@
                 table.ajax.reload();
             });
         });
-
+        function formatCurrency(data, type){
+            if (type === 'display' || type === 'filter') {
+                if (!data) return '';
+                return '$' + parseFloat(data).toLocaleString('es-AR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            return data;
+        }
         function exportarExcel() {
             let sucursal_id = $('#filtroSucursal').val();
             let user_id = $('#filtroUsuario').val();

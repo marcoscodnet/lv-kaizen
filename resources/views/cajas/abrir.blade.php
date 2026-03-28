@@ -28,7 +28,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="inicial">Monto Inicial:</label>
-                            <input type="number" name="inicial" id="inicial" class="form-control" step="0.01" min="0" required>
+                            <input type="text" name="inicial" id="inicial" class="form-control formato-numero" step="0.01" min="0" required>
                         </div>
                     </div>
                 </div>
@@ -48,8 +48,15 @@
     <script src="{{ asset('bower_components/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ asset('bower_components/select2/dist/js/select2.min.js') }}"></script>
     <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         $(document).ready(function() {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             $('.js-example-basic-single').select2({ language: 'es' });
         });
     </script>

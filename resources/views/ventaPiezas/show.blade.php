@@ -107,16 +107,16 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" name="costo[]" class="form-control" value="{{ $costo }}" disabled>
+                                            <input type="text" name="costo[]" class="form-control formato-numero" value="{{ $costo }}" disabled>
                                         </td>
                                         <td>
-                                            <input type="number" name="precio_minimo[]" class="form-control" value="{{ $precioMinimo }}" disabled>
+                                            <input type="text" name="precio_minimo[]" class="form-control formato-numero" value="{{ $precioMinimo }}" disabled>
                                         </td>
                                         <td>
                                             <input type="number" name="cantidad[]" class="form-control" value="{{ $cantidad }}" disabled>
                                         </td>
                                         <td>
-                                            <input type="number" name="precio[]" class="form-control" value="{{ $precio }}" disabled>
+                                            <input type="text" name="precio[]" class="form-control formato-numero" value="{{ $precio }}" disabled>
                                         </td>
 
                                     </tr>
@@ -270,10 +270,16 @@
     }
 </style>
 @section('footerSection')
-
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         const stockPiezas = @json($stockPiezasJson);
         $(document).ready(function () {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             function toggleDivs() {
                 const valor = $('#destino').val();
 

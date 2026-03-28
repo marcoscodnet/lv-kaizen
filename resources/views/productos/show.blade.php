@@ -78,7 +78,7 @@
                             <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="precio">$ sugerido</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio" name="precio" placeholder="$ sugerido" value="@if (old('precio')){{ old('precio') }}@else{{ $producto->precio }}@endif" disabled>
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="precio" name="precio" placeholder="$ sugerido" value="@if (old('precio')){{ old('precio') }}@else{{ $producto->precio }}@endif" disabled>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-3">
@@ -114,7 +114,18 @@
     <!-- /.content-wrapper -->
 @endsection
 @section('footerSection')
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
+        });
 
+    </script>
 
 
 @endsection

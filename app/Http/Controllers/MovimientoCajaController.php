@@ -81,7 +81,7 @@ class MovimientoCajaController extends Controller
         if ($mov->caja->estado === 'Cerrada') {
             return redirect()->back()->withErrors('No se pueden editar movimientos de una caja cerrada.');
         }
-
+        //dd($mov);
         // 🔒 Bloquear si ya está acreditado
         if ($mov->acreditado) {
             return redirect()->back()->withErrors('No se pueden editar movimientos acreditados.');

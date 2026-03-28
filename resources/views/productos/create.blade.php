@@ -79,7 +79,7 @@
                             <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="precio">$ sugerido</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio" name="precio" placeholder="$ sugerido" value="{{ old('precio') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="precio" name="precio" placeholder="$ sugerido" value="{{ old('precio') }}">
                                 </div>
                             </div>
                             <div class="col-12 col-lg-3">
@@ -136,10 +136,15 @@
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
 
-
-    <!-- page script -->
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
             $('.js-example-basic-single').select2({
                 language: 'es'});

@@ -58,13 +58,13 @@
                             <div class="col-12 col-md-3">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
-                                    <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="{{ old('costo') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="costo" name="costo" placeholder="Costo" value="{{ old('costo') }}">
                                 </div>
                             </div>
                             <div class="col-12 col-md-3">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="{{ old('precio_minimo') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="{{ old('precio_minimo') }}">
                                 </div>
                             </div>
 
@@ -182,13 +182,13 @@
                             <div class="col-12 col-md-3">
                                 <div class="form-group">
                                     <label for="costo">Costo</label>
-                                    <input type="number" step="0.01" class="form-control" id="costo" name="costo" placeholder="Costo" value="{{ old('costo') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="costo" name="costo" placeholder="Costo" value="{{ old('costo') }}">
                                 </div>
                             </div>
                             <div class="col-12 col-md-3">
                                 <div class="form-group">
                                     <label for="precio_minimo">$ mínimo</label>
-                                    <input type="number" step="0.01" class="form-control" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="{{ old('precio_minimo') }}">
+                                    <input type="text" step="0.01" class="form-control formato-numero" id="precio_minimo" name="precio_minimo" placeholder="$ mínimo" value="{{ old('precio_minimo') }}">
                                 </div>
                             </div>
 
@@ -264,11 +264,17 @@
     <script src="{{ asset('bower_components/select2/dist/js/i18n/es.js') }}"></script>
 
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <!-- page script -->
     <script>
         const piezaUrlTemplate = @json(route('api.piezas.getDatos', ['id' => 'PIEZA_ID']));
         $(document).ready(function () {
-
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             $('.js-example-basic-single').select2({
                 language: 'es'});
             $('#pieza_id').on('change', function () {

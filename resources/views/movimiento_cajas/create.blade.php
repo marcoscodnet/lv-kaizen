@@ -52,7 +52,7 @@
 
                     <div class="col-12 col-md-2">
                         <label for="monto" class="form-label">Monto</label>
-                        <input type="number" name="monto" id="monto" class="form-control" step="0.01" value="{{ old('monto') }}" required>
+                        <input type="text" name="monto" id="monto" class="form-control formato-numero" step="0.01" value="{{ old('monto') }}" required>
                     </div>
 
                     <div class="col-12 col-md-2" id="acreditado-container">
@@ -83,8 +83,15 @@
 
 @section('footerSection')
     <script src="{{ asset('bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         $(document).ready(function() {
+            new AutoNumeric.multiple('.formato-numero', {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalPlaces: 2,
+                unformatOnSubmit: true
+            });
             $('.select2').select2({ width: '100%' });
             function toggleAcreditado() {
                 if ($('#tipo').val() === 'Ingreso') {
