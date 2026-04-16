@@ -11,23 +11,22 @@ $font-size-base: 0.875rem;
 $line-height-base: 1.3;
 
 // Botones e inputs más compactos
-$input-btn-padding-y: 0.25rem;
-$input-btn-padding-x: 0.5rem;
+$input-btn-padding-y: 0.35rem;
+$input-btn-padding-x: 0.65rem;
 
-$btn-padding-y: 0.25rem;
-$btn-padding-x: 0.65rem;
+$btn-padding-y: 0.35rem;
+$btn-padding-x: 0.75rem;
 
 // Tablas más compactas
-$table-cell-padding-y: 0.3rem;
-$table-cell-padding-x: 0.5rem;
+$table-cell-padding-y: 0.4rem;
+$table-cell-padding-x: 0.6rem;
 
 // Espaciado general
-$spacer: 0.5rem;
+$spacer: 0.75rem;
 
 table.dataTable thead th {
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    font-size: 0.8rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
 }
 
 table.dataTable thead .sorting:before,

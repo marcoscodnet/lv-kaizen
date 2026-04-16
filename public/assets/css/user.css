@@ -6,9 +6,8 @@
 }
 
 table.dataTable thead th {
-  padding-top: 0.4rem;
-  padding-bottom: 0.4rem;
-  font-size: 0.8rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
 }
 
 table.dataTable thead .sorting:before,
