@@ -1,5 +1,20 @@
 /* -------------------------------------------------------------------------- */
 /*                                Falcon Button                               */
 /* -------------------------------------------------------------------------- */
+:root {
+  --falcon-body-font-size: 0.875rem !important;
+}
+
+table.dataTable thead th {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  font-size: 0.8rem;
+}
+
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting:after {
+  bottom: 0.4em;
+}
+
 /* prettier-ignore */
 /*# sourceMappingURL=user-rtl.min.css.map */

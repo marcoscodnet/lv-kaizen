@@ -3,3 +3,34 @@
 // user-variables.scss
 //
 // Place your own variable overrides here, these will override any Bootstrap and theme variables.
+
+:root { --falcon-body-font-size: 0.875rem !important; }
+
+// Bootstrap base scale
+$font-size-base: 0.875rem;
+$line-height-base: 1.3;
+
+// Botones e inputs más compactos
+$input-btn-padding-y: 0.25rem;
+$input-btn-padding-x: 0.5rem;
+
+$btn-padding-y: 0.25rem;
+$btn-padding-x: 0.65rem;
+
+// Tablas más compactas
+$table-cell-padding-y: 0.3rem;
+$table-cell-padding-x: 0.5rem;
+
+// Espaciado general
+$spacer: 0.5rem;
+
+table.dataTable thead th {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    font-size: 0.8rem;
+}
+
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting:after {
+    bottom: 0.4em;
+}

@@ -1,4 +1,4 @@
-aconst gulp = require('gulp');
+const gulp = require('gulp');
 const requireDir = require('require-dir');
 
 requireDir('./gulp');
