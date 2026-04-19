@@ -180,7 +180,12 @@ class VentaPiezaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('ventaPiezas.create', compact('users','stockPiezasJson','sucursals','provincias'));
+        // Load open service orders for the Taller destination dropdown
+        $serviciosAbiertos = \App\Models\Servicio::where('pagado', 0)
+            ->orderBy('id', 'desc')
+            ->get(['id', 'modelo', 'motor', 'chasis']);
+
+        return view('ventaPiezas.create', compact('users', 'stockPiezasJson', 'sucursals', 'provincias', 'serviciosAbiertos'));
     }
 
     public function store(Request $request)
@@ -261,6 +266,7 @@ class VentaPiezaController extends Controller
             $venta->cliente_id = $input['cliente_id'] ?? null;
             $venta->sucursal_id = $input['sucursal_id'] ?? null;
             $venta->pedido = $input['pedido'] ?? null;
+            $venta->servicio_id = ($input['destino'] === 'Taller') ? ($input['servicio_id'] ?? null) : null;
             $venta->save();
 
             // Guardar detalles y descontar stock

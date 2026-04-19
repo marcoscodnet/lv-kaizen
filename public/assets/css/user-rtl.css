@@ -2,7 +2,7 @@
 /*                                Falcon Button                               */
 /* -------------------------------------------------------------------------- */
 :root {
-  --falcon-body-font-size: 0.7rem !important;
+  --falcon-body-font-size: 0.875rem !important;
 }
 
 table.dataTable thead th {
@@ -16,4 +16,21 @@ table.dataTable thead .sorting:after {
 }
 
 /* prettier-ignore */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+select.form-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23343a40' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.75rem center;
+  background-size: 12px;
+  padding-left: 2rem;
+}
 /*# sourceMappingURL=user-rtl.css.map */

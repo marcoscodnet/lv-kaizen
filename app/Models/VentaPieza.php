@@ -9,7 +9,7 @@ class VentaPieza extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['precio','precio_minimo','cliente','documento','telefono','moto','sucursal_id','pedido','user_id','user_name','fecha','descripcion','destino','cliente_id'];
+    protected $fillable = ['precio','precio_minimo','cliente','documento','telefono','moto','sucursal_id','pedido','user_id','user_name','fecha','descripcion','destino','cliente_id','servicio_id'];
 
 
 

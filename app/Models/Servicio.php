@@ -9,7 +9,7 @@ class Servicio extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['carga','tipo_servicio_id','cliente_id','sucursal_id','kilometros','ingreso','observacion','descripcion','diagnostico','repuestos','mecanicos','instrumentos','tiempo','entrega','monto','pagado','modelo','year','chasis','motor','venta','user_id'];
+    protected $fillable = ['carga','tipo_servicio_id','cliente_id','sucursal_id','kilometros','ingreso','observacion','descripcion','diagnostico','repuestos','mecanicos','instrumentos','tiempo','entrega','monto','pagado','modelo','year','chasis','motor','venta','user_id','obra','monto_repuestos','forma'];
 
 
     public function user() {
@@ -28,6 +28,22 @@ class Servicio extends Model
         return $this->belongsTo('App\Models\Cliente', 'cliente_id');
     }
 
+    public function ventaPiezas()
+    {
+        return $this->hasMany(\App\Models\VentaPieza::class, 'servicio_id');
+    }
 
+// Calculate total parts cost from linked sales
+    public function getCostoRepuestosAttribute(): float
+    {
+        return $this->ventaPiezas()
+            ->join('pieza_venta_piezas', 'pieza_venta_piezas.venta_pieza_id', '=', 'venta_piezas.id')
+            ->sum('pieza_venta_piezas.precio');
+    }
+
+    public function pagos()
+    {
+        return $this->hasMany(\App\Models\Pago::class, 'servicio_id');
+    }
 
 }

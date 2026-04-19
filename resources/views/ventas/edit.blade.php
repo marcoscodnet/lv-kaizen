@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('headSection')
     <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendors/select2-bootstrap-5-theme/select2-bootstrap-5-theme.min.css') }}">
 @endsection
 
 @section('content')
@@ -716,13 +717,13 @@
             });
 
             $('#nuevoClienteModal').on('shown.bs.modal', function () {
+                // Force select2 to recalculate width now that modal is visible
                 $('#provincia_id, #localidad').select2({
                     theme: 'bootstrap-5',
-                    dropdownParent: $('#nuevoClienteModal')
-                }).next('.select2-container').addClass('form-control');;
-                // InputMask
+                    dropdownParent: $('#nuevoClienteModal'),
+                    width: '100%'
+                });
                 $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
-
             });
 
             // función que devuelve el bloque de pago

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('headSection')
     <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendors/select2-bootstrap-5-theme/select2-bootstrap-5-theme.min.css') }}">
 @endsection
 
 @section('content')
@@ -230,11 +231,27 @@
                                                    value="{{ old('entrega') }}" required>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-lg-2">
                                         <div class="form-group">
-                                            <label for="monto">Precio</label>
+                                            <label for="mano_de_obra">Mano de obra</label>
+                                            <input type="text" class="form-control formato-numero" id="mano_de_obra" name="mano_de_obra"
+                                                   value="{{ old('mano_de_obra', 0) }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="costo_repuestos">Repuestos</label>
+                                            <input type="text" class="form-control formato-numero" id="costo_repuestos" name="costo_repuestos"
+                                                   value="{{ old('costo_repuestos', 0) }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="monto">Total</label>
                                             <input type="text" class="form-control formato-numero" id="monto" name="monto"
-                                                   value="{{ old('monto') }}" required>
+                                                   value="{{ old('monto') }}" readonly>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">
@@ -247,6 +264,108 @@
                                             </label>
                                         </div>
                                 </div>
+                                </div>
+                            </div>
+                            {{-- ================================= --}}
+                            {{-- Sección: Cobro --}}
+                            {{-- ================================= --}}
+
+                            <div class="card mt-4">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">Cobro</h5>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="row mt-3">
+                                        <div class="col-lg-3">
+                                            <div class="form-group">
+                                                <label for="forma">Forma de pago</label>
+                                                <select name="forma" id="forma" class="form-control" required>
+                                                    <option value="">Seleccionar...</option>
+                                                    @foreach (config('formas') as $key => $label)
+                                                        <option value="{{ $key }}" {{ old('forma', $servicio->forma ?? '') == $key ? 'selected' : '' }}>
+                                                            {{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col">
+                                            <button type="button" id="addItemPago" class="btn btn-success btn-sm" style="display:none">
+                                                <i class="fa fa-plus"></i> Agregar pago
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="cuerpoPago" style="display:none">
+                                        {{-- En edit, cargar pagos existentes --}}
+                                        @isset($servicio)
+                                            @foreach($servicio->pagos as $i => $pago)
+                                                <div class="card p-3 mb-3 pago-item">
+                                                    <div class="row">
+                                                        <div class="col-md-3">
+                                                            <label>Entidad</label>
+                                                            <select name="entidad_id[]" class="form-control js-pago-select" required>
+                                                                @foreach($entidads as $entidadId => $entidad)
+                                                                    <option value="{{ $entidadId }}" {{ $pago->entidad_id == $entidadId ? 'selected' : '' }}>
+                                                                        {{ $entidad }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <label>Importe</label>
+                                                            <input type="text" name="monto[]" class="form-control formato-numero"
+                                                                   value="{{ old('monto.'.$i, $pago->monto) }}" required>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <label class="labelFechaPago">Fecha Pago</label>
+                                                            <input type="date" name="fecha_pago[]" class="form-control"
+                                                                   value="{{ old('fecha_pago.'.$i, optional($pago->fecha_pago)->format('Y-m-d')) }}" required>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <label>Acreditado</label>
+                                                            <input type="text" name="pagado_monto[]" class="form-control formato-numero"
+                                                                   value="{{ old('pagado_monto.'.$i, $pago->pagado) }}">
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <label>Fecha Contadora</label>
+                                                            <input type="date" name="contadora[]" class="form-control"
+                                                                   value="{{ old('contadora.'.$i, optional($pago->contadora)->format('Y-m-d')) }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mt-2">
+                                                        <div class="col-5">
+                                                            <label>Observaciones vendedor</label>
+                                                            <textarea name="detalle[]" class="form-control" rows="2">{{ old('detalle.'.$i, $pago->detalle) }}</textarea>
+                                                        </div>
+                                                        <div class="col-5">
+                                                            <label>Observaciones</label>
+                                                            <textarea name="observaciones[]" class="form-control" rows="2">{{ old('observaciones.'.$i, $pago->observaciones) }}</textarea>
+                                                        </div>
+                                                        <div class="col-md-1 d-flex align-items-end">
+                                                            <button type="button" class="btn btn-danger btn-sm removeItemPago">
+                                                                <i class="fa fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endisset
+                                    </div>
+
+                                    <div class="row mt-2" id="totalesPago" style="display:none">
+                                        <div class="col-md-3">
+                                            <label>Total importe</label>
+                                            <input type="text" id="totalMonto" class="form-control formato-numero" value="0" readonly>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label>Total acreditado</label>
+                                            <input type="text" id="totalAcreditado" class="form-control formato-numero" value="0" readonly>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -669,13 +788,13 @@
             });
 
             $('#nuevoClienteModal').on('shown.bs.modal', function () {
+                // Force select2 to recalculate width now that modal is visible
                 $('#provincia_id, #localidad').select2({
                     theme: 'bootstrap-5',
-                    dropdownParent: $('#nuevoClienteModal')
-                }).next('.select2-container').addClass('form-control');;
-                // InputMask
+                    dropdownParent: $('#nuevoClienteModal'),
+                    width: '100%'
+                });
                 $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
-
             });
 
 
@@ -697,8 +816,135 @@
             // Ejecutar al cargar (por si hay old() con Casado/a o Concubino/a)
             toggleConyuge();
 
+            // Recalculate total when labor cost changes
+            $('#mano_de_obra').on('change', function () {
+                var manoDeObra = AutoNumeric.getNumericString('#mano_de_obra') || 0;
+                var repuestos  = AutoNumeric.getNumericString('#costo_repuestos') || 0;
+                var total = parseFloat(manoDeObra) + parseFloat(repuestos);
+                AutoNumeric.set('#monto', total);
+            });
+            // Recalculate payment totals
+            function actualizarTotalesPago() {
+                let totalMonto = 0;
+                let totalAcreditado = 0;
 
+                $('input[name="monto[]"]').each(function () {
+                    let val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+                    totalMonto += val;
+                });
 
+                $('input[name="pagado_monto[]"]').each(function () {
+                    let val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+                    totalAcreditado += val;
+                });
+
+                AutoNumeric.getAutoNumericElement('#totalMonto').set(totalMonto);
+                AutoNumeric.getAutoNumericElement('#totalAcreditado').set(totalAcreditado);
+            }
+
+// Payment row template
+            function getPagoHtml() {
+                const entidadOptions = `
+        @foreach($entidads as $entidadId => $entidad)
+                <option value="{{ $entidadId }}">{{ $entidad }}</option>
+        @endforeach
+                `;
+                return `
+        <div class="card p-3 mb-3 pago-item">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Entidad</label>
+                    <select name="entidad_id[]" class="form-control js-pago-select" required>
+                        ${entidadOptions}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>Importe</label>
+                    <input type="text" name="monto[]" class="form-control formato-numero-pago" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="labelFechaPago">Fecha Pago</label>
+                    <input type="date" name="fecha_pago[]" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label>Acreditado</label>
+                    <input type="text" name="pagado_monto[]" class="form-control formato-numero-pago">
+                </div>
+                <div class="col-md-2">
+                    <label>Fecha Contadora</label>
+                    <input type="date" name="contadora[]" class="form-control">
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-5">
+                    <label>Observaciones vendedor</label>
+                    <textarea name="detalle[]" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-5">
+                    <label>Observaciones</label>
+                    <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger btn-sm removeItemPago">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+            }
+
+            $('#addItemPago').on('click', function () {
+                const $row = $(getPagoHtml()).appendTo('#cuerpoPago');
+                // Set correct label for current payment method
+                $row.find('.labelFechaPago').text($('#forma').val() === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito');
+                $row.find('.js-pago-select').select2({ language: 'es' });
+                new AutoNumeric.multiple($row.find('.formato-numero-pago').get(), {
+                    digitGroupSeparator: '.',
+                    decimalCharacter: ',',
+                    decimalPlaces: 2,
+                    unformatOnSubmit: true
+                });
+                actualizarTotalesPago();
+            });
+
+            $('body').on('click', '.removeItemPago', function () {
+                $(this).closest('.pago-item').remove();
+                actualizarTotalesPago();
+            });
+
+            $('body').on('input', 'input[name="monto[]"], input[name="pagado_monto[]"]', actualizarTotalesPago);
+            // Show/hide payment section based on payment method
+            function toggleCobro() {
+                const forma = $('#forma').val();
+                if (forma === '') {
+                    $('#addItemPago').hide();
+                    $('#cuerpoPago').hide();
+                    $('#totalesPago').hide();
+                } else {
+                    $('#addItemPago').show();
+                    $('#cuerpoPago').show();
+                    $('#totalesPago').show();
+                    // Update date label based on payment method
+                    $('.labelFechaPago').text(forma === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito');
+                    // Add first payment row automatically if none exist
+                    if ($('#cuerpoPago .pago-item').length === 0) {
+                        const $row = $(getPagoHtml()).appendTo('#cuerpoPago');
+                        $row.find('.labelFechaPago').text(forma === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito');
+                        $row.find('.js-pago-select').select2({ language: 'es' });
+                        new AutoNumeric.multiple($row.find('.formato-numero-pago').get(), {
+                            digitGroupSeparator: '.',
+                            decimalCharacter: ',',
+                            decimalPlaces: 2,
+                            unformatOnSubmit: true
+                        });
+                        actualizarTotalesPago();
+                    }
+                }
+            }
+
+            toggleCobro();
+            $('#forma').on('change', toggleCobro);
+            actualizarTotalesPago();
         });
     </script>
 

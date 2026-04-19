@@ -1,10 +1,8 @@
 @extends('layouts.app')
 @section('headSection')
-
     <link rel="stylesheet" href="{{ asset('bower_components/select2/dist/css/select2.min.css') }}">
-
+    <link rel="stylesheet" href="{{ asset('vendors/select2-bootstrap-5-theme/select2-bootstrap-5-theme.min.css') }}">
 @endsection
-
 @section('content')
     <div class="card mb-3">
         <div class="card-header">
@@ -210,7 +208,7 @@
                                 <div class="form-group d-flex align-items-end gap-2">
                                     <div class="flex-grow-1">
                                         <label for="cliente_id">Cliente</label>
-                                        <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single" required>
+                                        <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single">
                                             @if(old('cliente_id'))
                                                 {{-- Mostrar cliente seleccionado por old() --}}
                                                 <option value="{{ old('cliente_id') }}" selected>
@@ -438,9 +436,8 @@
     <!-- /.content-wrapper -->
 @endsection
 <style>
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-
-        width: 300px !important;
+    #nuevoClienteModal .select2-container {
+        width: 100% !important;
     }
 </style>
 @section('footerSection')
@@ -566,38 +563,33 @@
                 const precioMinimoInput = row.find('.precio_minimo');
 
                 sucursalSelect.empty();
-                costoInput.val('');
-                precioMinimoInput.val('');
+                // Clear via AutoNumeric API
+                AutoNumeric.getAutoNumericElement(costoInput[0])?.set(0);
+                AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(0);
 
                 if (piezaId && stockPiezas[piezaId]) {
                     const opciones = stockPiezas[piezaId];
-
-                    // Verificar rol del usuario desde Laravel
                     const esAdministrador = {{ auth()->user()->hasRole('Administrador') ? 'true' : 'false' }};
                     const sucursalUsuarioId = {{ auth()->user()->sucursal_id }};
 
                     let opcionesFiltradas = opciones;
-
-                    // Si NO es administrador, filtramos por la sucursal del usuario
                     if (!esAdministrador) {
                         opcionesFiltradas = opciones.filter(op => op.sucursal_id == sucursalUsuarioId);
                     }
 
-                    // Agregar las opciones filtradas al select
                     opcionesFiltradas.forEach(opcion => {
                         sucursalSelect.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
                     });
 
-                    // Completar costo y precio mínimo con la primera opción disponible
                     if (opcionesFiltradas.length > 0) {
                         const primeraOpcion = opcionesFiltradas[0];
-                        costoInput.val(primeraOpcion.costo);
-                        precioMinimoInput.val(primeraOpcion.precio_minimo);
+                        // Set via AutoNumeric API
+                        AutoNumeric.getAutoNumericElement(costoInput[0])?.set(primeraOpcion.costo);
+                        AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(primeraOpcion.precio_minimo);
                     }
                 }
             });
 
-            // Si querés cambiar los valores de costo y precio mínimo según la sucursal seleccionada:
             $('body').on('change', '.sucursalSelect', function () {
                 const sucursalId = $(this).val();
                 const row = $(this).closest('tr');
@@ -608,8 +600,9 @@
                 if (piezaId && stockPiezas[piezaId]) {
                     const match = stockPiezas[piezaId].find(sp => sp.sucursal_id == sucursalId);
                     if (match) {
-                        costoInput.val(match.costo);
-                        precioMinimoInput.val(match.precio_minimo);
+                        // Set via AutoNumeric API
+                        AutoNumeric.getAutoNumericElement(costoInput[0])?.set(match.costo);
+                        AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(match.precio_minimo);
                     }
                 }
             });
@@ -634,8 +627,18 @@
                 }, 100);
             });
 
-            $('form').on('submit', function () {
+            $('form').on('submit', function (e) {
                 const destino = $('#destino').val();
+
+                // Manual validation for hidden conditional fields
+                if (destino === 'Salón') {
+                    if (!$('#cliente_id').val()) {
+                        e.preventDefault();
+                        $('#divSalon').show(); // Make sure it's visible before alerting
+                        alert('Debe seleccionar un cliente.');
+                        return false;
+                    }
+                }
 
                 let pedido = '';
                 if (destino === 'Sucursal') {
@@ -864,13 +867,13 @@
             });
 
             $('#nuevoClienteModal').on('shown.bs.modal', function () {
+                // Force select2 to recalculate width now that modal is visible
                 $('#provincia_id, #localidad').select2({
                     theme: 'bootstrap-5',
-                    dropdownParent: $('#nuevoClienteModal')
-                }).next('.select2-container').addClass('form-control');;
-                // InputMask
+                    dropdownParent: $('#nuevoClienteModal'),
+                    width: '100%'
+                });
                 $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
-
             });
 
             // Mostrar/ocultar cónyuge

@@ -9,7 +9,7 @@ class Pago extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['venta_id','entidad_id','monto','fecha','pagado','contadora','detalle','observacion'];
+    protected $fillable = ['venta_id', 'servicio_id','entidad_id','monto','fecha','pagado','contadora','detalle','observacion'];
 
 
 
@@ -20,6 +20,11 @@ class Pago extends Model
 
     public function entidad() {
         return $this->belongsTo('App\Models\Entidad', 'entidad_id');
+    }
+
+    public function servicio()
+    {
+        return $this->belongsTo(\App\Models\Servicio::class, 'servicio_id');
     }
 
 

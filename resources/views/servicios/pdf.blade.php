@@ -86,8 +86,11 @@
         <td class="section-title">DATOS DEL VEHÍCULO</td>
     </tr>
     <tr>
-        <td class="bg-gray" colspan="2">
+        <td class="bg-gray no-right-border" >
             Nombre y apellido: {{ $servicio->cliente->nombre }}
+        </td>
+        <td class="bg-gray no-left-border" >
+            Documento: {{ $servicio->cliente->documento }}
         </td>
         <td class="bg-gray">
             Fecha de venta: {{ $servicio->venta ?? date('d/m/Y', strtotime($servicio->venta)) }}

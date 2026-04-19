@@ -289,7 +289,8 @@ class ServicioController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('servicios.registrar', compact('sucursals', 'venta','provincias','tipos'));
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->pluck('nombre', 'id')->prepend('', '');
+        return view('servicios.registrar', compact('sucursals', 'venta', 'provincias', 'tipos', 'entidads'));
     }
 
     public function store(Request $request)
@@ -353,7 +354,26 @@ class ServicioController extends Controller
             $input['carga'] = now();
             // Asignar el usuario logueado
             $input['user_id'] = auth()->id(); // o auth()->user()->id
+            // Calculate total from labor and parts costs
+            $input['mano_de_obra']   = $request->input('mano_de_obra', 0);
+            $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
+            $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
             $servicio = Servicio::create($input);
+            // Save service payments
+            if ($request->filled('entidad_id')) {
+                foreach ($request->entidad_id as $i => $entidadId) {
+                    $pago = new \App\Models\Pago();
+                    $pago->servicio_id  = $servicio->id;
+                    $pago->entidad_id   = $entidadId;
+                    $pago->monto        = $request->monto[$i] ?? 0;
+                    $pago->fecha        = $request->fecha_pago[$i] ?? null;
+                    $pago->pagado       = $request->pagado_monto[$i] ?? null;
+                    $pago->contadora    = $request->contadora[$i] ?? null;
+                    $pago->detalle      = $request->detalle[$i] ?? null;
+                    $pago->observacion  = $request->observaciones[$i] ?? null;
+                    $pago->save();
+                }
+            }
 
         }catch(QueryException $ex){
             $error = $ex->getMessage();
@@ -385,7 +405,9 @@ class ServicioController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos'));
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->pluck('nombre', 'id')->prepend('', '');
+
+        return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos', 'entidads'));
     }
 
     public function update(Request $request, $id)
@@ -448,7 +470,28 @@ class ServicioController extends Controller
                 : null;
             // Asignar el usuario logueado
             //$input['user_id'] = auth()->id(); // o auth()->user()->id
+            // Calculate total from labor and parts costs
+            $input['mano_de_obra']   = $request->input('mano_de_obra', 0);
+            $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
+            $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
             $servicio->update($input);
+            // Replace all payments on update
+            \App\Models\Pago::where('servicio_id', $servicio->id)->delete();
+
+            if ($request->filled('entidad_id')) {
+                foreach ($request->entidad_id as $i => $entidadId) {
+                    $pago = new \App\Models\Pago();
+                    $pago->servicio_id  = $servicio->id;
+                    $pago->entidad_id   = $entidadId;
+                    $pago->monto        = $request->monto[$i] ?? 0;
+                    $pago->fecha        = $request->fecha_pago[$i] ?? null;
+                    $pago->pagado       = $request->pagado_monto[$i] ?? null;
+                    $pago->contadora    = $request->contadora[$i] ?? null;
+                    $pago->detalle      = $request->detalle[$i] ?? null;
+                    $pago->observacion  = $request->observaciones[$i] ?? null;
+                    $pago->save();
+                }
+            }
 
         }catch(QueryException $ex){
             $error = $ex->getMessage();
