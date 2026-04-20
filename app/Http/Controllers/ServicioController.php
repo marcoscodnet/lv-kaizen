@@ -359,19 +359,50 @@ class ServicioController extends Controller
             $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
             $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
             $servicio = Servicio::create($input);
-            // Save service payments
+            // Save service payments and impact cash register
             if ($request->filled('entidad_id')) {
                 foreach ($request->entidad_id as $i => $entidadId) {
-                    $pago = new \App\Models\Pago();
+                    $pago = new Pago();
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
-                    $pago->monto        = $request->monto[$i] ?? 0;
-                    $pago->fecha        = $request->fecha_pago[$i] ?? null;
-                    $pago->pagado       = $request->pagado_monto[$i] ?? null;
-                    $pago->contadora    = $request->contadora[$i] ?? null;
-                    $pago->detalle      = $request->detalle[$i] ?? null;
-                    $pago->observacion  = $request->observaciones[$i] ?? null;
+                    $pago->monto        = $this->sanitizeInput($request->monto[$i]);
+                    $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
+                    $pago->pagado       = $this->sanitizeInput($request->pagado_monto[$i]);
+                    $pago->contadora    = $this->sanitizeInput($request->contadora[$i]);
+                    $pago->detalle      = $this->sanitizeInput($request->detalle[$i]);
+                    $pago->observacion  = $this->sanitizeInput($request->observaciones[$i]);
                     $pago->save();
+
+                    // Check for open cash register
+                    $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                        ->where('user_id', auth()->id())
+                        ->where('estado', 'Abierta')
+                        ->first();
+
+                    if (!$cajaAbierta) {
+                        DB::rollBack();
+                        return redirect()->back()
+                            ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
+                            ->withInput();
+                    }
+
+                    $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+
+                    $entidad = Entidad::find($entidadId);
+                    if ($entidad && $entidad->tangible && $pago->pagado > 0) {
+                        MovimientoCaja::create([
+                            'caja_id'    => $cajaAbierta->id,
+                            'concepto_id'=> $concepto->id,
+                            'entidad_id' => $entidad->id,
+                            'venta_id'   => null,
+                            'tipo'       => 'Ingreso',
+                            'monto'      => $pago->pagado,
+                            'acreditado' => $entidad->tangible,
+                            'fecha'      => now(),
+                            'user_id'    => auth()->id(),
+                            'referencia' => $pago->detalle,
+                        ]);
+                    }
                 }
             }
 
@@ -476,20 +507,52 @@ class ServicioController extends Controller
             $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
             $servicio->update($input);
             // Replace all payments on update
-            \App\Models\Pago::where('servicio_id', $servicio->id)->delete();
+            // Replace all payments on update
+            Pago::where('servicio_id', $servicio->id)->delete();
 
             if ($request->filled('entidad_id')) {
                 foreach ($request->entidad_id as $i => $entidadId) {
-                    $pago = new \App\Models\Pago();
+                    $pago = new Pago();
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
-                    $pago->monto        = $request->monto[$i] ?? 0;
-                    $pago->fecha        = $request->fecha_pago[$i] ?? null;
-                    $pago->pagado       = $request->pagado_monto[$i] ?? null;
-                    $pago->contadora    = $request->contadora[$i] ?? null;
-                    $pago->detalle      = $request->detalle[$i] ?? null;
-                    $pago->observacion  = $request->observaciones[$i] ?? null;
+                    $pago->monto        = $this->sanitizeInput($request->monto[$i]);
+                    $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
+                    $pago->pagado       = $this->sanitizeInput($request->pagado_monto[$i]);
+                    $pago->contadora    = $this->sanitizeInput($request->contadora[$i]);
+                    $pago->detalle      = $this->sanitizeInput($request->detalle[$i]);
+                    $pago->observacion  = $this->sanitizeInput($request->observaciones[$i]);
                     $pago->save();
+
+                    // Check for open cash register
+                    $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                        ->where('user_id', auth()->id())
+                        ->where('estado', 'Abierta')
+                        ->first();
+
+                    if (!$cajaAbierta) {
+                        DB::rollBack();
+                        return redirect()->back()
+                            ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
+                            ->withInput();
+                    }
+
+                    $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+
+                    $entidad = Entidad::find($entidadId);
+                    if ($entidad && $entidad->tangible && $pago->pagado > 0) {
+                        MovimientoCaja::create([
+                            'caja_id'    => $cajaAbierta->id,
+                            'concepto_id'=> $concepto->id,
+                            'entidad_id' => $entidad->id,
+                            'venta_id'   => null,
+                            'tipo'       => 'Ingreso',
+                            'monto'      => $pago->pagado,
+                            'acreditado' => $entidad->tangible,
+                            'fecha'      => now(),
+                            'user_id'    => auth()->id(),
+                            'referencia' => $pago->detalle,
+                        ]);
+                    }
                 }
             }
 
