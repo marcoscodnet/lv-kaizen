@@ -43,12 +43,12 @@ class ProveedorController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['proveedors.nombre','proveedors.razon','proveedors.particular','proveedors.celular','proveedors.email']; // Define las columnas disponibles
+        $columnas = ['proveedors.razon','proveedors.cuil','proveedors.celular','proveedors.email']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
-        $query = Proveedor::select('proveedors.id as id', 'proveedors.nombre as proveedor_nombre','proveedors.razon', DB::raw("CONCAT('(',proveedors.particular_area, ') ', proveedors.particular) as telefono"), DB::raw("CONCAT('(',proveedors.celular_area, ') ', proveedors.celular) as celular"),'proveedors.email')
+        $query = Proveedor::select('proveedors.id as id','proveedors.razon', 'proveedors.cuil', DB::raw("CONCAT('(',proveedors.celular_area, ') ', proveedors.celular) as celular"),'proveedors.email')
         ;
 
         // Aplicar la búsqueda

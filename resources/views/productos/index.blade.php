@@ -56,12 +56,22 @@
 
                     </div>
                 </div>
-                <div class="col-md-2">
+                <!--<div class="col-md-2">
                     <div class="form-group">
                         <label for="filtroStockMinimo">Debajo del mínimo:</label>
                         <select id="filtroStockMinimo" class="form-control">
                             <option value="0">Todos</option>
                             <option value="1">Sí</option>
+                        </select>
+                    </div>
+                </div>-->
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroStock">Stock:</label>
+                        <select id="filtroStock" class="form-control">
+                            <option value="-1">Todos</option>
+                            <option value="1">Con stock</option>
+                            <option value="2">Sin stock</option>
                         </select>
                     </div>
                 </div>
@@ -150,7 +160,8 @@
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
                         d.discontinuo = $('#filtroDiscontinuo').val();
-                        d.filtroStockMinimo = $('#filtroStockMinimo').val();
+                        //d.filtroStockMinimo = $('#filtroStockMinimo').val();
+                        d.filtroStock = $('#filtroStock').val();  // 👈 cambiado
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
                     }
@@ -228,15 +239,19 @@
                 stateSave: true,
                 stateSaveParams: function (settings, data) {
                     data.filtroDiscontinuo = $('#filtroDiscontinuo').val();
-                    data.filtroStockMinimo = $('#filtroStockMinimo').val();
+                    //data.filtroStockMinimo = $('#filtroStockMinimo').val();
+                    data.filtroStock = $('#filtroStock').val();  // 👈 cambiado
 
                 },
                 stateLoadParams: function (settings, data) {
                     if (data.filtroDiscontinuo) {
                         $('#filtroDiscontinuo').val(data.filtroDiscontinuo).trigger('change');
                     }
-                    if (data.filtroStockMinimo) {
+                    /*if (data.filtroStockMinimo) {
                         $('#filtroStockMinimo').val(data.filtroStockMinimo).trigger('change');
+                    }*/
+                    if (data.filtroStock) {
+                        $('#filtroStock').val(data.filtroStock).trigger('change');  // 👈 cambiado
                     }
 
                 },
@@ -250,7 +265,11 @@
             $('#filtroDiscontinuo').change(function() {
                 table.ajax.reload(); // Recargar la tabla cuando cambie el filtro de período
             });
-            $('#filtroStockMinimo').change(function() {
+            /*$('#filtroStockMinimo').change(function() {
+                table.ajax.reload();
+            });*/
+            // Trigger de cambio
+            $('#filtroStock').change(function() {  // 👈 cambiado
                 table.ajax.reload();
             });
 

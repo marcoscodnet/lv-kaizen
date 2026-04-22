@@ -52,7 +52,8 @@ class ProductoController extends Controller
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $discontinuo = $request->input('discontinuo');
-        $filtroStockMinimo = $request->input('filtroStockMinimo');
+        //$filtroStockMinimo = $request->input('filtroStockMinimo');
+        $filtroStock = $request->input('filtroStock');
 
         $columnasBusqueda = [
             'tipo_unidads.nombre',
@@ -97,8 +98,21 @@ class ProductoController extends Controller
             $query->where('productos.discontinuo', $discontinuo == 1 ? 1 : 0);
         }
 
-        if (!empty($filtroStockMinimo) && $filtroStockMinimo != '-1') {
+        /*if (!empty($filtroStockMinimo) && $filtroStockMinimo != '-1') {
             $query->havingRaw('COUNT(CASE WHEN v.id IS NULL THEN 1 END) < productos.minimo');
+        }*/
+
+
+        //dd($request->input('filtroStock'));
+// Reemplazar el having anterior por este:
+        if (!empty($filtroStock) && $filtroStock != '-1') {
+            if ($filtroStock == '1') {
+                // Con stock: al menos 1 unidad disponible
+                $query->havingRaw('COUNT(CASE WHEN v.id IS NULL THEN 1 END) > 0');
+            } else {
+                // Sin stock: ninguna unidad disponible
+                $query->havingRaw('COUNT(CASE WHEN v.id IS NULL THEN 1 END) = 0');
+            }
         }
 
         // Aplicar la búsqueda

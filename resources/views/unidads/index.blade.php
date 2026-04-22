@@ -99,6 +99,7 @@
                 responsive: true,
                 scrollX: true,
                 paging : true,
+                order: [[5, 'desc']],
                 "ajax": {
                     "url": "{{ route('unidads.dataTable') }}",
                     "type": "POST",
@@ -189,6 +190,24 @@
                     $('select[name="example1_length"]').removeClass('form-control');
                     $('input[type="search"]').removeClass('form-control');
                     $('input[type="search"]').css('width', '70%');
+                    // Scroll superior sincronizado
+                    var $tableContainer = $('#example1').parent(); // div.dataTables_scrollBody o el padre directo
+                    var tableWidth = $('#example1').outerWidth();
+                    var containerWidth = $tableContainer.outerWidth();
+
+                    if (tableWidth > containerWidth) {
+                        var $topScroll = $('<div style="overflow-x:scroll;overflow-y:hidden;margin-bottom:4px;"><div style="height:1px;"></div></div>');
+                        $topScroll.find('div').width(tableWidth);
+                        $tableContainer.before($topScroll);
+
+                        $topScroll.on('scroll', function () {
+                            $tableContainer.scrollLeft($(this).scrollLeft());
+                        });
+                        $tableContainer.on('scroll', function () {
+                            $topScroll.scrollLeft($(this).scrollLeft());
+                        });
+                    }
+
                 }
             });
         });

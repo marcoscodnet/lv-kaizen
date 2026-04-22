@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('unidads.update',$unidad->id) }}" method="post" >
+            <form role="form" action="{{ route('unidads.update',$unidad->id) }}" method="post" autocomplete="off">
                 {{ csrf_field() }}
                 {{ method_field('PUT') }}
                 <div class="tab-content">

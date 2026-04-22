@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('unidads.store') }}" method="post" >
+            <form role="form" action="{{ route('unidads.store') }}" method="post" autocomplete="off">
                 {{ csrf_field() }}
                 <div class="tab-content">
                     <div class="box-body">

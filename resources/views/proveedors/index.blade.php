@@ -46,9 +46,9 @@
                     <tr>
 
 
-                        <th scope="col">Apellido y Nombre</th>
+                        <!--<th scope="col">Apellido y Nombre</th>-->
                         <th scope="col">Razón Social</th>
-                        <th scope="col">Teléfono</th>
+                        <th scope="col">CUIT</th>
                         <th scope="col">Celular</th>
                         <th scope="col">E-mail</th>
 
@@ -115,7 +115,7 @@
                 },
                 columns: [
 
-                    { data: 'proveedor_nombre', name: 'proveedor_nombre' },
+
 
                     {
                         data: 'razon', // Acceder al nombre de la marca a través de la relación
@@ -123,7 +123,7 @@
                         orderable: true,
                         searchable: true
                     },
-                    { data: 'telefono', name: 'telefono' },
+                    { data: 'cuil', name: 'cuil' },
                     { data: 'celular', name: 'celular' },
 
                     { data: 'email', name: 'email' },
