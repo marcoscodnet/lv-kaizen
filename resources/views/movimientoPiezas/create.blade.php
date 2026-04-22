@@ -51,7 +51,7 @@
                             <div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="fecha">Fecha</label>
-                                    <input type="date" class="form-control" id="fecha" name="fecha"  value="{{ old('fecha') }}" required>
+                                    <input type="date" class="form-control" id="fecha" name="fecha"   value="{{ old('fecha', date('Y-m-d')) }}" required>
                                 </div>
                             </div>
                         </div>

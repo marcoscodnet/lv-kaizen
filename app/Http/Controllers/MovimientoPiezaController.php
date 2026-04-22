@@ -98,7 +98,22 @@ class MovimientoPiezaController extends Controller
                 return [$pieza->id => $texto];
             })
             ->prepend('', ''); // si necesitas un vacío al principio
-        $origens = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $user = auth()->user();
+
+        if ($user->hasRole('Administrador')) {
+            // Admin sees all active branches
+            $origens = Sucursal::where('activa', 1)
+                ->orderBy('nombre')
+                ->pluck('nombre', 'id')
+                ->prepend('', '');
+        } else {
+            // Non-admin only sees their own branch
+            $origens = Sucursal::where('activa', 1)
+                ->where('id', $user->sucursal_id)
+                ->orderBy('nombre')
+                ->pluck('nombre', 'id')
+                ->prepend('', '');
+        }
         $destinos = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('movimientoPiezas.create', compact('piezas','origens','destinos'));

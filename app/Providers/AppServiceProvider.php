@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\View;
+use App\Models\MovimientoPieza;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -28,14 +29,39 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Schema::defaultStringLength(255); // Ajusta la longitud máxima de las cadenas
-        /*DB::listen(function ($query) {
-            Log::debug("DB: " . $query->sql . "[".  implode(",",$query->bindings). "]");
-        });*/
+        Schema::defaultStringLength(255);
+
+        DB::listen(function ($query) {
+            $sql = ltrim($query->sql);
+
+            if (preg_match('/^(insert|update|delete|replace|truncate)/i', $sql)) {
+                Log::debug(
+                    "DB WRITE: {$query->sql} [" . implode(',', $query->bindings) . "]"
+                );
+            }
+        });
+
         if (App::environment('local') && app()->runningInConsole() && $this->isMigrating()) {
             $this->logMigrationQueries();
         }
+
+        View::composer('*', function ($view) {
+            if (auth()->check()) {
+                $user = auth()->user();
+
+                if (!$user->hasRole('Administrador') && $user->sucursal_id) {
+                    $pendientes = MovimientoPieza::where('estado', 'Pendiente')
+                        ->where('sucursal_destino_id', $user->sucursal_id)
+                        ->count();
+                } else {
+                    $pendientes = 0;
+                }
+
+                $view->with('alertaPendientesPiezas', $pendientes);
+            }
+        });
     }
+
 
     protected function isMigrating()
     {

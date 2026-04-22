@@ -25,7 +25,7 @@
         <div class="content">
         @include('layouts.partials.header')
 
-
+            @include('includes.alerta_pendientes_piezas')
 
         @yield('content')
 

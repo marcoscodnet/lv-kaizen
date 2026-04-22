@@ -94,7 +94,7 @@ class ProductoController extends Controller
 
 
         if (!empty($discontinuo) && $discontinuo != '-1') {
-            $query->where('productos.discontinuo', $discontinuo);
+            $query->where('productos.discontinuo', $discontinuo == 1 ? 1 : 0);
         }
 
         if (!empty($filtroStockMinimo) && $filtroStockMinimo != '-1') {
