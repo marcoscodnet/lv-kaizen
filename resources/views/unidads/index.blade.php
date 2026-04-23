@@ -40,7 +40,45 @@
             @include('includes.messages')
         </div>
         <div class="card-body pt-0">
-            <div class="tab-content table-responsive">
+        <div class="row">
+
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="fechaDesde">Desde:</label>
+                    <input type="date" id="fechaDesde" class="form-control">
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="fechaHasta">Hasta:</label>
+                    <input type="date" id="fechaHasta" class="form-control">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="filtroMarca">Marcas:</label>
+                    <select name="filtroMarca" id="filtroMarca" class="form-control js-example-basic-single" required>
+
+                        @foreach($marcas as $marcaId => $marca)
+                            <option value="{{ $marcaId }}">
+                                {{ $marca }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                </div>
+            </div>
+
+
+
+
+        </div>
+    </div>
+        <div class="card-body pt-0">
+
+
+            <div class="tab-content">
                 <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
@@ -92,7 +130,7 @@
     <!-- page script -->
     <script>
         $(document).ready(function() {
-            $('#example1').DataTable({
+            var table = $('#example1').DataTable({
                 "processing": true, // Activar la indicación de procesamiento
                 "serverSide": true, // Habilitar el procesamiento del lado del servidor
                 "autoWidth": false, // Desactiva el ajuste automático del anchos
@@ -105,6 +143,10 @@
                     "type": "POST",
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
+                        d.marca_id = $('#filtroMarca').val();
+
+                        d.fecha_desde = $('#fechaDesde').val();
+                        d.fecha_hasta = $('#fechaHasta').val();
                         // Agrega otros parámetros si es necesario
                         // d.otroParametro = valor;
                     },
@@ -185,6 +227,25 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                stateSave: true,
+                stateSaveParams: function (settings, data) {
+
+                    data.filtroMarca = $('#filtroMarca').val();
+                    data.fechaDesde = $('#fechaDesde').val();
+                    data.fechaHasta = $('#fechaHasta').val();
+                },
+                stateLoadParams: function (settings, data) {
+
+                    if (data.filtroMarca) {
+                        $('#filtroMarca').val(data.filtroMarca).trigger('change');
+                    }
+                    if (data.fechaDesde) {
+                        $('#fechaDesde').val(data.fechaDesde);
+                    }
+                    if (data.fechaHasta) {
+                        $('#fechaHasta').val(data.fechaHasta);
+                    }
+                },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');
@@ -210,21 +271,36 @@
 
                 }
             });
+            $('#filtroMarca,#fechaDesde, #fechaHasta').change(function() {
+                table.ajax.reload();
+            });
         });
 
         function exportarExcel() {
+            let marca_id = $('#filtroMarca').val();
+            let desde = $('#fechaDesde').val();
+            let hasta = $('#fechaHasta').val();
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
             let url = "{{ route('unidads.exportarXLS') }}"
-                + "?search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+                + "?marca_id=" + marca_id
+                + "&desde=" + desde
+                + "&hasta=" + hasta
+                + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
 
             window.location.href = url;
         }
 
         function exportarPDF() {
+            let marca_id = $('#filtroMarca').val();
+            let desde = $('#fechaDesde').val();
+            let hasta = $('#fechaHasta').val();
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
 
             let url = "{{ route('unidads.exportarPDF') }}"
-                + "?search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
+                + "?marca_id=" + marca_id
+                + "&desde=" + desde
+                + "&hasta=" + hasta
+                + "&search=" + encodeURIComponent(busqueda); // <-- pasar búsqueda
 
             window.location.href = url;
         }

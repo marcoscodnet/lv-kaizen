@@ -18,14 +18,18 @@
     <h2 style="margin-top: 10px;">Listado de Unidades</h2>
 </div>
 
-<!-- Filtros aplicados -->
-<p><strong>Filtros aplicados:</strong></p>
-<p>
-    @if(!empty($busqueda))
-        <strong>Búsqueda:</strong> {{ $busqueda }}<br>
-    @endif
 
-</p>
+{{-- ============================ --}}
+{{--        FILTROS APLICADOS     --}}
+{{-- ============================ --}}
+
+<div class="filtros">
+
+    <p><strong>Marca:</strong> {{ $marcaNombre }}</p>
+    <p><strong>Fecha desde:</strong> {{ $fechaDesde ? date('d/m/Y', strtotime($fechaDesde)) : '—' }}</p>
+    <p><strong>Fecha hasta:</strong> {{ $fechaHasta ? date('d/m/Y', strtotime($fechaHasta)) : '—' }}</p>
+    <p><strong>Búsqueda:</strong> {{ $busqueda ?: '—' }}</p>
+</div>
 
 <table>
     <thead>

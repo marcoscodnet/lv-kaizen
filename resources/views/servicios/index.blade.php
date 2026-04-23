@@ -86,19 +86,34 @@
                     </div>
                 </div>
 
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label for="filtroMarca">Marcas:</label>
+                        <select name="filtroMarca" id="filtroMarca" class="form-control js-example-basic-single" required>
 
+                            @foreach($marcas as $marcaId => $marca)
+                                <option value="{{ $marcaId }}">
+                                    {{ $marca }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                </div>
             </div>
             <!-- /.form-group -->
         </div>
         <div class="card-body pt-0">
-            <div class="tab-content table-responsive">
+            <div class="tab-content">
                 <table id="example1" class="table table-bordered table-striped table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
                         <th scope="col">Nro.</th>
                         <th scope="col">Fecha</th>
-                        <th scope="col">Nro. motor</th>
+                        <th scope="col">Marca</th>
                         <th scope="col">Modelo</th>
+                        <th scope="col">Nro. motor</th>
+
                         <th scope="col">Chasis</th>
                         <th scope="col">Cliente</th>
                         <th scope="col">Técnico</th>
@@ -164,6 +179,7 @@
                     "data": function (d) {
                         d._token = '{{ csrf_token() }}'; // Agrega el token CSRF si estás usando Laravel
                         d.sucursal_id = $('#filtroSucursal').val();
+                        d.marca_id = $('#filtroMarca').val();
                         d.user_id = $('#filtroUsuario').val();
                         d.fecha_desde = $('#fechaDesde').val();
                         d.fecha_hasta = $('#fechaHasta').val();
@@ -211,9 +227,10 @@
                             return '';
                         }
                     },
-
-                    { data: 'motor', name: 'motor' },
+                    { data: 'marca', name: 'marca' },
                     { data: 'modelo', name: 'modelo' },
+                    { data: 'motor', name: 'motor' },
+
                     { data: 'chasis', name: 'chasis' },
                     { data: 'cliente', name: 'cliente' },
                     { data: 'mecanicos', name: 'mecanicos' },
@@ -259,7 +276,7 @@
 
                     }
                 ],
-                order: [[0, 'desc']],
+                order: [[2, 'desc']],
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
@@ -267,6 +284,7 @@
                 stateSaveParams: function (settings, data) {
                     data.filtroUsuario = $('#filtroUsuario').val();
                     data.filtroSucursal = $('#filtroSucursal').val();
+                    data.filtroMarca = $('#filtroMarca').val();
                     data.fechaDesde = $('#fechaDesde').val();
                     data.fechaHasta = $('#fechaHasta').val();
                 },
@@ -276,6 +294,9 @@
                     }
                     if (data.filtroSucursal) {
                         $('#filtroSucursal').val(data.filtroSucursal).trigger('change');
+                    }
+                    if (data.filtroMarca) {
+                        $('#filtroMarca').val(data.filtroMarca).trigger('change');
                     }
                     if (data.fechaDesde) {
                         $('#fechaDesde').val(data.fechaDesde);
@@ -292,26 +313,26 @@
                     $('input[type="search"]').css('width', '70%');
 
                     // Scroll superior sincronizado
-                    var $tableContainer = $('#example1').parent(); // div.dataTables_scrollBody o el padre directo
-                    var tableWidth = $('#example1').outerWidth();
-                    var containerWidth = $tableContainer.outerWidth();
+                    var $container = $('#example1').closest('.dataTables_scrollBody');
 
-                    if (tableWidth > containerWidth) {
-                        var $topScroll = $('<div style="overflow-x:scroll;overflow-y:hidden;margin-bottom:4px;"><div style="height:1px;"></div></div>');
-                        $topScroll.find('div').width(tableWidth);
-                        $tableContainer.before($topScroll);
+                    var $topScroll = $('<div style="overflow-x:auto;overflow-y:hidden;"><div style="height:1px;"></div></div>');
+                    $topScroll.find('div').width($container[0].scrollWidth);
+                    $container.before($topScroll);
 
-                        $topScroll.on('scroll', function () {
-                            $tableContainer.scrollLeft($(this).scrollLeft());
-                        });
-                        $tableContainer.on('scroll', function () {
-                            $topScroll.scrollLeft($(this).scrollLeft());
-                        });
-                    }
+                    $topScroll.on('scroll', function () {
+                        $container.scrollLeft($(this).scrollLeft());
+                    });
+                    $container.on('scroll', function () {
+                        $topScroll.scrollLeft($(this).scrollLeft());
+                    });
+
+                    $(window).on('resize', function () {
+                        $topScroll.find('div').width($container[0].scrollWidth);
+                    });
                 }
             });
 
-            $('#filtroSucursal,#filtroUsuario,#fechaDesde, #fechaHasta').change(function() {
+            $('#filtroSucursal,#filtroMarca,#filtroUsuario,#fechaDesde, #fechaHasta').change(function() {
                 table.ajax.reload();
             });
         });
@@ -327,12 +348,14 @@
         }
         function exportarExcel() {
             let sucursal_id = $('#filtroSucursal').val();
+            let marca_id = $('#filtroMarca').val();
             let user_id = $('#filtroUsuario').val();
             let desde = $('#fechaDesde').val();
             let hasta = $('#fechaHasta').val();
             let busqueda = $('#example1_filter input').val(); // <-- esto captura la búsqueda
             let url = "{{ route('servicios.exportarXLS') }}"
                 + "?sucursal_id=" + sucursal_id
+                + "&marca_id=" + marca_id
                 + "&user_id=" + user_id
                 + "&desde=" + desde
                 + "&hasta=" + hasta
@@ -343,6 +366,7 @@
 
         function exportarPDF() {
             let sucursal_id = $('#filtroSucursal').val();
+            let marca_id = $('#filtroMarca').val();
             let user_id = $('#filtroUsuario').val();
             let desde = $('#fechaDesde').val();
             let hasta = $('#fechaHasta').val();
@@ -350,6 +374,7 @@
 
             let url = "{{ route('servicios.exportarPDF') }}"
                 + "?sucursal_id=" + sucursal_id
+                + "&marca_id=" + marca_id
                 + "&user_id=" + user_id
                 + "&desde=" + desde
                 + "&hasta=" + hasta

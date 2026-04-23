@@ -47,11 +47,28 @@
                                     <input type="date" class="form-control" id="venta" name="venta"  value="@if (old('venta')){{ old('venta') }}@else{{ (optional($venta)->fecha)?date('Y-m-d', strtotime($venta->fecha)):'' }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-2">
                                 <div class="form-group">
-                                    <label for="modelo">Modelo</label>
-                                    <input type="text" class="form-control" id="modelo" name="modelo"
-                                           value="{{ old('modelo', optional(optional($venta)->unidad)->producto->modelo->nombre ?? '') }}" required>
+                                    <label for="marca_id">Marca</label>
+
+                                    <select name="marca_id" class="form-control js-example-basic-single" required>
+
+
+                                            @foreach($marcas as $marcaId => $marca)
+                                                <option value="{{ $marcaId }}" {{ old('marca_id', optional(optional($venta)->unidad)->producto->marca_id ?? '') == $marcaId ? 'selected' : '' }}>{{ $marca }}</option>
+                                            @endforeach
+                                    </select>
+
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="form-group"><label for="modelo_id">Modelo</label>
+
+                                    <select name="modelo_id" class="form-control js-example-basic-single" required>
+                                        @foreach($modelos as $modeloId => $modelo)
+                                            <option value="{{ $modeloId }}" {{ old('modelo_id', optional(optional($venta)->unidad)->producto->modelo_id ?? '') == $modeloId ? 'selected' : '' }}>{{ $modelo }}</option>
+                                        @endforeach
+                                    </select>
 
                                 </div>
                             </div>
@@ -249,9 +266,9 @@
                                     </div>
                                     <div class="col-lg-2">
                                         <div class="form-group">
-                                            <label for="monto">Total</label>
-                                            <input type="text" class="form-control formato-numero" id="monto" name="monto"
-                                                   value="{{ old('monto') }}" readonly>
+                                            <label for="total">Total</label>
+                                            <input type="text" class="form-control formato-numero" id="total" name="total"
+                                                   value="{{ old('total') }}" readonly>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">
@@ -821,7 +838,7 @@
                 var manoDeObra = AutoNumeric.getNumericString('#mano_de_obra') || 0;
                 var repuestos  = AutoNumeric.getNumericString('#costo_repuestos') || 0;
                 var total = parseFloat(manoDeObra) + parseFloat(repuestos);
-                AutoNumeric.set('#monto', total);
+                AutoNumeric.set('#total', total);
             });
             // Recalculate payment totals
             function actualizarTotalesPago() {

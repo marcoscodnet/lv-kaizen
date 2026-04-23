@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 
 
 use App\Models\Cliente;
+use App\Models\Marca;
+use App\Models\Modelo;
 use App\Models\Sucursal;
 use App\Models\Servicio;
 use App\Models\Unidad;
@@ -13,6 +15,11 @@ use App\Models\Provincia;
 use App\Models\TipoServicio;
 use App\Models\User;
 use App\Models\Venta;
+use App\Models\Pago;
+use App\Models\Caja;
+use App\Models\MovimientoCaja;
+use App\Models\Concepto;
+use App\Models\Entidad;
 use App\Traits\SanitizesInput;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -53,7 +60,8 @@ class ServicioController extends Controller
         $servicios = Servicio::all();
 
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
-        return view ('servicios.index',compact('servicios','users','sucursals'));
+        $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        return view ('servicios.index',compact('servicios','users','sucursals','marcas'));
     }
 
 
@@ -63,8 +71,9 @@ class ServicioController extends Controller
             'servicios.id',
             'servicios.id',
             'servicios.carga',
+            'marcas.nombre',
+            DB::raw("IFNULL(modelos.nombre, servicios.modelo)"),
             'servicios.motor',
-            'servicios.modelo',
             'servicios.chasis',
             'clientes.nombre',
             'servicios.mecanicos',
@@ -80,6 +89,7 @@ class ServicioController extends Controller
         $busqueda = $request->input('search.value');
         $user_id = $request->input('user_id');
         $sucursal_id = $request->input('sucursal_id');
+        $marca_id = $request->input('marca_id');
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
         // Query base
@@ -87,8 +97,10 @@ class ServicioController extends Controller
             'servicios.id as id',
             'servicios.id as nro',
             'servicios.carga',
+            'marcas.nombre as marca',
+            DB::raw("IFNULL(modelos.nombre, servicios.modelo) as modelo"),
             'servicios.motor',
-            'servicios.modelo',
+
             'servicios.chasis',
             'clientes.nombre as cliente',
             'servicios.mecanicos',
@@ -102,6 +114,8 @@ class ServicioController extends Controller
             ->leftJoin('tipo_servicios', 'servicios.tipo_servicio_id', '=', 'tipo_servicios.id')
             ->leftJoin('sucursals', 'servicios.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
+            ->leftJoin('marcas', 'servicios.marca_id', '=', 'marcas.id')
+            ->leftJoin('modelos', 'servicios.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
 
 
@@ -109,7 +123,9 @@ class ServicioController extends Controller
             $query->where('servicios.sucursal_id', $sucursal_id);
         }
 
-
+        if (!empty($marca_id) && $marca_id != '-1') {
+            $query->where('servicios.marca_id', $marca_id);
+        }
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('servicios.user_id', $user_id);
@@ -290,7 +306,9 @@ class ServicioController extends Controller
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->pluck('nombre', 'id')->prepend('', '');
-        return view('servicios.registrar', compact('sucursals', 'venta', 'provincias', 'tipos', 'entidads'));
+        $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        return view('servicios.registrar', compact('sucursals', 'venta', 'provincias', 'tipos', 'entidads','marcas','modelos'));
     }
 
     public function store(Request $request)
@@ -300,7 +318,8 @@ class ServicioController extends Controller
 
         $rules = [
             'venta' => 'nullable|date',
-            'modelo' => 'required',
+            'modelo_id' => 'required',
+            'marca_id' => 'required',
             'motor' => 'required',
             'chasis' => 'required',
             'year' => 'required',
@@ -310,6 +329,7 @@ class ServicioController extends Controller
             'tipo_servicio_id' => 'required',
             'ingreso' => 'required|date_format:d/m/Y H:i:s',
             'entrega' => 'required|date',
+            'mano_de_obra' => 'required|numeric|min:0',
         ];
 
 
@@ -318,6 +338,8 @@ class ServicioController extends Controller
 
             'year.required' => 'El año es obligatorio.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
+            'marca_id.required' => 'Debe seleccionar una marca.',
+            'modelo_id.required' => 'Debe seleccionar un modelo.',
             'cliente_id.required' => 'Debe seleccionar un cliente.',
             'tipo_servicio_id.required' => 'Debe seleccionar un tipo.',
             'ingreso.required' => 'La fecha de ingreso es obligatoria.',
@@ -389,7 +411,7 @@ class ServicioController extends Controller
                     $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
 
                     $entidad = Entidad::find($entidadId);
-                    if ($entidad && $entidad->tangible && $pago->pagado > 0) {
+                    if ($entidad && $entidad->tangible && $pago->monto > 0) {
                         MovimientoCaja::create([
                             'caja_id'    => $cajaAbierta->id,
                             'concepto_id'=> $concepto->id,
@@ -437,8 +459,10 @@ class ServicioController extends Controller
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->pluck('nombre', 'id')->prepend('', '');
+        $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos', 'entidads'));
+        return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos', 'entidads','modelos','marcas'));
     }
 
     public function update(Request $request, $id)
@@ -448,7 +472,8 @@ class ServicioController extends Controller
 
         $rules = [
             'venta' => 'nullable|date',
-            'modelo' => 'required',
+            'modelo_id' => 'required',
+            'marca_id' => 'required',
             'motor' => 'required',
             'chasis' => 'required',
             'year' => 'required',
@@ -458,6 +483,7 @@ class ServicioController extends Controller
             'tipo_servicio_id' => 'required',
             'ingreso' => 'required|date_format:d/m/Y H:i:s',
             'entrega' => 'required|date',
+            'mano_de_obra' => 'required|numeric|min:0',
         ];
 
 
@@ -466,6 +492,8 @@ class ServicioController extends Controller
 
             'year.required' => 'El año es obligatorio.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
+            'marca_id.required' => 'Debe seleccionar una marca.',
+            'modelo_id.required' => 'Debe seleccionar un modelo.',
             'cliente_id.required' => 'Debe seleccionar un cliente.',
             'tipo_servicio_id.required' => 'Debe seleccionar un tipo.',
             'ingreso.required' => 'La fecha de ingreso es obligatoria.',
@@ -506,7 +534,7 @@ class ServicioController extends Controller
             $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
             $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
             $servicio->update($input);
-            // Replace all payments on update
+
             // Replace all payments on update
             Pago::where('servicio_id', $servicio->id)->delete();
 
@@ -539,14 +567,14 @@ class ServicioController extends Controller
                     $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
 
                     $entidad = Entidad::find($entidadId);
-                    if ($entidad && $entidad->tangible && $pago->pagado > 0) {
+                    if ($entidad && $entidad->tangible && $pago->monto > 0) {
                         MovimientoCaja::create([
                             'caja_id'    => $cajaAbierta->id,
                             'concepto_id'=> $concepto->id,
                             'entidad_id' => $entidad->id,
                             'venta_id'   => null,
                             'tipo'       => 'Ingreso',
-                            'monto'      => $pago->pagado,
+                            'monto'      => $pago->monto,
                             'acreditado' => $entidad->tangible,
                             'fecha'      => now(),
                             'user_id'    => auth()->id(),
@@ -649,8 +677,9 @@ class ServicioController extends Controller
             'servicios.id',
             'servicios.id',
             'servicios.carga',
+            'marcas.nombre',
+            DB::raw("IFNULL(modelos.nombre, servicios.modelo)"),
             'servicios.motor',
-            'servicios.modelo',
             'servicios.chasis',
             'clientes.nombre',
             'servicios.mecanicos',
@@ -663,12 +692,17 @@ class ServicioController extends Controller
 
         $busqueda = $request->search;
         $user_id = $request->user_id;
-        $sucursal_id = $request->sucursdal_id;
+        $sucursal_id = $request->sucursal_id;
+        $marca_id = $request->marca_id;
         $fechaDesde = $request->desde;
         $fechaHasta = $request->hasta;
 
         $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
             ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        $marcaNombre = ($marca_id && $marca_id != -1)
+            ? (Marca::find($marca_id)->nombre ?? '—')
             : 'Todas';
 
         $userNombre = ($user_id && $user_id != -1)
@@ -681,7 +715,8 @@ class ServicioController extends Controller
         $query = Servicio::select(
             'servicios.id as id',
             'servicios.id as nro',
-            'servicios.carga',
+            'marcas.nombre as marca',
+            DB::raw("IFNULL(modelos.nombre, servicios.modelo) as modelo"),
             'servicios.motor',
             'servicios.modelo',
             'servicios.chasis',
@@ -697,6 +732,8 @@ class ServicioController extends Controller
             ->leftJoin('tipo_servicios', 'servicios.tipo_servicio_id', '=', 'tipo_servicios.id')
             ->leftJoin('sucursals', 'servicios.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
+            ->leftJoin('marcas', 'servicios.marca_id', '=', 'marcas.id')
+            ->leftJoin('modelos', 'servicios.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
 
 
@@ -704,7 +741,9 @@ class ServicioController extends Controller
             $query->where('servicios.sucursal_id', $sucursal_id);
         }
 
-
+        if (!empty($marca_id) && $marca_id != '-1') {
+            $query->where('servicios.marca_id', $marca_id);
+        }
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('servicios.user_id', $user_id);
@@ -746,19 +785,22 @@ class ServicioController extends Controller
         $sheet->setCellValue('A2', 'Vendedor:');
         $sheet->setCellValue('B2', $userNombre);
 
-        $sheet->setCellValue('A3', 'Desde:');
-        $sheet->setCellValue('B3', $fechaDesde
+        $sheet->setCellValue('A3', 'Marca:');
+        $sheet->setCellValue('B3', $marcaNombre);
+
+        $sheet->setCellValue('A4', 'Desde:');
+        $sheet->setCellValue('B4', $fechaDesde
             ? \Carbon\Carbon::parse($fechaDesde)->format('d/m/Y')
             : '—');
 
-        $sheet->setCellValue('A4', 'Hasta:');
-        $sheet->setCellValue('B4', $fechaHasta
+        $sheet->setCellValue('A5', 'Hasta:');
+        $sheet->setCellValue('B5', $fechaHasta
             ? \Carbon\Carbon::parse($fechaHasta)->format('d/m/Y')
             : '—');
 
 
-        $sheet->setCellValue('A5', 'Búsqueda:');
-        $sheet->setCellValue('B5', $busqueda ?: '—');
+        $sheet->setCellValue('A6', 'Búsqueda:');
+        $sheet->setCellValue('B6', $busqueda ?: '—');
 
         // Espacio antes de la tabla
         $startRow = 5;
@@ -767,7 +809,7 @@ class ServicioController extends Controller
         // ENCABEZADOS DE LA TABLA
         // ------------------------------
         $headers = [
-            "Nro.", "Fecha", "Nro. Motor", "Modelo",
+            "Nro.", "Fecha", "Marca", "Modelo", "Nro. Motor",
             "Chasis", "Cliente", "Técnico", "Monto", "Servicio", "Cerrado", "Sucursal", "Vendedor"
         ];
 
@@ -790,16 +832,18 @@ class ServicioController extends Controller
                     ? \Carbon\Carbon::parse($p->carga)->format('d/m/Y')
                     : '—'
             );
-            $sheet->setCellValue("C{$row}", $p->motor);
+            $sheet->setCellValue("C{$row}", $p->marca);
             $sheet->setCellValue("D{$row}", $p->modelo);
-            $sheet->setCellValue("E{$row}", $p->chasis);
-            $sheet->setCellValue("F{$row}", $p->cliente);
-            $sheet->setCellValue("G{$row}", $p->mecanicos);
-            $sheet->setCellValue("H{$row}", $p->monto);
-            $sheet->setCellValue("I{$row}", $p->tipo_servicio);
-            $sheet->setCellValue("J{$row}", $p->pagado);
-            $sheet->setCellValue("K{$row}", $p->sucursal_nombre);
-            $sheet->setCellValue("L{$row}", $p->usuario_nombre);
+            $sheet->setCellValue("E{$row}", $p->motor);
+
+            $sheet->setCellValue("F{$row}", $p->chasis);
+            $sheet->setCellValue("G{$row}", $p->cliente);
+            $sheet->setCellValue("H{$row}", $p->mecanicos);
+            $sheet->setCellValue("I{$row}", $p->monto);
+            $sheet->setCellValue("J{$row}", $p->tipo_servicio);
+            $sheet->setCellValue("K{$row}", $p->pagado);
+            $sheet->setCellValue("L{$row}", $p->sucursal_nombre);
+            $sheet->setCellValue("M{$row}", $p->usuario_nombre);
             $row++;
         }
 
@@ -834,8 +878,9 @@ class ServicioController extends Controller
             'servicios.id',
             'servicios.id',
             'servicios.carga',
+            'marcas.nombre',
+            DB::raw("IFNULL(modelos.nombre, servicios.modelo)"),
             'servicios.motor',
-            'servicios.modelo',
             'servicios.chasis',
             'clientes.nombre',
             'servicios.mecanicos',
@@ -848,13 +893,18 @@ class ServicioController extends Controller
 
         $busqueda = $request->search;
         $user_id = $request->user_id;
-        $sucursal_id = $request->sucursdal_id;
+        $sucursal_id = $request->sucursal_id;
+        $marca_id = $request->marca_id;
         $fechaDesde = $request->desde;
         $fechaHasta = $request->hasta;
 
 
         $sucursalNombre = ($sucursal_id && $sucursal_id != -1)
             ? (Sucursal::find($sucursal_id)->nombre ?? '—')
+            : 'Todas';
+
+        $marcaNombre = ($marca_id && $marca_id != -1)
+            ? (Marca::find($marca_id)->nombre ?? '—')
             : 'Todas';
 
         // ===============================
@@ -879,8 +929,9 @@ class ServicioController extends Controller
             'servicios.id as id',
             'servicios.id as nro',
             'servicios.carga',
+            'marcas.nombre as marca',
+            DB::raw("IFNULL(modelos.nombre, servicios.modelo) as modelo"),
             'servicios.motor',
-            'servicios.modelo',
             'servicios.chasis',
             'clientes.nombre as cliente',
             'servicios.mecanicos',
@@ -894,6 +945,8 @@ class ServicioController extends Controller
             ->leftJoin('tipo_servicios', 'servicios.tipo_servicio_id', '=', 'tipo_servicios.id')
             ->leftJoin('sucursals', 'servicios.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
+            ->leftJoin('marcas', 'servicios.marca_id', '=', 'marcas.id')
+            ->leftJoin('modelos', 'servicios.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
 
 
@@ -901,6 +954,9 @@ class ServicioController extends Controller
             $query->where('servicios.sucursal_id', $sucursal_id);
         }
 
+        if (!empty($marca_id) && $marca_id != '-1') {
+            $query->where('servicios.marca_id', $marca_id);
+        }
 
 
         if (!empty($user_id) && $user_id != '-1') {
@@ -932,6 +988,7 @@ class ServicioController extends Controller
             'busqueda' => $busqueda,
             'usuarioFiltrado' => $usuarioFiltrado,
             'sucursalNombre' => $sucursalNombre,
+            'marcaNombre' => $marcaNombre,
             'fechaDesde' => $fechaDesde,
             'fechaHasta' => $fechaHasta,
         ];

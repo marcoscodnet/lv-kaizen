@@ -35,12 +35,30 @@
                                     <input type="date" class="form-control" id="venta" name="venta"  value="@if (old('venta')){{ old('venta') }}@else{{ (optional($servicio)->venta)?date('Y-m-d', strtotime($servicio->venta)):'' }}@endif">
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-2">
                                 <div class="form-group">
-                                    <label for="modelo">Modelo</label>
-                                    <input type="text" class="form-control" id="modelo" name="modelo"
-                                           value="{{ old('modelo', $servicio->modelo) }}" required>
 
+                                    <label for="marca_id">Marca</label>
+
+                                    <select name="marca_id" class="form-control js-example-basic-single" required>
+
+
+                                        @foreach($marcas as $marcaId => $marca)
+                                            <option value="{{ $marcaId }}" {{ old('marca_id', $servicio->marca_id) == $marcaId ? 'selected' : '' }}>{{ $marca }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="form-group">
+
+                                    <label for="modelo_id">Modelo</label>
+
+                                    <select name="modelo_id" class="form-control js-example-basic-single" required>
+                                        @foreach($modelos as $modeloId => $modelo)
+                                            <option value="{{ $modeloId }}" {{ old('modelo_id', $servicio->modelo_id) == $modeloId ? 'selected' : '' }}>{{ $modelo }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -238,9 +256,9 @@
 
                                     <div class="col-lg-2">
                                         <div class="form-group">
-                                            <label for="monto">Total</label>
-                                            <input type="text" class="form-control formato-numero" id="monto" name="monto"
-                                                   value="{{ old('monto', $servicio->monto) }}" readonly>
+                                            <label for="total">Total</label>
+                                            <input type="text" class="form-control formato-numero" id="total" name="total"
+                                                   value="{{ old('total', $servicio->monto) }}" readonly>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">
@@ -292,6 +310,7 @@
                                         {{-- En edit, cargar pagos existentes --}}
                                         @isset($servicio)
                                             @foreach($servicio->pagos as $i => $pago)
+
                                                 <div class="card p-3 mb-3 pago-item">
                                                     <div class="row">
                                                         <div class="col-md-3">
@@ -312,7 +331,7 @@
                                                         <div class="col-md-2">
                                                             <label class="labelFechaPago">Fecha Pago</label>
                                                             <input type="date" name="fecha_pago[]" class="form-control"
-                                                                   value="{{ old('fecha_pago.'.$i, optional($pago->fecha_pago)->format('Y-m-d')) }}" required>
+                                                                   value="{{ old('fecha_pago.'.$i, $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('Y-m-d') : '') }}" required>
                                                         </div>
                                                         <div class="col-md-2">
                                                             <label>Acreditado</label>
@@ -322,7 +341,7 @@
                                                         <div class="col-md-2">
                                                             <label>Fecha Contadora</label>
                                                             <input type="date" name="contadora[]" class="form-control"
-                                                                   value="{{ old('contadora.'.$i, optional($pago->contadora)->format('Y-m-d')) }}">
+                                                                   value="{{ old('contadora.'.$i, $pago->contadora ? \Carbon\Carbon::parse($pago->contadora)->format('Y-m-d') : '') }}">
                                                         </div>
                                                     </div>
                                                     <div class="row mt-2">
@@ -784,7 +803,7 @@
             $('#mano_de_obra').on('change', function () {
                 var manoDeObra = parseFloat(AutoNumeric.getNumericString('#mano_de_obra') || 0);
                 var repuestos  = parseFloat(AutoNumeric.getNumericString('#costo_repuestos') || 0);
-                AutoNumeric.set('#monto', manoDeObra + repuestos);
+                AutoNumeric.set('#total', manoDeObra + repuestos);
             });
 
             // Recalculate payment totals

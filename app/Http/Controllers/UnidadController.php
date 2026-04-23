@@ -47,7 +47,8 @@ class UnidadController extends Controller
     {
 
         $unidads = Unidad::all();
-        return view ('unidads.index',compact('unidads'));
+        $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        return view ('unidads.index',compact('unidads','marcas'));
     }
 
 
@@ -57,7 +58,9 @@ class UnidadController extends Controller
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
-
+        $marca_id = $request->input('marca_id');
+        $fechaDesde = $request->input('fecha_desde');
+        $fechaHasta = $request->input('fecha_hasta');
         $query = Unidad::select('unidads.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro')
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('sucursals', 'unidads.sucursal_id', '=', 'sucursals.id')
@@ -65,6 +68,24 @@ class UnidadController extends Controller
             ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+
+
+        if (!empty($marca_id) && $marca_id != '-1') {
+            $query->where('productos.marca_id', $marca_id);
+        }
+
+
+
+
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('unidads.ingreso', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('unidads.ingreso', '<=', $fechaHasta);
+        }
 
         // Aplicar la búsqueda
         if (!empty($busqueda)) {
@@ -359,6 +380,17 @@ class UnidadController extends Controller
 
         $busqueda = $request->search;
 
+        $marca_id = $request->marca_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+        $marcaNombre = ($marca_id && $marca_id != -1)
+            ? (Marca::find($marca_id)->nombre ?? '—')
+            : 'Todas';
+
+
+
+
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
@@ -369,6 +401,22 @@ class UnidadController extends Controller
             ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+
+
+        if (!empty($marca_id) && $marca_id != '-1') {
+            $query->where('productos.marca_id', $marca_id);
+        }
+
+
+
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('unidads.ingreso', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('unidads.ingreso', '<=', $fechaHasta);
+        }
 
 
         if (!empty($busqueda)) {
@@ -392,8 +440,23 @@ class UnidadController extends Controller
         // FILTROS
         // ------------------------------
 
-        $sheet->setCellValue('A3', 'Búsqueda:');
-        $sheet->setCellValue('B3', $busqueda ?: '—');
+
+        $sheet->setCellValue('A1', 'Marca:');
+        $sheet->setCellValue('B1', $marcaNombre);
+
+
+
+        $sheet->setCellValue('A2', 'Desde:');
+        $sheet->setCellValue('B2', $fechaDesde
+            ? \Carbon\Carbon::parse($fechaDesde)->format('d/m/Y')
+            : '—');
+
+        $sheet->setCellValue('A3', 'Hasta:');
+        $sheet->setCellValue('B3', $fechaHasta
+            ? \Carbon\Carbon::parse($fechaHasta)->format('d/m/Y')
+            : '—');
+        $sheet->setCellValue('A4', 'Búsqueda:');
+        $sheet->setCellValue('B4', $busqueda ?: '—');
 
         // Espacio antes de la tabla
         $startRow = 5;
@@ -469,6 +532,13 @@ class UnidadController extends Controller
 
         $busqueda = $request->search;
 
+        $marca_id = $request->marca_id;
+        $fechaDesde = $request->desde;
+        $fechaHasta = $request->hasta;
+
+        $marcaNombre = ($marca_id && $marca_id != -1)
+            ? (Marca::find($marca_id)->nombre ?? '—')
+            : 'Todas';
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
@@ -479,6 +549,19 @@ class UnidadController extends Controller
             ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+
+
+        if (!empty($marca_id) && $marca_id != '-1') {
+            $query->where('productos.marca_id', $marca_id);
+        }
+
+        if (!empty($fechaDesde)) {
+            $query->whereDate('unidads.ingreso', '>=', $fechaDesde);
+        }
+
+        if (!empty($fechaHasta)) {
+            $query->whereDate('unidads.ingreso', '<=', $fechaHasta);
+        }
 
 
         if (!empty($busqueda)) {
@@ -494,6 +577,9 @@ class UnidadController extends Controller
         // Pasamos datos a la vista PDF
         $data = [
             'unidads' => $unidads,
+            'marcaNombre' => $marcaNombre,
+            'fechaDesde' => $fechaDesde,
+            'fechaHasta' => $fechaHasta,
             'busqueda' => $busqueda,
         ];
 

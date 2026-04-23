@@ -58,6 +58,7 @@
 <div class="filtros">
     <p><strong>Vendedor:</strong> {{ $usuarioFiltrado }}</p>
     <p><strong>Sucursal:</strong> {{ $sucursalNombre }}</p>
+    <p><strong>Marca:</strong> {{ $marcaNombre }}</p>
     <p><strong>Fecha desde:</strong> {{ $fechaDesde ? date('d/m/Y', strtotime($fechaDesde)) : '—' }}</p>
     <p><strong>Fecha hasta:</strong> {{ $fechaHasta ? date('d/m/Y', strtotime($fechaHasta)) : '—' }}</p>
     <p><strong>Búsqueda:</strong> {{ $busqueda ?: '—' }}</p>
@@ -72,8 +73,9 @@
 
         <th>Nro.</th>
         <th>Fecha</th>
-        <th>Nro. motor</th>
+        <th>Marca</th>
         <th>Modelo</th>
+        <th>Nro. motor</th>
         <th>Chasis</th>
         <th>Cliente</th>
         <th>Técnico</th>
@@ -90,8 +92,10 @@
         <tr>
             <td>{{ $p->id }}</td>
             <td>{{ $p->carga ? date('d/m/Y', strtotime($p->carga)) : '—' }}</td>
-            <td>{{ $p->motor }}</td>
+            <td>{{ $p->marca }}</td>
             <td>{{ $p->modelo }}</td>
+            <td>{{ $p->motor }}</td>
+
             <td>{{ $p->chasis }}</td>
             <td>{{ $p->cliente }}</td>
             <td>{{ $p->mecanicos }}</td>

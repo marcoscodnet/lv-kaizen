@@ -9,7 +9,7 @@ class Servicio extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['carga','tipo_servicio_id','cliente_id','sucursal_id','kilometros','ingreso','observacion','descripcion','diagnostico','repuestos','mecanicos','instrumentos','tiempo','entrega','monto','pagado','modelo','year','chasis','motor','venta','user_id','obra','monto_repuestos','forma'];
+    protected $fillable = ['carga','tipo_servicio_id','cliente_id','sucursal_id','kilometros','ingreso','observacion','descripcion','diagnostico','repuestos','mecanicos','instrumentos','tiempo','entrega','monto','pagado','modelo','year','chasis','motor','venta','user_id','mano_de_obra','costo_repuestos','forma','marca_id','modelo_id'];
 
 
     public function user() {
@@ -44,6 +44,14 @@ class Servicio extends Model
     public function pagos()
     {
         return $this->hasMany(\App\Models\Pago::class, 'servicio_id');
+    }
+
+    public function marca() {
+        return $this->belongsTo('App\Models\Marca', 'marca_id');
+    }
+
+    public function modelo() {
+        return $this->belongsTo('App\Models\Modelo', 'modelo_id');
     }
 
 }

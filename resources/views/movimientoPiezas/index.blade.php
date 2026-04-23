@@ -64,7 +64,7 @@
             <!-- /.form-group -->
         </div>
         <div class="card-body pt-0">
-            <div class="tab-content table-responsive">
+            <div class="tab-content">
                 <table id="example1" class="table table-bordered table-hover fs-10 mb-0">
                     <thead class="bg-200">
                     <tr>
@@ -257,6 +257,24 @@
                     $('select[name="example1_length"]').removeClass('form-control');
                     $('input[type="search"]').removeClass('form-control');
                     $('input[type="search"]').css('width', '70%');
+
+                    // Scroll superior sincronizado
+                    var $container = $('#example1').closest('.dataTables_scrollBody');
+
+                    var $topScroll = $('<div style="overflow-x:auto;overflow-y:hidden;"><div style="height:1px;"></div></div>');
+                    $topScroll.find('div').width($container[0].scrollWidth);
+                    $container.before($topScroll);
+
+                    $topScroll.on('scroll', function () {
+                        $container.scrollLeft($(this).scrollLeft());
+                    });
+                    $container.on('scroll', function () {
+                        $topScroll.scrollLeft($(this).scrollLeft());
+                    });
+
+                    $(window).on('resize', function () {
+                        $topScroll.find('div').width($container[0].scrollWidth);
+                    });
                 }
             });
             $('#filtroUsuario').change(function() {
