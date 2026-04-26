@@ -83,17 +83,6 @@
                             </div>
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
-                                    <input type="hidden" name="activa" value="0">
-                                    <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"
-                                        {{ old('activa', $obj->activa ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="activa">
-                                        activa
-                                    </label>
-                                </div>
-
-                            </div>
-                            <div class="col-12 col-lg-3">
-                                <div class="form-check mt-4">
                                     <input type="hidden" name="cuenta" value="0">
                                     <input class="form-check-input" type="checkbox" id="cuenta" name="cuenta" value="1"
                                         {{ old('cuenta', $obj->cuenta ?? false) ? 'checked' : '' }}>
@@ -103,6 +92,18 @@
                                 </div>
 
                             </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="activa" value="0">
+                                    <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1"
+                                        {{ old('activa', $obj->activa ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="activa">
+                                        activa
+                                    </label>
+                                </div>
+
+                            </div>
+
                         </div>
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
