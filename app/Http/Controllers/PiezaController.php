@@ -104,7 +104,7 @@ class PiezaController extends Controller
             'piezas.descripcion',
             'tipo_piezas.nombre as tipo_pieza',
             'piezas.stock_minimo',
-            'piezas.stock_actual',
+            DB::raw("(SELECT SUM(sp.cantidad) FROM stock_piezas sp WHERE sp.pieza_id = piezas.id) as stock_actual"),
             DB::raw("GROUP_CONCAT(DISTINCT sucursals.nombre ORDER BY sucursals.nombre SEPARATOR ' / ') as sucursal_nombre"),
             DB::raw("GROUP_CONCAT(DISTINCT ubicacions.nombre ORDER BY ubicacions.nombre SEPARATOR ' / ') as ubicacion_nombre"),
             'piezas.observaciones'
@@ -119,7 +119,6 @@ class PiezaController extends Controller
                 'piezas.descripcion',
                 'tipo_piezas.nombre',
                 'piezas.stock_minimo',
-                'piezas.stock_actual',
                 'piezas.observaciones'
             );
 
@@ -290,13 +289,17 @@ class PiezaController extends Controller
     {
         $pieza = Pieza::find($id);
         $tipos = TipoPieza::orderBy('nombre')->pluck('nombre', 'id');
-        // Agrupar stocks por sucursal y sumar la cantidad
+
         $stocksPorSucursal = StockPieza::where('pieza_id', $id)
             ->selectRaw('sucursal_id, SUM(cantidad) as total_cantidad')
             ->groupBy('sucursal_id')
-            ->with('sucursal') // para poder acceder al nombre de la sucursal
+            ->with('sucursal')
             ->get();
-        return view('piezas.show',compact('pieza','tipos','stocksPorSucursal'));
+
+        // Calculate stock from stock_piezas table (single source of truth)
+        $stockActual = $stocksPorSucursal->sum('total_cantidad');
+
+        return view('piezas.show', compact('pieza', 'tipos', 'stocksPorSucursal', 'stockActual'));
     }
 
     /**
@@ -523,7 +526,7 @@ class PiezaController extends Controller
             'piezas.descripcion',
             'tipo_piezas.nombre',
             'piezas.stock_minimo',
-            'piezas.stock_actual',
+            'stock_actual',
             'sucursals.nombre',
             'ubicacions.nombre',
             'piezas.observaciones'
@@ -553,11 +556,12 @@ class PiezaController extends Controller
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
         $query = Pieza::select(
+            'piezas.id',
             'piezas.codigo',
             'piezas.descripcion',
             'tipo_piezas.nombre as tipo_pieza',
             'piezas.stock_minimo',
-            'piezas.stock_actual',
+            DB::raw("(SELECT SUM(sp.cantidad) FROM stock_piezas sp WHERE sp.pieza_id = piezas.id) as stock_actual"),
             DB::raw("GROUP_CONCAT(DISTINCT sucursals.nombre ORDER BY sucursals.nombre SEPARATOR ' / ') as sucursal_nombre"),
             DB::raw("GROUP_CONCAT(DISTINCT ubicacions.nombre ORDER BY ubicacions.nombre SEPARATOR ' / ') as ubicacion_nombre"),
             'piezas.observaciones'
@@ -572,7 +576,6 @@ class PiezaController extends Controller
                 'piezas.descripcion',
                 'tipo_piezas.nombre',
                 'piezas.stock_minimo',
-                'piezas.stock_actual',
                 'piezas.observaciones'
             );
 
@@ -687,7 +690,7 @@ class PiezaController extends Controller
             'piezas.descripcion',
             'tipo_piezas.nombre',
             'piezas.stock_minimo',
-            'piezas.stock_actual',
+            'stock_actual',
             'sucursals.nombre',
             'ubicacions.nombre',
             'piezas.observaciones'
@@ -703,11 +706,12 @@ class PiezaController extends Controller
 
         // MISMA QUERY QUE EN dataTable
         $query = Pieza::select(
+            'piezas.id',
             'piezas.codigo',
             'piezas.descripcion',
             'tipo_piezas.nombre as tipo_pieza',
             'piezas.stock_minimo',
-            'piezas.stock_actual',
+            DB::raw("(SELECT SUM(sp.cantidad) FROM stock_piezas sp WHERE sp.pieza_id = piezas.id) as stock_actual"),
             DB::raw("GROUP_CONCAT(DISTINCT sucursals.nombre ORDER BY sucursals.nombre SEPARATOR ' / ') as sucursal_nombre"),
             DB::raw("GROUP_CONCAT(DISTINCT ubicacions.nombre ORDER BY ubicacions.nombre SEPARATOR ' / ') as ubicacion_nombre"),
             'piezas.observaciones'
@@ -722,7 +726,6 @@ class PiezaController extends Controller
                 'piezas.descripcion',
                 'tipo_piezas.nombre',
                 'piezas.stock_minimo',
-                'piezas.stock_actual',
                 'piezas.observaciones'
             );
 

@@ -130,7 +130,7 @@
 
                             <div class="col-12 col-lg-2">
                                 <label>Stock actual</label>
-                                <input disabled class="form-control" value="{{ $pieza->stock_actual }}">
+                                <input disabled class="form-control" value="{{ $stockActual }}">
                             </div>
                         </div>
 

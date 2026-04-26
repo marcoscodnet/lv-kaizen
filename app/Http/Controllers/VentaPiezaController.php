@@ -156,18 +156,27 @@ class VentaPiezaController extends Controller
     public function create()
     {
 
+        $user = auth()->user();
+        $esAdministrador = $user->hasRole('Administrador');
 
-        $stockPiezas = StockPieza::with(['pieza', 'sucursal'])
+        $stockPiezasQuery = StockPieza::with(['pieza', 'sucursal'])
+            ->where('cantidad', '>', 0); // Only show pieces with available stock
+
+        // Non-admin users see only stock from their own branch
+        if (!$esAdministrador) {
+            $stockPiezasQuery->where('sucursal_id', $user->sucursal_id);
+        }
+        $stockPiezas = $stockPiezasQuery
             ->get()
             ->map(function ($sp) {
                 return [
-                    'id' => $sp->pieza_id,
-                    'codigo' => $sp->pieza->codigo,
-                    'descripcion' => $sp->pieza->descripcion,
-                    'sucursal_id' => $sp->sucursal_id,
+                    'id'              => $sp->pieza_id,
+                    'codigo'          => $sp->pieza->codigo,
+                    'descripcion'     => $sp->pieza->descripcion,
+                    'sucursal_id'     => $sp->sucursal_id,
                     'sucursal_nombre' => $sp->sucursal->nombre,
-                    'costo' => $sp->pieza->costo,
-                    'precio_minimo' => $sp->pieza->precio_minimo,
+                    'costo'           => $sp->pieza->costo,
+                    'precio_minimo'   => $sp->pieza->precio_minimo,
                 ];
             })
             ->unique(function ($item) {
@@ -176,7 +185,6 @@ class VentaPiezaController extends Controller
             ->values();
 
         $stockPiezasJson = $stockPiezas->groupBy('id');
-
 
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
@@ -448,17 +456,26 @@ class VentaPiezaController extends Controller
     {
         $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal'])->findOrFail($id);
 
-        $stockPiezas = StockPieza::with(['pieza', 'sucursal'])
+        $user = auth()->user();
+        $esAdministrador = $user->hasRole('Administrador');
+
+        $stockPiezasQuery = StockPieza::with(['pieza', 'sucursal']);
+
+        // Non-admin users see only stock from their own branch
+        if (!$esAdministrador) {
+            $stockPiezasQuery->where('sucursal_id', $user->sucursal_id);
+        }
+        $stockPiezas = $stockPiezasQuery
             ->get()
             ->map(function ($sp) {
                 return [
-                    'id' => $sp->pieza_id,
-                    'codigo' => $sp->pieza->codigo,
-                    'descripcion' => $sp->pieza->descripcion,
-                    'sucursal_id' => $sp->sucursal_id,
+                    'id'              => $sp->pieza_id,
+                    'codigo'          => $sp->pieza->codigo,
+                    'descripcion'     => $sp->pieza->descripcion,
+                    'sucursal_id'     => $sp->sucursal_id,
                     'sucursal_nombre' => $sp->sucursal->nombre,
-                    'costo' => $sp->pieza->costo,
-                    'precio_minimo' => $sp->pieza->precio_minimo,
+                    'costo'           => $sp->pieza->costo,
+                    'precio_minimo'   => $sp->pieza->precio_minimo,
                 ];
             })
             ->unique(function ($item) {
@@ -484,17 +501,26 @@ class VentaPiezaController extends Controller
     {
         $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal'])->findOrFail($id);
 
-        $stockPiezas = StockPieza::with(['pieza', 'sucursal'])
+        $user = auth()->user();
+        $esAdministrador = $user->hasRole('Administrador');
+
+        $stockPiezasQuery = StockPieza::with(['pieza', 'sucursal']);
+
+        // Non-admin users see only stock from their own branch
+        if (!$esAdministrador) {
+            $stockPiezasQuery->where('sucursal_id', $user->sucursal_id);
+        }
+        $stockPiezas = $stockPiezasQuery
             ->get()
             ->map(function ($sp) {
                 return [
-                    'id' => $sp->pieza_id,
-                    'codigo' => $sp->pieza->codigo,
-                    'descripcion' => $sp->pieza->descripcion,
-                    'sucursal_id' => $sp->sucursal_id,
+                    'id'              => $sp->pieza_id,
+                    'codigo'          => $sp->pieza->codigo,
+                    'descripcion'     => $sp->pieza->descripcion,
+                    'sucursal_id'     => $sp->sucursal_id,
                     'sucursal_nombre' => $sp->sucursal->nombre,
-                    'costo' => $sp->pieza->costo,
-                    'precio_minimo' => $sp->pieza->precio_minimo,
+                    'costo'           => $sp->pieza->costo,
+                    'precio_minimo'   => $sp->pieza->precio_minimo,
                 ];
             })
             ->unique(function ($item) {
