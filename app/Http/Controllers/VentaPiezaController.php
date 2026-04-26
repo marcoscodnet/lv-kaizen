@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Caja;
+use App\Models\Concepto;
+use App\Models\Entidad;
+use App\Models\MovimientoCaja;
 use App\Models\Provincia;
 use App\Models\StockPieza;
 use App\Models\Sucursal;
 use App\Models\User;
 use App\Models\VentaPieza;
 use App\Models\PiezaVentaPieza;
+use App\Models\Pago;
 use App\Http\Controllers\Controller;
 use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
@@ -185,41 +190,158 @@ class VentaPiezaController extends Controller
             ->orderBy('id', 'desc')
             ->get(['id', 'modelo', 'motor', 'chasis']);
 
-        return view('ventaPiezas.create', compact('users', 'stockPiezasJson', 'sucursals', 'provincias', 'serviciosAbiertos'));
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        return view('ventaPiezas.create', compact('users', 'stockPiezasJson', 'sucursals', 'provincias', 'serviciosAbiertos', 'entidads'));
+    }
+
+    private function guardarVenta(Request $request): VentaPieza
+    {
+        $input = $this->sanitizeInput($request->all());
+
+        // Validate stock before saving
+        foreach ($request->pieza_id as $i => $piezaId) {
+            $sucursalId = $request->sucursal_id_item[$i];
+            $cantidadSolicitada = $request->cantidad[$i];
+
+            $stockDisponible = StockPieza::where('pieza_id', $piezaId)
+                ->where('sucursal_id', $sucursalId)
+                ->sum('cantidad');
+
+            if ($stockDisponible < $cantidadSolicitada) {
+                throw new \Exception("No hay suficiente stock de la pieza {$piezaId} en la sucursal seleccionada.");
+            }
+        }
+
+        // Save main sale
+        $venta = new VentaPieza();
+        $venta->user_id    = $input['user_id'];
+        $venta->fecha      = $input['fecha'];
+        $venta->destino    = $input['destino'];
+        $venta->cliente_id = $input['cliente_id'] ?? null;
+        $venta->sucursal_id = $input['sucursal_id'] ?? null;
+        $venta->pedido     = $input['pedido'] ?? null;
+        $venta->servicio_id = ($input['destino'] === 'Taller') ? ($input['servicio_id'] ?? null) : null;
+        $venta->forma      = ($input['destino'] === 'Salón') ? ($input['forma'] ?? null) : null;
+        $venta->save();
+
+        // Save details and discount stock
+        foreach ($request->pieza_id as $i => $piezaId) {
+            $detalle = new PiezaVentaPieza();
+            $detalle->venta_pieza_id = $venta->id;
+            $detalle->pieza_id       = $piezaId;
+            $detalle->sucursal_id    = $request->sucursal_id_item[$i];
+            $detalle->cantidad       = $request->cantidad[$i];
+            $detalle->precio         = $request->precio[$i];
+            $detalle->save();
+
+            $stockPiezas = StockPieza::where('pieza_id', $piezaId)
+                ->where('sucursal_id', $request->sucursal_id_item[$i])
+                ->orderBy('id')
+                ->get();
+
+            $cantidadRestante = $request->cantidad[$i];
+
+            foreach ($stockPiezas as $stockPieza) {
+                if ($stockPieza->cantidad >= $cantidadRestante) {
+                    $stockPieza->cantidad -= $cantidadRestante;
+                    $cantidadRestante = 0;
+                } else {
+                    $cantidadRestante -= $stockPieza->cantidad;
+                    $stockPieza->cantidad = 0;
+                }
+                $stockPieza->save();
+                if ($cantidadRestante <= 0) {
+                    break;
+                }
+            }
+        }
+
+        // Save payments only for Salón
+        if ($input['destino'] === 'Salón' && $request->filled('entidad_id')) {
+            // Check for open cash register
+            $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                ->where('user_id', $request->user_id)
+                ->where('estado', 'Abierta')
+                ->first();
+
+            if (!$cajaAbierta) {
+                throw new \Exception("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.");
+            }
+
+            $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de pieza']);
+
+            foreach ($request->entidad_id as $i => $entidadId) {
+                $pago = new Pago();
+                $pago->venta_pieza_id = $venta->id;
+                $pago->entidad_id     = $entidadId;
+                $pago->monto          = $this->sanitizeInput($request->monto[$i]);
+                $pago->fecha          = $this->sanitizeInput($request->fecha_pago[$i]);
+                $pago->pagado         = $this->sanitizeInput($request->pagado[$i]);
+                $pago->contadora      = $this->sanitizeInput($request->contadora[$i]);
+                $pago->detalle        = $this->sanitizeInput($request->detalle[$i]);
+                $pago->observacion    = $this->sanitizeInput($request->observaciones[$i]);
+                $pago->save();
+
+                $entidad = Entidad::find($entidadId);
+                if ($entidad) {
+
+                    if ($entidad->tangible) {
+                        // Cash payment: impacts physical cash register
+                        MovimientoCaja::create([
+                            'caja_id'        => $cajaAbierta->id,
+                            'concepto_id'    => $conceptoVenta->id,
+                            'entidad_id'     => $entidad->id,
+                            'venta_pieza_id' => $venta->id,
+                            'tipo'           => 'Ingreso',
+                            'monto'       => $pago->pagado ,
+                            'acreditado'     => 1,
+                            'fecha'          => now(),
+                            'user_id'        => $request->user_id,
+                            'referencia'     => $pago->detalle,
+                        ]);
+                    }
+                    if ($entidad->cuenta) {
+                        // Non-tangible payment: impacts entity account only
+                        \App\Models\MovimientoCuenta::create([
+                            'entidad_id' => $entidad->id,
+                            'tipo'       => 'Ingreso',
+                            'monto'      => $pago->monto,
+                            'fecha'      => $pago->fecha,
+                            'concepto'   => $conceptoVenta->nombre,
+                            'venta_pieza_id'   => $venta->id,
+                            'pago_id'    => $pago->id,
+                            'user_id'    => $request->user_id,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $venta;
     }
 
     public function store(Request $request)
     {
         $rules = [
-            'user_id' => 'required',
-            'fecha' => 'required|date',
-            'pieza_id' => 'required|array|min:1',
-            'pieza_id.*' => 'required|distinct',
+            'user_id'      => 'required',
+            'fecha'        => 'required|date',
+            'pieza_id'     => 'required|array|min:1',
+            'pieza_id.*'   => 'required|distinct',
         ];
 
         $messages = [
-            'fecha.required' => 'La fecha es obligatoria.',
-            'pieza_id.required' => 'Debe agregar al menos una pieza.',
-            'pieza_id.min' => 'Debe agregar al menos una pieza.',
-            'pieza_id.*.required' => 'Debe seleccionar una pieza.',
-            'pieza_id.*.distinct' => 'No puede repetir piezas.',
-            'sucursal_id.*.required' => 'Debe seleccionar una sucursal.',
+            'fecha.required'        => 'La fecha es obligatoria.',
+            'pieza_id.required'     => 'Debe agregar al menos una pieza.',
+            'pieza_id.min'          => 'Debe agregar al menos una pieza.',
+            'pieza_id.*.required'   => 'Debe seleccionar una pieza.',
+            'pieza_id.*.distinct'   => 'No puede repetir piezas.',
         ];
 
-        // Validaciones condicionales según destino
         switch ($request->input('destino')) {
             case 'Salón':
                 $rules['cliente_id'] = 'required';
-                /*$rules['documento'] = 'required';
-                $rules['telefono'] = 'required';
-                $rules['moto'] = 'required';*/
-
                 $messages['cliente_id.required'] = 'El campo Cliente es obligatorio.';
-                /*$messages['documento.required'] = 'El campo Documento es obligatorio.';
-                $messages['telefono.required'] = 'El campo Teléfono es obligatorio.';
-                $messages['moto.required'] = 'El campo Moto es obligatorio.';*/
                 break;
-
             case 'Sucursal':
                 $rules['sucursal_id'] = 'required';
                 $messages['sucursal_id.required'] = 'Debe seleccionar una sucursal.';
@@ -229,127 +351,42 @@ class VentaPiezaController extends Controller
         $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
-
-        $input = $this->sanitizeInput($request->all());
 
         DB::beginTransaction();
         try {
-            // Validar stock antes de guardar
-            foreach ($request->pieza_id as $i => $piezaId) {
-                $sucursalId = $request->sucursal_id_item[$i];
-                $cantidadSolicitada = $request->cantidad[$i];
-
-                $stockDisponible = StockPieza::where('pieza_id', $piezaId)
-                    ->where('sucursal_id', $sucursalId)
-                    ->sum('cantidad');
-
-                if ($stockDisponible < $cantidadSolicitada) {
-                    return redirect()->back()
-                        ->withErrors(['cantidad' => "No hay suficiente stock de la pieza {$piezaId} en la sucursal seleccionada."])
-                        ->withInput();
-                }
-            }
-
-            // Guardar venta principal
-            $venta = new VentaPieza();
-            $venta->user_id = $input['user_id'];
-            $venta->fecha = $input['fecha'];
-            $venta->destino = $input['destino'];
-            /*$venta->cliente = $input['cliente'] ?? null;
-            $venta->documento = $input['documento'] ?? null;
-            $venta->telefono = $input['telefono'] ?? null;
-            $venta->moto = $input['moto'] ?? null;*/
-            $venta->cliente_id = $input['cliente_id'] ?? null;
-            $venta->sucursal_id = $input['sucursal_id'] ?? null;
-            $venta->pedido = $input['pedido'] ?? null;
-            $venta->servicio_id = ($input['destino'] === 'Taller') ? ($input['servicio_id'] ?? null) : null;
-            $venta->save();
-
-            // Guardar detalles y descontar stock
-            foreach ($request->pieza_id as $i => $piezaId) {
-                $detalle = new PiezaVentaPieza();
-                $detalle->venta_pieza_id = $venta->id;
-                $detalle->pieza_id = $piezaId;
-                $detalle->sucursal_id = $request->sucursal_id_item[$i];
-                $detalle->cantidad = $request->cantidad[$i];
-                $detalle->precio = $request->precio[$i];
-                $detalle->save();
-
-                $stockPiezas = StockPieza::where('pieza_id', $piezaId)
-                    ->where('sucursal_id', $request->sucursal_id_item[$i])
-                    ->orderBy('id') // opcional, para controlar el orden
-                    ->get();
-
-                $cantidadRestante = $request->cantidad[$i];
-
-                foreach ($stockPiezas as $stockPieza) {
-                    if ($stockPieza->cantidad >= $cantidadRestante) {
-                        $stockPieza->cantidad -= $cantidadRestante;
-                        $cantidadRestante = 0;
-                    } else {
-                        $cantidadRestante -= $stockPieza->cantidad;
-                        $stockPieza->cantidad = 0;
-                    }
-
-                    /*if ($stockPieza->cantidad == 0) {
-                        $stockPieza->delete();
-                    } else {
-                        $stockPieza->save();
-                    }*/
-                    $stockPieza->save();
-                    if ($cantidadRestante <= 0) {
-                        break;
-                    }
-                }
-            }
-
+            $this->guardarVenta($request);
             DB::commit();
             return redirect()->route('ventaPiezas.index')->with('success', 'Registro creado satisfactoriamente');
-
         } catch (\Exception $ex) {
             DB::rollback();
             return redirect()->back()->withErrors(['error' => $ex->getMessage()])->withInput();
         }
     }
 
-
-
     public function update(Request $request, $id)
     {
-        //dd($request);
         $rules = [
-            'user_id' => 'required',
-            'fecha' => 'required|date',
-            'pieza_id' => 'required|array|min:1',
-            'pieza_id.*' => 'required|distinct',
+            'user_id'      => 'required',
+            'fecha'        => 'required|date',
+            'pieza_id'     => 'required|array|min:1',
+            'pieza_id.*'   => 'required|distinct',
         ];
 
         $messages = [
-            'fecha.required' => 'La fecha es obligatoria.',
-            'pieza_id.required' => 'Debe agregar al menos una pieza.',
-            'pieza_id.min' => 'Debe agregar al menos una pieza.',
-            'pieza_id.*.required' => 'Debe seleccionar una pieza.',
-            'pieza_id.*.distinct' => 'No puede repetir piezas.',
+            'fecha.required'        => 'La fecha es obligatoria.',
+            'pieza_id.required'     => 'Debe agregar al menos una pieza.',
+            'pieza_id.min'          => 'Debe agregar al menos una pieza.',
+            'pieza_id.*.required'   => 'Debe seleccionar una pieza.',
+            'pieza_id.*.distinct'   => 'No puede repetir piezas.',
         ];
 
         switch ($request->input('destino')) {
             case 'Salón':
-                /*$rules['cliente'] = 'required';
-                $rules['documento'] = 'required';
-                $rules['telefono'] = 'required';*/
                 $rules['cliente_id'] = 'required';
-                //$rules['moto'] = 'required';
-
                 $messages['cliente_id.required'] = 'El campo Cliente es obligatorio.';
-                /*$messages['documento.required'] = 'El campo Documento es obligatorio.';
-                $messages['telefono.required'] = 'El campo Teléfono es obligatorio.';
-                $messages['moto.required'] = 'El campo Moto es obligatorio.';*/
                 break;
-
             case 'Sucursal':
                 $rules['sucursal_id'] = 'required';
                 $messages['sucursal_id.required'] = 'Debe seleccionar una sucursal.';
@@ -359,29 +396,51 @@ class VentaPiezaController extends Controller
         $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         DB::beginTransaction();
-        $ok = true;
-
         try {
-            // Anulamos la venta anterior
-            $this->destroy($id);
+            // destroy() has its own DB::transaction — call delete logic directly
+            $venta = VentaPieza::with('piezas.pieza', 'piezas.sucursal')->findOrFail($id);
 
-            // Creamos una nueva venta (puede ser necesario adaptar `store()` para recibir `$request` como parámetro)
-            $this->store($request);
+            foreach ($venta->piezas as $pvp) {
+                if ($pvp->cantidad > 0) {
+                    $stock = StockPieza::where('pieza_id', $pvp->pieza_id)
+                        ->where('sucursal_id', $pvp->sucursal_id)
+                        ->first();
+
+                    if ($stock) {
+                        $stock->cantidad += $pvp->cantidad;
+                        $stock->save();
+                    } else {
+                        StockPieza::create([
+                            'pieza_id'       => $pvp->pieza_id,
+                            'sucursal_id'    => $pvp->sucursal_id,
+                            'cantidad'       => $pvp->cantidad,
+                            'remito'         => 'venta anulada',
+                            'ingreso'        => Carbon::now()->toDateString(),
+                            'costo'          => $pvp->pieza->costo ?? 0,
+                            'precio_minimo'  => $pvp->pieza->precio_minimo ?? 0,
+                            'proveedor'      => null,
+                        ]);
+                    }
+                }
+            }
+
+            PiezaVentaPieza::where('venta_pieza_id', $venta->id)->delete();
+            Pago::where('venta_pieza_id', $venta->id)->delete();
+            $venta->delete();
+
+            $this->guardarVenta($request);
+
+            DB::commit();
+            return redirect()->route('ventaPiezas.index')->with('success', 'Registro actualizado correctamente');
 
         } catch (\Exception $ex) {
             DB::rollback();
             return redirect()->back()->with('error', 'Error al actualizar: ' . $ex->getMessage());
         }
-
-        DB::commit();
-
-        return redirect()->route('ventaPiezas.index')->with('success', 'Registro actualizado correctamente');
     }
 
 
@@ -416,7 +475,8 @@ class VentaPiezaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        return view('ventaPiezas.edit', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals','provincias'));
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        return view('ventaPiezas.edit', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals', 'provincias', 'entidads'));
     }
 
 
@@ -494,7 +554,7 @@ class VentaPiezaController extends Controller
 
             // Eliminar relaciones
             PiezaVentaPieza::where('venta_pieza_id', $venta->id)->delete();
-
+            \App\Models\Pago::where('venta_pieza_id', $venta->id)->delete();
             // Eliminar la venta
             $venta->delete();
         });

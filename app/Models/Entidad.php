@@ -14,7 +14,9 @@ class Entidad extends Model
         'ticket',
         'referencia',
         'tangible',
-        'activa'
+        'activa',
+        'forma',
+        'cuenta'
     ];
 
     public function movimientos()

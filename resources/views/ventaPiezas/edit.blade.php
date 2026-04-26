@@ -228,6 +228,11 @@
                                 </div>
 
                             </div>
+                            @include('includes.cobro', [
+                                'entidads'        => $entidads,
+                                'formaActual'     => $ventaPieza->forma ?? '',
+                                'pagosExistentes' => $ventaPieza->pagos ?? collect(),
+                            ])
 
 
                         </div>

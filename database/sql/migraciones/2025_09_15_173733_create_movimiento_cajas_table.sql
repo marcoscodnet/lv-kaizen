@@ -1,0 +1,17 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `cajas` (`id` bigint unsigned not null auto_increment primary key, `sucursal_id` bigint unsigned not null, `user_id` bigint unsigned not null, `apertura` datetime not null, `cierre` datetime null, `inicial` decimal(12, 2) not null default '0', `final` decimal(12, 2) null, `estado` enum('Abierta', 'Cerrada') not null default 'abierta', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `cajas` add constraint `cajas_sucursal_id_foreign` foreign key (`sucursal_id`) references `sucursals` (`id`);
+alter table `cajas` add constraint `cajas_user_id_foreign` foreign key (`user_id`) references `users` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_09_15_172902_create_cajas_table', 22);
+create table `medios` (`id` bigint unsigned not null auto_increment primary key, `nombre` varchar(255) not null, `ticket` tinyint(1) not null default '0', `referencia` tinyint(1) not null default '0', `tangible` tinyint(1) not null default '0', `activo` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+insert into `migrations` (`migration`, `batch`) values ('2025_09_15_173338_create_medios_table', 22);
+create table `movimiento_cajas` (`id` bigint unsigned not null auto_increment primary key, `caja_id` bigint unsigned not null, `venta_id` bigint unsigned null, `concepto_id` bigint unsigned not null, `tipo` enum('Ingreso', 'Egreso') not null, `monto` decimal(12, 2) not null, `medio_id` bigint unsigned not null, `referencia` varchar(255) null, `acreditado` tinyint(1) not null default '1', `fecha` datetime not null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `movimiento_cajas` add constraint `movimiento_cajas_caja_id_foreign` foreign key (`caja_id`) references `cajas` (`id`);
+alter table `movimiento_cajas` add constraint `movimiento_cajas_venta_id_foreign` foreign key (`venta_id`) references `ventas` (`id`);
+alter table `movimiento_cajas` add constraint `movimiento_cajas_concepto_id_foreign` foreign key (`concepto_id`) references `conceptos` (`id`);
+alter table `movimiento_cajas` add constraint `movimiento_cajas_medio_id_foreign` foreign key (`medio_id`) references `medios` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_09_15_173733_create_movimiento_cajas_table', 22);

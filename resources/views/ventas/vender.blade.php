@@ -122,117 +122,10 @@
 
                         </div>
 
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <div class="form-group d-flex align-items-end gap-2">
-                                    <div class="flex-grow-1">
-                                        <label for="forma">Forma de pago</label>
-                                        <select name="forma" id="forma" class="form-control" required>
-                                        <option value="">
-                                            Seleccionar...
-                                        </option>
-                                        @foreach (config('formas') as $key => $label)
-                                            <option value="{{ $key }}" {{ old('forma', $venta->forma ?? '') == $key ? 'selected' : '' }}>
-                                                {{ $label }}
-                                            </option>
-                                        @endforeach
-                                        </select>
-                                    </div>
-
-                                </div>
-                            </div>
-
-
-                        </div>
-<p></p>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div id="cuerpoVenta">
-                                    <div class="row">
-                                        <div class="col text-start" style="margin-bottom: 1%">
-                                            <button type="button" id="addItemPago" class="btn btn-success btn-sm mt-2">
-                                                <i class="fa fa-plus"></i> Agregar pago
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    @php
-                                        $oldPagos = old('entidad_id') ? collect(old('entidad_id'))->keys() : [0];
-                                    @endphp
-
-                                    @foreach($oldPagos as $i)
-                                        <div class="card p-3 mb-3 pago-item">
-                                            <div class="row">
-                                                <div class="col-md-3">
-                                                    <label>Entidad</label>
-                                                    <select name="entidad_id[]" class="form-control js-example-basic-single" required>
-
-                                                        @foreach($entidads as $entidadId => $entidad)
-                                                            <option value="{{ $entidadId }}"
-                                                                {{ old('entidad_id.'.$i) == $entidadId ? 'selected' : '' }}>
-                                                                {{ $entidad }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label>Importe</label>
-                                                    <input type="text" name="monto[]" class="form-control formato-numero"
-                                                           value="{{ old('monto.'.$i) }}" required>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label id="fechaPago">Fecha Pago</label>
-                                                    <input type="date" name="fecha_pago[]" class="form-control"
-                                                           value="{{ old('fecha_pago.'.$i) }}" required>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label>Acreditado</label>
-                                                    <input type="text" name="pagado[]" class="form-control formato-numero"
-                                                           value="{{ old('pagado.'.$i) }}">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <label>Fecha Contadora</label>
-                                                    <input type="date" name="contadora[]" class="form-control"
-                                                           value="{{ old('contadora.'.$i) }}">
-                                                </div>
-                                            </div>
-
-                                            <div class="row mt-2">
-                                                <div class="col-5">
-                                                    <label>Observaciones vendedor</label>
-                                                    <textarea name="detalle[]" class="form-control" rows="2">{{ old('detalle.'.$i) }}</textarea>
-                                                </div>
-                                                <div class="col-5">
-                                                    <label>Observaciones</label>
-                                                    <textarea name="observaciones[]" class="form-control" rows="2">{{ old('observaciones.'.$i) }}</textarea>
-                                                </div>
-                                                <div class="col-md-1 d-flex align-items-end">
-                                                    <button type="button" class="btn btn-danger btn-sm removeItemPago">
-                                                        <i class="fa fa-times"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-
-
-                                </div>
-
-
-                            </div>
-
-
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <label>Importe total</label>
-                                <input type="text" id="totalMonto" name="totalMonto" class="form-control formato-numero" value="0" readonly>
-                            </div>
-                            <div class="col-md-3">
-                                <label>Importe Acreditado</label>
-                                <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control formato-numero" value="0" readonly>
-                            </div>
-                        </div>
+                        @include('includes.cobro', [
+                                'entidads'    => $entidads,
+                                'formaActual' => $venta->forma ?? '',
+                            ])
 
                         {{-- Botones --}}
                         <div class="row mt-3">
@@ -416,30 +309,15 @@
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
-        function actualizarTotales() {
-            let totalMonto = 0;
-            let totalAcreditado = 0;
+        var entidadsData = {!! json_encode($entidads->map(function($e) {
+        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
+    })) !!};
+    </script>
+    <script src="{{ asset('assets/js/cobro.js') }}"></script>
 
-            $('input[name="monto[]"]').each(function() {
-                let val = $(this).val()
-                    .replace(/\./g,'')
-                    .replace(',','.');
-                val = parseFloat(val);
-                if (!isNaN(val)) totalMonto += val;
-            });
 
-            $('input[name="pagado[]"]').each(function() {
-                let val = $(this).val()
-                    .replace(/\./g,'')
-                    .replace(',','.');
-                val = parseFloat(val);
-                if (!isNaN(val)) totalAcreditado += val;
-            });
+    <script>
 
-            // VOLVER a formato-numero usando AutoNumeric
-            AutoNumeric.getAutoNumericElement('#totalMonto').set(totalMonto);
-            AutoNumeric.getAutoNumericElement('#totalAcreditado').set(totalAcreditado);
-        }
 
 
         var CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
@@ -452,40 +330,13 @@
                 decimalPlaces: 2,
                 unformatOnSubmit: true
             });
-            actualizarTotales();
 
-            // Ejecutar al cambiar monto o pagado
-            $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotales);
-
-            // Ejecutar al agregar o eliminar pagos
-            $('body').on('click', '#addItemPago, .removeItemPago', function() {
-                setTimeout(actualizarTotales, 100); // pequeño delay para que el DOM se actualice
+            $('#forma').on('change', function () {
+                $(document).trigger('forma:changed', [$(this).val()]);
             });
+            $(document).trigger('forma:changed', [$('#forma').val()]);
 
-            function toggleDivs() {
-                const valor = $('#forma').val();
 
-                // Ocultar todos
-                $('#cuerpoVenta').hide();
-
-                // Mostrar el que corresponde
-                if (valor !== '') {
-                    if (valor === 'Contado') {
-
-                        $('#fechaPago').html('Fecha de pago');
-                    }
-                    else{
-                        $('#fechaPago').html('Aprobación Crédito');
-                    }
-                    $('#cuerpoVenta').show();
-                }
-            }
-
-            // Ejecutar al cargar por si hay uno preseleccionado
-            toggleDivs();
-
-            // Ejecutar al cambiar
-            $('#forma').on('change', toggleDivs);
             // Inicializar Select2 básico
             $('.js-example-basic-single').each(function () {
                 if ($(this).hasClass("select2-hidden-accessible")) {
@@ -725,75 +576,7 @@
                 $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
             });
 
-            // función que devuelve el bloque de pago
-            function getPagoHtml() {
-                return `
-        <div class="card p-3 mb-3 pago-item">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label>Entidad</label>
-                                                <select name="entidad_id[]" class="form-control js-example-basic-single" required>
 
-                                                    @foreach($entidads as $entidadId => $entidad)
-                <option value="{{ $entidadId }}" {{ old('entidad_id') == $entidadId ? 'selected' : '' }}>
-                                                            {{ $entidad }}
-                </option>
-@endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                                                <label>Importe</label>
-                                                <input type="text" name="monto[]" class="form-control formato-numero" required>
-                                            </div>
-            <div class="col-md-2">
-                <label id="fechaPago"></label>
-                <input type="date" name="fecha_pago[]" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-                <label>Acreditado</label>
-                <input type="text" name="pagado[]" class="form-control formato-numero">
-            </div>
-            <div class="col-md-2">
-                <label>Fecha</label>
-                <input type="date" name="contadora[]" class="form-control">
-            </div>
-
-        </div>
-        <div class="row mt-2">
-            <div class="col-5">
-                <label>Observaciones vendedor</label>
-                <textarea name="detalle[]" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="col-5">
-                <label>Observaciones</label>
-                <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="button" class="btn btn-danger btn-sm removeItemPago"><i class="fa fa-times"></i></button>
-            </div>
-        </div>
-    </div>`;
-            }
-
-            // Agregar pago
-            $('#addItemPago').on('click', function () {
-
-                const $html = $(getPagoHtml()).appendTo('#cuerpoVenta');
-                // select2
-                $html.find('.js-example-basic-single').select2({
-                    language: 'es'
-                });
-
-                // AutoNumeric
-                $html.find('.formato-numero').each(function(){
-                    new AutoNumeric(this, {
-                        digitGroupSeparator: '.',
-                        decimalCharacter: ',',
-                        decimalPlaces: 2,
-                        unformatOnSubmit: true
-                    });
-                });
-            });
 
             // Mostrar/ocultar cónyuge
             function toggleConyuge() {
@@ -813,31 +596,7 @@
             toggleConyuge();
 
 
-            // Eliminar pago
-            $('body').on('click', '.removeItemPago', function () {
-                $(this).closest('.pago-item').remove();
-            });
-            $("#formVenta").on("submit", function(e) {
-                @can('unidad-autorizar')
-                // Preguntar solo si existe el input
-                let autorizadaInput = $("#autorizada");
-                if (autorizadaInput.length && autorizadaInput.val() === "") {
-                    //e.preventDefault(); // primero detenemos el submit
 
-                    // Primera confirmación
-                    if (confirm("¿Desea autorizar la unidad a vender?")) {
-                        // Segunda confirmación
-                        if (confirm("Confirma que desea autorizar la unidad a vender")) {
-                            autorizadaInput.val("1"); // marcar como autorizada
-                        } else {
-                            autorizadaInput.val(""); // no autorizada
-                        }
-                    } else {
-                        autorizadaInput.val(""); // no autorizada
-                    }
-                }
-                @endcan
-            });
         });
     </script>
 

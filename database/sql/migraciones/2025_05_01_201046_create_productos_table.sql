@@ -1,0 +1,11 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `productos` (`id` bigint unsigned not null auto_increment primary key, `tipo_unidad_id` bigint unsigned null, `marca_id` bigint unsigned null, `modelo_id` bigint unsigned null, `color_id` bigint unsigned null, `monto` decimal(10, 2) null, `minimo` int null, `discontinuo` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `productos` add constraint `productos_tipo_unidad_id_foreign` foreign key (`tipo_unidad_id`) references `tipo_unidads` (`id`);
+alter table `productos` add constraint `productos_marca_id_foreign` foreign key (`marca_id`) references `marcas` (`id`);
+alter table `productos` add constraint `productos_modelo_id_foreign` foreign key (`modelo_id`) references `modelos` (`id`);
+alter table `productos` add constraint `productos_color_id_foreign` foreign key (`color_id`) references `colors` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_05_01_201046_create_productos_table', 8);

@@ -1,0 +1,12 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `tipo_piezas` (`id` bigint unsigned not null auto_increment primary key, `nombre` varchar(255) null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+insert into `migrations` (`migration`, `batch`) values ('2025_09_09_092632_create_tipo_piezas_table', 19);
+alter table `piezas` add `tipo_pieza_id` bigint unsigned null;
+alter table `piezas` add constraint `piezas_tipo_pieza_id_foreign` foreign key (`tipo_pieza_id`) references `tipo_piezas` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_09_09_093056_add_tipo_to_piezas_table', 19);
+alter table `stock_piezas` add `inicial` int null;
+insert into `migrations` (`migration`, `batch`) values ('2025_09_09_125759_add_inicial_to_stock_piezas_table', 19);

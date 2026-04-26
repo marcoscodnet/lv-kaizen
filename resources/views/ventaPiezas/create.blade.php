@@ -209,6 +209,10 @@
                                     </button>
                                 </div>
                             </div>
+                            @include('includes.cobro', [
+                                'entidads'    => $entidads,
+                                'formaActual' => '',
+                            ])
 
 
                         </div>
@@ -457,6 +461,12 @@
     <script src="{{ asset('assets/js/confirm-exit.js') }}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
+    <script>
+        var entidadsData = {!! json_encode($entidads->map(function($e) {
+        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
+    })) !!};
+    </script>
+    <script src="{{ asset('assets/js/cobro.js') }}"></script>
 
     <!-- page script -->
     <script>
@@ -470,6 +480,10 @@
                 decimalPlaces: 2,
                 unformatOnSubmit: true
             });
+
+            $('#forma').on('change', function () {
+                $(document).trigger('forma:changed', [$(this).val()]);
+            });
             function toggleDivs() {
                 const valor = $('#destino').val();
 
@@ -479,6 +493,7 @@
                 // Mostrar el que corresponde
                 if (valor === 'Salón') {
                     $('#divSalon').show();
+                    $(document).trigger('forma:changed', [$('#forma').val()]);
                 } else if (valor === 'Sucursal') {
                     $('#divSucursal').show();
                 } else if (valor === 'Taller') {

@@ -55,8 +55,8 @@ class EntidadController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'nombre' => 'required'
-
+            'nombre' => 'required',
+            'forma' => 'required'
         ]);
 
 
@@ -107,8 +107,8 @@ class EntidadController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'nombre' => 'required'
-
+            'nombre' => 'required',
+            'forma' => 'required'
         ]);
 
         $input = $this->sanitizeInput($request->all());

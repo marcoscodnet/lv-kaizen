@@ -252,7 +252,7 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = Entidad::orderBy('nombre')->where('activa',1)->pluck('nombre', 'id')->prepend('', '');
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
         return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
     }
 
@@ -367,19 +367,36 @@ class VentaController extends Controller
                 $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
 
                 $entidad = Entidad::find($entidadId);
-                if ($entidad && $entidad->tangible && $detalle->pagado > 0) {
-                    MovimientoCaja::create([
-                        'caja_id' => $cajaAbierta->id,
-                        'concepto_id' => $conceptoVenta->id,
-                        'entidad_id' => $entidad->id,
-                        'venta_id' => $venta->id,
-                        'tipo' => 'Ingreso',
-                        'monto' => $detalle->pagado,
-                        'acreditado' => $entidad->tangible,
-                        'fecha' => now(),
-                        'user_id' => $request->user_id,
-                        'referencia' => $detalle->detalle,
-                    ]);
+                if ($entidad) {
+                    if ($entidad->tangible) {
+                        // Cash payment: impacts physical cash register
+                        MovimientoCaja::create([
+                            'caja_id'     => $cajaAbierta->id,
+                            'concepto_id' => $conceptoVenta->id,
+                            'entidad_id'  => $entidad->id,
+                            'venta_id'    => $venta->id,
+                            'tipo'        => 'Ingreso',
+                            'monto'       => $detalle->pagado,
+                            'acreditado'  => 1,
+                            'fecha'       => now(),
+                            'user_id'     => $request->user_id,
+                            'referencia'  => $detalle->detalle,
+                        ]);
+                    }
+
+                    if ($entidad->cuenta) {
+                        // Account payment: impacts entity account
+                        \App\Models\MovimientoCuenta::create([
+                            'entidad_id' => $entidad->id,
+                            'tipo'       => 'Ingreso',
+                            'monto'      => $detalle->monto,
+                            'fecha'      => $detalle->fecha,
+                            'concepto'   => $conceptoVenta->nombre,
+                            'venta_id'   => $venta->id,
+                            'pago_id'    => $detalle->id,
+                            'user_id'    => $request->user_id,
+                        ]);
+                    }
                 }
 
             }
@@ -425,7 +442,7 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = Entidad::orderBy('nombre')->where('activa',1)->pluck('nombre', 'id')->prepend('', '');
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
 
         return view('ventas.edit', compact('venta', 'users', 'sucursals', 'entidads','provincias'));
     }
@@ -531,19 +548,35 @@ class VentaController extends Controller
                 $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
 
                 $entidad = Entidad::find($entidadId);
-                if ($entidad && $entidad->tangible && $detalle->pagado > 0) {
-                    MovimientoCaja::create([
-                        'caja_id' => $cajaAbierta->id,
-                        'concepto_id' => $conceptoVenta->id,
-                        'entidad_id' => $entidad->id,
-                        'venta_id' => $venta->id,
-                        'tipo' => 'Ingreso',
-                        'monto' => $detalle->pagado,
-                        'acreditado' => $entidad->tangible,
-                        'fecha' => now(),
-                        'user_id' => $request->user_id,
-                        'referencia' => $detalle->detalle,
-                    ]);
+                if ($entidad) {
+                    if ($entidad->tangible) {
+                        // Cash payment: impacts physical cash register
+                        MovimientoCaja::create([
+                            'caja_id' => $cajaAbierta->id,
+                            'concepto_id' => $conceptoVenta->id,
+                            'entidad_id' => $entidad->id,
+                            'venta_id' => $venta->id,
+                            'tipo' => 'Ingreso',
+                            'monto' => $detalle->pagado,
+                            'acreditado' => 1,
+                            'fecha' => now(),
+                            'user_id' => $request->user_id,
+                            'referencia' => $detalle->detalle,
+                        ]);
+                    }
+                    if ($entidad->cuenta) {
+                        // Non-tangible payment: impacts entity account only
+                        \App\Models\MovimientoCuenta::create([
+                            'entidad_id' => $entidad->id,
+                            'tipo' => 'Ingreso',
+                            'monto' => $detalle->monto,
+                            'fecha' => $detalle->fecha,
+                            'concepto' => $conceptoVenta->nombre,
+                            'venta_id' => $venta->id,
+                            'pago_id' => $detalle->id,
+                            'user_id' => $request->user_id,
+                        ]);
+                    }
                 }
             }
 

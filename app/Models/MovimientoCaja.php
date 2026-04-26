@@ -12,6 +12,8 @@ class MovimientoCaja extends Model
     protected $fillable = [
         'caja_id',
         'venta_id',
+        'venta_pieza_id',
+        'servicio_id',
         'concepto_id',
         'tipo',
         'monto',

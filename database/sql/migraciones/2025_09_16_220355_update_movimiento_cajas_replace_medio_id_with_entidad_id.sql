@@ -1,0 +1,12 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+alter table `entidads` add `ticket` tinyint(1) not null default '0', add `referencia` tinyint(1) not null default '0', add `tangible` tinyint(1) not null default '0';
+insert into `migrations` (`migration`, `batch`) values ('2025_09_16_220158_add_ticket_referencia_tangible_to_entidades_table', 23);
+alter table `movimiento_cajas` add `entidad_id` bigint unsigned null after `caja_id`;
+alter table `movimiento_cajas` drop foreign key `movimiento_cajas_medio_id_foreign`;
+alter table `movimiento_cajas` drop `medio_id`;
+alter table `movimiento_cajas` add constraint `movimiento_cajas_entidad_id_foreign` foreign key (`entidad_id`) references `entidads` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_09_16_220355_update_movimiento_cajas_replace_medio_id_with_entidad_id', 23);

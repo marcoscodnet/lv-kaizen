@@ -1,0 +1,10 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `movimientos` (`id` bigint unsigned not null auto_increment primary key, `sucursal_origen_id` bigint unsigned null, `sucursal_destino_id` bigint unsigned null, `user_id` bigint unsigned not null, `fecha` datetime null, `observaciones` text null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `movimientos` add constraint `movimientos_sucursal_origen_id_foreign` foreign key (`sucursal_origen_id`) references `sucursals` (`id`);
+alter table `movimientos` add constraint `movimientos_sucursal_destino_id_foreign` foreign key (`sucursal_destino_id`) references `sucursals` (`id`);
+alter table `movimientos` add constraint `movimientos_user_id_foreign` foreign key (`user_id`) references `users` (`id`) on delete cascade;
+insert into `migrations` (`migration`, `batch`) values ('2025_05_14_180418_create_movimientos_table', 12);

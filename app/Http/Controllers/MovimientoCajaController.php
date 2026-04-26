@@ -32,7 +32,7 @@ class MovimientoCajaController extends Controller
     {
         $caja = Caja::findOrFail($caja_id);
         $conceptos = Concepto::where('activo', true)->get();
-        $entidads = Entidad::where('activa', true)->get();
+        $entidads = Entidad::where('activa', true)->where('tangible', true)->get();
 
         return view('movimiento_cajas.create', compact('caja', 'conceptos', 'entidads'));
     }
@@ -88,7 +88,7 @@ class MovimientoCajaController extends Controller
         }
 
         $conceptos = Concepto::where('activo', true)->get();
-        $entidads = Entidad::where('activa', true)->get();
+        $entidads = Entidad::where('activa', true)->where('tangible', true)->get();
 
         return view('movimiento_cajas.edit', compact('mov', 'conceptos', 'entidads'));
     }

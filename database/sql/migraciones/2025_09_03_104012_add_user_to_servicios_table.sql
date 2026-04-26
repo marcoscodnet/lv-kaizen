@@ -1,0 +1,13 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `servicios` (`id` bigint unsigned not null auto_increment primary key, `carga` datetime null, `tipo_servicio_id` bigint unsigned null, `cliente_id` bigint unsigned null, `sucursal_id` bigint unsigned null, `kilometros` int null, `ingreso` datetime null, `observacion` text null, `descripcion` text null, `diagnostico` text null, `repuestos` text null, `mecanicos` text null, `instrumentos` text null, `tiempo` varchar(255) null, `entrega` datetime null, `monto` decimal(10, 2) null, `pagado` tinyint(1) not null default '0', `modelo` varchar(255) null, `year` varchar(10) null, `chasis` varchar(50) null, `motor` varchar(50) null, `venta` datetime null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `servicios` add constraint `servicios_tipo_servicio_id_foreign` foreign key (`tipo_servicio_id`) references `tipo_servicios` (`id`);
+alter table `servicios` add constraint `servicios_cliente_id_foreign` foreign key (`cliente_id`) references `clientes` (`id`);
+alter table `servicios` add constraint `servicios_sucursal_id_foreign` foreign key (`sucursal_id`) references `sucursals` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_09_03_084746_create_servicios_table', 17);
+alter table `servicios` add `user_id` bigint unsigned not null;
+alter table `servicios` add constraint `servicios_user_id_foreign` foreign key (`user_id`) references `users` (`id`) on delete cascade;
+insert into `migrations` (`migration`, `batch`) values ('2025_09_03_104012_add_user_to_servicios_table', 17);

@@ -305,7 +305,7 @@ class ServicioController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->pluck('nombre', 'id')->prepend('', '');
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
         $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('servicios.registrar', compact('sucursals', 'venta', 'provincias', 'tipos', 'entidads','marcas','modelos'));
@@ -314,7 +314,6 @@ class ServicioController extends Controller
     public function store(Request $request)
     {
         //dd($request->all());
-
 
         $rules = [
             'venta' => 'nullable|date',
@@ -370,6 +369,15 @@ class ServicioController extends Controller
         DB::beginTransaction();
         $ok=1;
         try {
+            // Remove payment fields — they are arrays and not columns of servicios table
+            unset($input['monto']);
+            unset($input['entidad_id']);
+            unset($input['pagado']);
+            unset($input['fecha_pago']);
+            unset($input['contadora']);
+            unset($input['detalle']);
+            unset($input['observaciones']);
+
             $input['ingreso']=$request->filled('ingreso')
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $request->ingreso)->format('Y-m-d H:i:s')
                 : null;
@@ -380,7 +388,11 @@ class ServicioController extends Controller
             $input['mano_de_obra']   = $request->input('mano_de_obra', 0);
             $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
             $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
+
+            //dd(array_filter($input, function($v) { return is_array($v); }));
             $servicio = Servicio::create($input);
+            // Temporarily add before the foreach to debug
+
             // Save service payments and impact cash register
             if ($request->filled('entidad_id')) {
                 foreach ($request->entidad_id as $i => $entidadId) {
@@ -389,7 +401,7 @@ class ServicioController extends Controller
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
                     $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
-                    $pago->pagado       = $this->sanitizeInput($request->pagado_monto[$i]);
+                    $pago->pagado       = $this->sanitizeInput($request->pagado[$i]);
                     $pago->contadora    = $this->sanitizeInput($request->contadora[$i]);
                     $pago->detalle      = $this->sanitizeInput($request->detalle[$i]);
                     $pago->observacion  = $this->sanitizeInput($request->observaciones[$i]);
@@ -411,19 +423,36 @@ class ServicioController extends Controller
                     $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
 
                     $entidad = Entidad::find($entidadId);
-                    if ($entidad && $entidad->tangible && $pago->monto > 0) {
-                        MovimientoCaja::create([
-                            'caja_id'    => $cajaAbierta->id,
-                            'concepto_id'=> $concepto->id,
-                            'entidad_id' => $entidad->id,
-                            'venta_id'   => null,
-                            'tipo'       => 'Ingreso',
-                            'monto'      => $pago->pagado,
-                            'acreditado' => $entidad->tangible,
-                            'fecha'      => now(),
-                            'user_id'    => auth()->id(),
-                            'referencia' => $pago->detalle,
-                        ]);
+                    if ($entidad) {
+
+                        if ($entidad->tangible) {
+                            // Cash payment: impacts physical cash register
+                            MovimientoCaja::create([
+                                'caja_id'    => $cajaAbierta->id,
+                                'concepto_id'=> $concepto->id,
+                                'entidad_id' => $entidad->id,
+                                'servicio_id'   => $servicio->id,
+                                'tipo'       => 'Ingreso',
+                                'monto'       => $pago->pagado,
+                                'acreditado' => 1,
+                                'fecha'      => now(),
+                                'user_id'    => auth()->id(),
+                                'referencia' => $pago->detalle,
+                            ]);
+                        }
+                        if ($entidad->cuenta) {
+                            // Non-tangible payment: impacts entity account only
+                            \App\Models\MovimientoCuenta::create([
+                                'entidad_id' => $entidad->id,
+                                'tipo'       => 'Ingreso',
+                                'monto'      => $pago->monto,
+                                'fecha'      => $pago->fecha,
+                                'concepto'   => $concepto->nombre,
+                                'servicio_id'   => $servicio->id,
+                                'pago_id'    => $pago->id,
+                                'user_id'    => $request->user_id,
+                            ]);
+                        }
                     }
                 }
             }
@@ -458,7 +487,7 @@ class ServicioController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->pluck('nombre', 'id')->prepend('', '');
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
         $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
@@ -545,7 +574,7 @@ class ServicioController extends Controller
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
                     $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
-                    $pago->pagado       = $this->sanitizeInput($request->pagado_monto[$i]);
+                    $pago->pagado       = $this->sanitizeInput($request->pagado[$i]);
                     $pago->contadora    = $this->sanitizeInput($request->contadora[$i]);
                     $pago->detalle      = $this->sanitizeInput($request->detalle[$i]);
                     $pago->observacion  = $this->sanitizeInput($request->observaciones[$i]);
@@ -567,19 +596,36 @@ class ServicioController extends Controller
                     $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
 
                     $entidad = Entidad::find($entidadId);
-                    if ($entidad && $entidad->tangible && $pago->monto > 0) {
-                        MovimientoCaja::create([
-                            'caja_id'    => $cajaAbierta->id,
-                            'concepto_id'=> $concepto->id,
-                            'entidad_id' => $entidad->id,
-                            'venta_id'   => null,
-                            'tipo'       => 'Ingreso',
-                            'monto'      => $pago->monto,
-                            'acreditado' => $entidad->tangible,
-                            'fecha'      => now(),
-                            'user_id'    => auth()->id(),
-                            'referencia' => $pago->detalle,
-                        ]);
+                    if ($entidad) {
+
+                        if ($entidad->tangible) {
+                            // Cash payment: impacts physical cash register
+                            MovimientoCaja::create([
+                                'caja_id'    => $cajaAbierta->id,
+                                'concepto_id'=> $concepto->id,
+                                'entidad_id' => $entidad->id,
+                                'servicio_id'   => $servicio->id,
+                                'tipo'       => 'Ingreso',
+                                'monto'       => $entidad->tangible ? $pago->pagado : $pago->monto,
+                                'acreditado' => $entidad->tangible,
+                                'fecha'      => now(),
+                                'user_id'    => auth()->id(),
+                                'referencia' => $pago->detalle,
+                            ]);
+                        }
+                        if ($entidad->cuenta) {
+                            // Non-tangible payment: impacts entity account only
+                            \App\Models\MovimientoCuenta::create([
+                                'entidad_id' => $entidad->id,
+                                'tipo'       => 'Ingreso',
+                                'monto'      => $pago->monto,
+                                'fecha'      => $pago->fecha,
+                                'concepto'   => $concepto->nombre,
+                                'servicio_id'   => $servicio->id,
+                                'pago_id'    => $pago->id,
+                                'user_id'    => $request->user_id,
+                            ]);
+                        }
                     }
                 }
             }
@@ -615,8 +661,13 @@ class ServicioController extends Controller
     public function destroy($id)
     {
 
+        $servicio = Servicio::findOrFail($id);
+        // Elimina las relaciones
+        $servicio->pagos()->delete();
 
-        Servicio::find($id)->delete();
+
+        // Elimina el venta
+        $servicio->delete();
 
         return redirect()->route('servicios.index')
             ->with('success','Servicio eliminado con éxito');

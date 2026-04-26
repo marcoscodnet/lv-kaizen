@@ -1,0 +1,11 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `colors` (`id` bigint unsigned not null auto_increment primary key, `nombre` varchar(191) null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+insert into `migrations` (`migration`, `batch`) values ('2025_04_14_101632_create_colors_table', 2);
+create table `entidads` (`id` bigint unsigned not null auto_increment primary key, `nombre` varchar(255) null, `activa` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+insert into `migrations` (`migration`, `batch`) values ('2025_04_14_113456_create_entidads_table', 2);
+create table `tipo_servicios` (`id` bigint unsigned not null auto_increment primary key, `nombre` varchar(255) null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+insert into `migrations` (`migration`, `batch`) values ('2025_04_14_123254_create_tipo_servicios_table', 2);

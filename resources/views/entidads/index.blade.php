@@ -39,6 +39,7 @@
 
 
                         <th scope="col">Nombre</th>
+                        <th scope="col">Forma</th>
                         <th scope="col">Ticket</th>
                         <th scope="col">Referencia</th>
                         <th scope="col">Tangible</th>
@@ -54,6 +55,7 @@
                         <tr>
 
                             <td>{{ $entidad->nombre }}</td>
+                            <td>{{ $entidad->forma }}</td>
                             <td>{{ $entidad->ticket?'SI':'NO' }}</td>
                             <td>{{ $entidad->referencia?'SI':'NO' }}</td>
                             <td>{{ $entidad->tangible?'SI':'NO' }}</td>

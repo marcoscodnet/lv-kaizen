@@ -1,0 +1,16 @@
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select * from information_schema.tables where table_schema = 'lv_kaizen' and table_name = 'migrations' and table_type = 'BASE TABLE';
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select `migration` from `migrations` order by `batch` asc, `migration` asc;
+select max(`batch`) as aggregate from `migrations`;
+create table `venta_piezas` (`id` bigint unsigned not null auto_increment primary key, `precio` decimal(10, 2) null, `precio_minimo` decimal(10, 2) null, `cliente` varchar(255) null, `documento` varchar(45) null, `telefono` varchar(45) null, `moto` varchar(255) null, `sucursal_id` bigint unsigned null, `pedido` int null, `user_id` bigint unsigned not null, `fecha` datetime null, `descripcion` text null, `destino` enum('Salón', 'Sucursal', 'Taller') null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `venta_piezas` add constraint `venta_piezas_sucursal_id_foreign` foreign key (`sucursal_id`) references `sucursals` (`id`);
+alter table `venta_piezas` add constraint `venta_piezas_user_id_foreign` foreign key (`user_id`) references `users` (`id`) on delete cascade;
+insert into `migrations` (`migration`, `batch`) values ('2025_05_22_085814_create_venta_piezas_table', 14);
+create table `pieza_venta_piezas` (`id` bigint unsigned not null auto_increment primary key, `pieza_id` bigint unsigned null, `sucursal_id` bigint unsigned null, `cantidad` int null, `precio` decimal(10, 2) null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci';
+alter table `pieza_venta_piezas` add constraint `pieza_venta_piezas_pieza_id_foreign` foreign key (`pieza_id`) references `piezas` (`id`);
+alter table `pieza_venta_piezas` add constraint `pieza_venta_piezas_sucursal_id_foreign` foreign key (`sucursal_id`) references `sucursals` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_05_22_090758_create_pieza_venta_piezas_table', 14);
+alter table `pieza_venta_piezas` add `pieza_venta_id` bigint unsigned null;
+alter table `pieza_venta_piezas` add constraint `pieza_venta_piezas_pieza_venta_id_foreign` foreign key (`pieza_venta_id`) references `venta_piezas` (`id`);
+insert into `migrations` (`migration`, `batch`) values ('2025_05_22_092235_add_pieza_to_pieza_venta_piezas_table', 14);

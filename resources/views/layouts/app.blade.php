@@ -42,6 +42,6 @@
 <!--    End of Main Content-->
 <!-- ===============================================-->
 <!-- @include('layouts.partials.settings')-->
-
+@stack('scripts')  {{-- agregar esto --}}
 </body>
 </html>

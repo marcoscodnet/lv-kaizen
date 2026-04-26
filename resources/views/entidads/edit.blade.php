@@ -26,13 +26,25 @@
 
                         @include('includes.messages')
                         <div class="row">
-                            <div class="col-12 col-lg-6">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="nombre">Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" value="@if (old('nombre')){{ old('nombre') }}@else{{ $entidad->nombre }}@endif">
                                 </div>
                             </div>
-
+                            <div class="col-12 col-lg-4">
+                                <div class="form-group">
+                                    <label for="forma">Forma de pago</label>
+                                    <select name="forma" id="forma" class="form-control" required>
+                                        <option value="">Seleccionar...</option>
+                                        @foreach (config('formas') as $key => $label)
+                                            <option value="{{ $key }}" {{ old('forma', $entidad->forma ?? '') == $key ? 'selected' : '' }}>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-12 col-lg-3">
@@ -75,6 +87,17 @@
                                         {{ old('activa', $entidad->activa ?? true) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="activa">
                                         Activa
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="cuenta" value="0">
+                                    <input class="form-check-input" type="checkbox" id="cuenta" name="cuenta" value="1"
+                                        {{ old('cuenta', $entidad->cuenta ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="cuenta">
+                                        Cuenta
                                     </label>
                                 </div>
 

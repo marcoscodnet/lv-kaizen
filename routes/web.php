@@ -30,6 +30,7 @@ use App\Http\Controllers\UbicacionController;
 use App\Http\Controllers\ProveedorController;
 use App\Exports\PiezasExport;
 use App\Http\Controllers\MovimientoPiezaController;
+use App\Http\Controllers\MovimientoCuentaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -291,7 +292,14 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('movimientoPieza-datatable', [MovimientoPiezaController::class, 'dataTable'])->name('movimientoPiezas.dataTable');
     Route::get('movimientoPieza-pdf', [MovimientoPiezaController::class, 'generatePDF'])->name('movimientoPiezas.pdf');
 
-
+    Route::get('/cuentas', [MovimientoCuentaController::class, 'index'])->name('cuentas.index');
+    Route::get('/cuentas/{id}', [MovimientoCuentaController::class, 'show'])->name('cuentas.show');
+    Route::post('/cuentas/{id}/data', [MovimientoCuentaController::class, 'dataTable'])->name('cuentas.data');
+    Route::post('/cuentas/{id}/movimiento', [MovimientoCuentaController::class, 'store'])->name('cuentas.store');
+    Route::post('/cuentas/{id}/saldo-inicial', [MovimientoCuentaController::class, 'storeSaldoInicial'])->name('cuentas.saldoInicial');
+    Route::delete('/cuentas/movimiento/{id}', [MovimientoCuentaController::class, 'destroy'])->name('cuentas.destroy');
+    Route::post('/cuentas/{id}/transferencia', [MovimientoCuentaController::class, 'storeTransferencia'])
+        ->name('cuentas.transferencia');
 
 });
 

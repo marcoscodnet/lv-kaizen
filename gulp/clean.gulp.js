@@ -15,6 +15,7 @@ gulp.task('clean', () =>
         `!${baseDir}/${paths.script.dest}/combo-sucursal-ubicacion.js`,
         `!${baseDir}/${paths.script.dest}/confirm-exit.js`,
         `!${baseDir}/${paths.script.dest}/flatpickr.js`,
+        `!${baseDir}/${paths.script.dest}/cobro.js`,
         `${baseDir}/**/*.html`
     ])
 );
