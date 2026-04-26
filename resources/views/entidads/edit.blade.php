@@ -47,7 +47,7 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-12 col-lg-3">
+                            <!--<div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="ticket" value="0">
                                     <input class="form-check-input" type="checkbox" id="ticket" name="ticket" value="1"
@@ -68,7 +68,7 @@
                                     </label>
                                 </div>
 
-                            </div>
+                            </div>-->
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="tangible" value="0">

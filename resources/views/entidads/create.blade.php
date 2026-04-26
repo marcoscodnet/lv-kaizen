@@ -48,7 +48,7 @@
                         </div>
                         <div class="row">
 
-                            <div class="col-12 col-lg-3">
+                            <!--<div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="ticket" value="0">
                                     <input class="form-check-input" type="checkbox" id="ticket" name="ticket" value="1"
@@ -69,7 +69,7 @@
                                     </label>
                                 </div>
 
-                            </div>
+                            </div>-->
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="tangible" value="0">
@@ -96,7 +96,7 @@
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="cuenta" value="0">
                                     <input class="form-check-input" type="checkbox" id="cuenta" name="cuenta" value="1"
-                                        {{ old('cuenta', $obj->cuenta ?? true) ? 'checked' : '' }}>
+                                        {{ old('cuenta', $obj->cuenta ?? false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="cuenta">
                                         cuenta
                                     </label>

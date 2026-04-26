@@ -40,8 +40,9 @@
 
                         <th scope="col">Nombre</th>
                         <th scope="col">Forma</th>
-                        <th scope="col">Ticket</th>
-                        <th scope="col">Referencia</th>
+                        <!--<th scope="col">Ticket</th>
+                        <th scope="col">Referencia</th>-->
+                        <th scope="col">Cuenta</th>
                         <th scope="col">Tangible</th>
                         <th scope="col">Activa</th>
 
@@ -56,8 +57,9 @@
 
                             <td>{{ $entidad->nombre }}</td>
                             <td>{{ $entidad->forma }}</td>
-                            <td>{{ $entidad->ticket?'SI':'NO' }}</td>
-                            <td>{{ $entidad->referencia?'SI':'NO' }}</td>
+                            <!--<td>{{ $entidad->ticket?'SI':'NO' }}</td>
+                            <td>{{ $entidad->referencia?'SI':'NO' }}</td>-->
+                            <td>{{ $entidad->cuenta?'SI':'NO' }}</td>
                             <td>{{ $entidad->tangible?'SI':'NO' }}</td>
                             <td>{{ $entidad->activa?'SI':'NO' }}</td>
                             <td ><div>
