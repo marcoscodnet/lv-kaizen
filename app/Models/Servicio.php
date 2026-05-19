@@ -54,4 +54,9 @@ class Servicio extends Model
         return $this->belongsTo('App\Models\Modelo', 'modelo_id');
     }
 
+    public function autorizaciones()
+    {
+        return $this->morphMany(\App\Models\Autorizacion::class, 'autorizable');
+    }
+
 }

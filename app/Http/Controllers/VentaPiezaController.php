@@ -59,51 +59,66 @@ class VentaPiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente)"),'venta_piezas.pedido','venta_piezas.destino',DB::raw("(
-        SELECT SUM(pvp.precio)
-        FROM pieza_venta_piezas pvp
-        WHERE pvp.venta_pieza_id = venta_piezas.id
-    ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+        $columnas = [
+            'venta_piezas.fecha',
+            DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente)"),
+            'venta_piezas.pedido',
+            'venta_piezas.destino',
             DB::raw("(
-    SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
-    FROM pieza_venta_piezas pvp
-    INNER JOIN piezas p ON p.id = pvp.pieza_id
-    WHERE pvp.venta_pieza_id = venta_piezas.id
-) as piezas_codigos")
+            SELECT SUM(pvp.precio)
+            FROM pieza_venta_piezas pvp
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ) as precio_total"),
+            'sucursals.nombre',
+            DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+            DB::raw("(
+            SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
+            FROM pieza_venta_piezas pvp
+            INNER JOIN piezas p ON p.id = pvp.pieza_id
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ) as piezas_codigos"),
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
+        ];
 
-        ]; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $user_id = $request->input('user_id');
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente) as cliente"),'venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+
+        $query = VentaPieza::select(
+            'venta_piezas.id as id',
+            'venta_piezas.fecha',
+            DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente) as cliente"),
+            'venta_piezas.pedido',
+            'venta_piezas.destino',
+            DB::raw("(
             SELECT SUM(pvp.precio)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
-        ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
+        ) as precio_total"),
+            'sucursals.nombre as sucursal_nombre',
+            DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
             DB::raw("(
-    SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
-    FROM pieza_venta_piezas pvp
-    INNER JOIN piezas p ON p.id = pvp.pieza_id
-    WHERE pvp.venta_pieza_id = venta_piezas.id
-) as piezas_codigos")
-
+            SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
+            FROM pieza_venta_piezas pvp
+            INNER JOIN piezas p ON p.id = pvp.pieza_id
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ) as piezas_codigos"),
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
-
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
             ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
-        ;
-
-
-
+            ->leftJoin('autorizacions', function ($join) {
+                $join->on('autorizacions.autorizable_id', '=', 'venta_piezas.id')
+                    ->where('autorizacions.autorizable_type', '=', 'App\\Models\\VentaPieza');
+            });
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('venta_piezas.user_id', $user_id);
         }
-
 
         if (!empty($fechaDesde)) {
             $query->whereDate('venta_piezas.fecha', '>=', $fechaDesde);
@@ -113,35 +128,27 @@ class VentaPiezaController extends Controller
             $query->whereDate('venta_piezas.fecha', '<=', $fechaHasta);
         }
 
-
-        // Aplicar la búsqueda
         if (!empty($busqueda)) {
             $query->where(function ($query) use ($columnas, $busqueda) {
                 foreach ($columnas as $columna) {
-                    if ($columna){
+                    if ($columna) {
                         $query->orWhere($columna, 'like', "%$busqueda%");
                     }
-
                 }
             });
         }
 
-
-
-
-        // Obtener la cantidad total de registros después de aplicar el filtro de búsqueda
         $recordsFiltered = $query->count();
 
+        $datos = $query->orderBy($columnaOrden, $orden)
+            ->skip($request->input('start'))
+            ->take($request->input('length'))
+            ->get();
 
-        $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
-
-        // Obtener la cantidad total de registros sin filtrar
         $recordsTotal = VentaPieza::count();
 
-
-
         return response()->json([
-            'data' => $datos, // Obtener solo los elementos paginados
+            'data' => $datos,
             'recordsTotal' => $recordsTotal,
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,

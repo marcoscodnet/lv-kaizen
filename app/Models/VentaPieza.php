@@ -36,4 +36,9 @@ class VentaPieza extends Model
         return $this->hasMany(\App\Models\Pago::class, 'venta_pieza_id');
     }
 
+    public function autorizaciones()
+    {
+        return $this->morphMany(\App\Models\Autorizacion::class, 'autorizable');
+    }
+
 }

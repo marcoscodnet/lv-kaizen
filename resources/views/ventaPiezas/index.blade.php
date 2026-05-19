@@ -91,6 +91,7 @@
                         <th scope="col">Monto</th>
                         <th scope="col">Sucursal</th>
                         <th scope="col">Vendedor</th>
+                        <th scope="col">Estado</th>
                         <th scope="col">Piezas</th>
 
                         <th scope="col">Acciones</th>
@@ -181,6 +182,7 @@
                     { data: 'precio_total', name: 'precio_total', render: formatCurrency },
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'usuario_nombre', name: 'usuario_nombre' },
+                    { data: 'autorizacion', name: 'autorizacion' },
                     { data: 'piezas_codigos', name: 'piezas_codigos' },
 
                     // Actions column

@@ -15,7 +15,7 @@ class CreateMovimientoCuentasTable extends Migration
     {
         Schema::create('movimiento_cuentas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('entidad_id')->constrained('entidades')->cascadeOnDelete();
+            $table->foreignId('entidad_id')->constrained('entidads')->cascadeOnDelete();
             $table->enum('tipo', ['Ingreso', 'Egreso']);
             $table->decimal('monto', 12, 2);
             $table->date('fecha');

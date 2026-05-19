@@ -73,8 +73,7 @@ class VentaController extends Controller
             'modelos.nombre',
             DB::raw("IFNULL(users.name, ventas.user_name)"),
             'sucursals.nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
-            'ventas.forma'
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END")
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -93,8 +92,7 @@ class VentaController extends Controller
             'modelos.nombre as modelo',
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
-            'ventas.forma'
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
@@ -102,7 +100,10 @@ class VentaController extends Controller
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+            ->leftJoin('autorizacions', function($join) {
+                $join->on('autorizacions.autorizable_id', '=', 'ventas.id')
+                    ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Venta');
+            });
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);
@@ -619,14 +620,7 @@ class VentaController extends Controller
     {
         $venta = Venta::findOrFail($id);
 
-        // Buscar la autorización correspondiente a esa unidad
-        $autorizacion = Autorizacion::where('unidad_id', $venta->unidad_id)
-            ->first();
-
-        if ($autorizacion) {
-            $autorizacion->delete();
-        }
-
+        $venta->autorizaciones()->delete();
         // Elimina las relaciones
         $venta->pagos()->delete();
 
@@ -646,18 +640,16 @@ class VentaController extends Controller
      */
     public function autorizar($id)
     {
-
         $venta = Venta::findOrFail($id);
 
-
-        $autorizacion = new Autorizacion();
-        $autorizacion->user_id = $this->sanitizeInput(auth()->id());
-        $autorizacion->unidad_id = $this->sanitizeInput($venta->unidad_id);
-        $autorizacion->fecha = $this->sanitizeInput(Carbon::now()->toDateString());
-        $autorizacion->save();
+        $venta->autorizaciones()->create([
+            'user_id'   => auth()->id(),
+            'user_name' => auth()->user()->name,
+            'fecha'     => Carbon::now()->toDateString(),
+        ]);
 
         return redirect()->route('ventas.index')
-            ->with('success','Unidad autorizada con éxito');
+            ->with('success', 'Venta autorizada con éxito');
     }
 
     /**
@@ -668,21 +660,12 @@ class VentaController extends Controller
      */
     public function desautorizar($id)
     {
-
         $venta = Venta::findOrFail($id);
 
-        // Buscar la autorización correspondiente a esa unidad
-        $autorizacion = Autorizacion::where('unidad_id', $venta->unidad_id)
-
-            ->first();
-
-        if ($autorizacion) {
-            $autorizacion->delete();
-        }
-
+        $venta->autorizaciones()->delete();
 
         return redirect()->route('ventas.index')
-            ->with('success','Unidad desautorizada con éxito');
+            ->with('success', 'Venta desautorizada con éxito');
     }
 
     public function generateBoleto(Request $request)
@@ -905,7 +888,10 @@ class VentaController extends Controller
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+            ->leftJoin('autorizacions', function($join) {
+    $join->on('autorizacions.autorizable_id', '=', 'ventas.id')
+         ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Venta');
+});
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);
@@ -1094,7 +1080,10 @@ class VentaController extends Controller
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
             ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+            ->leftJoin('autorizacions', function($join) {
+                $join->on('autorizacions.autorizable_id', '=', 'ventas.id')
+                     ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Venta');
+            });
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);

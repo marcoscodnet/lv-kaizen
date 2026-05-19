@@ -104,7 +104,7 @@
                         <th scope="col">Vendedor</th>
                         <th scope="col">Sucursal</th>
                         <th scope="col">Estado</th>
-                        <th scope="col">Pago</th>
+
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -257,7 +257,7 @@
                     { data: 'usuario_nombre', name: 'usuario_nombre' },
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'autorizacion', name: 'autorizacion' },
-                    { data: 'forma', name: 'forma' },
+
 
                     // Actions column
                     {
@@ -283,7 +283,7 @@
 
 
 
-                            if (row.autorizacion == 'No autorizada') {
+                            /*if (row.autorizacion == 'No autorizada') {
                                 @can('unidad-autorizar')
                                     actionsHtml += '<form id="admit-form-' + row.id + '" method="post" action="{{ route('ventas.autorizar', '') }}/' + row.id + '" style="display: none">';
                                 actionsHtml += '{{ csrf_field() }}';
@@ -292,14 +292,14 @@
                                 actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'admit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Autorizar" title="Autorizar"><i class="fa fa-check-circle text-500"></i></a>';
                                 @endcan
 
-                            }
+                            }*/
                             if (row.autorizacion == 'Autorizada') {
-                                @can('unidad-autorizar')
+                                /*@can('unidad-autorizar')
                                     actionsHtml += '<form id="noadmit-form-' + row.id + '" method="post" action="{{ route('ventas.desautorizar', '') }}/' + row.id + '" style="display: none">';
                                 actionsHtml += '{{ csrf_field() }}';
 
                                 actionsHtml += '</form>';
-                                actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'noadmit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Desautorizar" title="Desautorizar"><i class="fa fa-times-circle text-500"></i></a>';
+                                actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'noadmit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Desautorizar" title="Desautorizar"><i class="fa fa-times-circle text-500"></i></a>';*/
 
                                 @endcan
                                     @can('imprimir-formulario-12')

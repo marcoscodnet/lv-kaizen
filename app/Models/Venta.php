@@ -32,4 +32,9 @@ class Venta extends Model
     {
         return $this->hasMany(Pago::class, 'venta_id');
     }
+
+    public function autorizaciones()
+    {
+        return $this->morphMany(\App\Models\Autorizacion::class, 'autorizable');
+    }
 }

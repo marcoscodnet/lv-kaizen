@@ -14,7 +14,7 @@ class AddCuentaToEntidadsTable extends Migration
     public function up()
     {
         Schema::table('entidads', function (Blueprint $table) {
-            Schema::table('entidades', function (Blueprint $table) {
+            Schema::table('entidads', function (Blueprint $table) {
                 $table->boolean('cuenta')->default(false)->after('activa');
             });
         });

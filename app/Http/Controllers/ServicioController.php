@@ -81,7 +81,9 @@ class ServicioController extends Controller
             'tipo_servicios.nombre',
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END"),
             'sucursals.nombre',
-            'users.name'
+            'users.name',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
+
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -108,7 +110,9 @@ class ServicioController extends Controller
             'tipo_servicios.nombre as tipo_servicio',
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END as pagado"),
             'sucursals.nombre as sucursal_nombre',
-            'users.name as usuario_nombre'
+            'users.name as usuario_nombre',
+            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+
 
         )
             ->leftJoin('tipo_servicios', 'servicios.tipo_servicio_id', '=', 'tipo_servicios.id')
@@ -116,7 +120,10 @@ class ServicioController extends Controller
             ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
             ->leftJoin('marcas', 'servicios.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'servicios.modelo_id', '=', 'modelos.id')
-            ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
+            ->leftJoin('users', 'servicios.user_id', '=', 'users.id')->leftJoin('autorizacions', function ($join) {
+                $join->on('autorizacions.autorizable_id', '=', 'servicios.id')
+                    ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Servicio');
+            });
 
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
