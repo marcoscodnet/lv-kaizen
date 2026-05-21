@@ -73,7 +73,14 @@ class VentaController extends Controller
             'modelos.nombre',
             DB::raw("IFNULL(users.name, ventas.user_name)"),
             'sucursals.nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END")
+            DB::raw("CASE
+                        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
+                         AND NOT EXISTS (
+                             SELECT 1 FROM pagos p2
+                             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                             WHERE p2.venta_id = ventas.id AND a2.id IS NULL
+                         )
+                        THEN 'Autorizada' ELSE 'No autorizada' END")
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -92,18 +99,21 @@ class VentaController extends Controller
             'modelos.nombre as modelo',
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
+            DB::raw("CASE
+                        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
+                         AND NOT EXISTS (
+                             SELECT 1 FROM pagos p2
+                             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                             WHERE p2.venta_id = ventas.id AND a2.id IS NULL
+                         )
+                        THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
             ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', function($join) {
-                $join->on('autorizacions.autorizable_id', '=', 'ventas.id')
-                    ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Venta');
-            });
+            ->leftJoin('users', 'ventas.user_id', '=', 'users.id');
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);
@@ -139,7 +149,22 @@ class VentaController extends Controller
 
         // Totales
         $totalVentas = (clone $baseQuery)->count();
-        $ventasAutorizadas = (clone $baseQuery)->whereNotNull('autorizacions.id')->count();
+
+        $ventasAutorizadas = (clone $baseQuery)
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('pagos')
+                    ->whereColumn('pagos.venta_id', 'ventas.id');
+            })
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('pagos as p2')
+                    ->leftJoin('autorizacions as a2', 'a2.pago_id', '=', 'p2.id')
+                    ->whereColumn('p2.venta_id', 'ventas.id')
+                    ->whereNull('a2.id');
+            })
+            ->count();
+
         $ventasNoAutorizadas = $totalVentas - $ventasAutorizadas;
 
         // IDs de ventas para pagos
@@ -253,7 +278,8 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        //$entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
         return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
     }
 

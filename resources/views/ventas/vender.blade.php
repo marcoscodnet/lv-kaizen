@@ -17,11 +17,9 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form id="formVenta" role="form" action="{{ route('ventas.store') }}" method="post">
+            <form id="formVenta" role="form" action="{{ route('ventas.store') }}" method="post" enctype="multipart/form-data">
                 {{ csrf_field() }}
-                @can('unidad-autorizar')
-                    <input type="hidden" id="autorizada" name="autorizada" value="">
-                @endcan
+
                 <div class="tab-content">
                     <div class="box-body">
                         @include('includes.messages')
@@ -310,8 +308,13 @@
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         var entidadsData = {!! json_encode($entidads->map(function($e) {
-        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
-    })) !!};
+                       return [
+                           'id' => $e->id,
+                           'nombre' => $e->nombre,
+                           'forma' => $e->forma,
+                           'autorizacion' => $e->autorizacion,
+                       ];
+                   })) !!};
     </script>
     <script src="{{ asset('assets/js/cobro.js') }}"></script>
 

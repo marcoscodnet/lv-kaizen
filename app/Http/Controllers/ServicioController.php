@@ -82,7 +82,14 @@ class ServicioController extends Controller
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END"),
             'sucursals.nombre',
             'users.name',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
+            DB::raw("CASE
+                        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.servicio_id = servicios.id)
+                         AND NOT EXISTS (
+                             SELECT 1 FROM pagos p2
+                             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                             WHERE p2.servicio_id = servicios.id AND a2.id IS NULL
+                         )
+                        THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
 
         ];
 
@@ -111,7 +118,14 @@ class ServicioController extends Controller
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END as pagado"),
             'sucursals.nombre as sucursal_nombre',
             'users.name as usuario_nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+            DB::raw("CASE
+                            WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.servicio_id = servicios.id)
+                             AND NOT EXISTS (
+                                 SELECT 1 FROM pagos p2
+                                 LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                                 WHERE p2.servicio_id = servicios.id AND a2.id IS NULL
+                             )
+                            THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
 
 
         )
@@ -120,10 +134,7 @@ class ServicioController extends Controller
             ->leftJoin('clientes', 'servicios.cliente_id', '=', 'clientes.id')
             ->leftJoin('marcas', 'servicios.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'servicios.modelo_id', '=', 'modelos.id')
-            ->leftJoin('users', 'servicios.user_id', '=', 'users.id')->leftJoin('autorizacions', function ($join) {
-                $join->on('autorizacions.autorizable_id', '=', 'servicios.id')
-                    ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Servicio');
-            });
+            ->leftJoin('users', 'servicios.user_id', '=', 'users.id');
 
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {

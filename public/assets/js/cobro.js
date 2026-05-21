@@ -1,56 +1,99 @@
 $(document).ready(function () {
 
+    // Contexto: 'vendedor' por defecto. La vista de auditoría seteará window.cobroContexto = 'auditor'
+    var contexto = window.cobroContexto || 'vendedor';
+    var esVendedor = contexto === 'vendedor';
+    var esAuditor = contexto === 'auditor';
+
     function getEntidadOptions(forma) {
         return entidadsData
             .filter(function (e) { return e.forma === forma; })
             .map(function (e) {
-                return '<option value="' + e.id + '">' + e.nombre + '</option>';
+                return '<option value="' + e.id + '" data-autorizacion="' + (e.autorizacion ? 1 : 0) + '">' + e.nombre + '</option>';
             })
             .join('');
     }
 
     function getPagoHtml(forma) {
         var labelFecha = forma === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito';
-        return `
-            <div class="card p-3 mb-3 pago-item">
-                <div class="row">
+
+        // Bloque de comprobante (solo vendedor lo puede cargar)
+        var comprobanteHtml = esVendedor ? `
+                <div class="row mt-2 comprobante-wrapper" style="display:none;">
+                    <div class="col-md-12">
+                        <label>Comprobante</label>
+                        <div class="d-flex gap-2 align-items-start flex-wrap">
+                            <div>
+                                <input type="file" name="comprobante[]"
+                                       class="form-control form-control-sm comprobante-file"
+                                       accept="image/jpeg,image/png,application/pdf">
+                                <small class="text-muted">JPG, PNG o PDF (max 5MB)</small>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-primary btn-capturar-comprobante">
+                                    📸 Capturar
+                                </button>
+                            </div>
+                            <div>
+                                <img class="comprobante-preview border" style="display:none; max-width: 150px; max-height: 100px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>` : '';
+
+        // Campos del auditor (Acreditado + Fecha Contadora). Solo visibles para auditor.
+        var camposAuditorHtml = `
+                <div class="col-md-2 campos-auditor" style="display:${esAuditor ? 'block' : 'none'};">
+                    <label>Acreditado</label>
+                    <input type="text" name="pagado[]" class="form-control formato-numero-pago">
+                </div>`;
+
+        var fechaContadoraHtml = `
+                <div class="row mt-2 campos-auditor" style="display:${esAuditor ? 'flex' : 'none'};">
                     <div class="col-md-3">
-                        <label>Entidad</label>
-                        <select name="entidad_id[]" class="form-control js-pago-select" required>
-                            ${getEntidadOptions(forma)}
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label>Importe</label>
-                        <input type="text" name="monto[]" class="form-control formato-numero-pago" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="labelFechaPago">${labelFecha}</label>
-                        <input type="date" name="fecha_pago[]" class="form-control" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label>Acreditado</label>
-                        <input type="text" name="pagado[]" class="form-control formato-numero-pago">
-                    </div>
-                    <div class="col-md-2">
                         <label>Fecha Contadora</label>
                         <input type="date" name="contadora[]" class="form-control">
                     </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-5">
-                        <label>Observaciones vendedor</label>
-                        <textarea name="detalle[]" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="col-5">
-                        <label>Observaciones</label>
-                        <textarea name="observaciones[]" class="form-control" rows="2"></textarea>
-                    </div>
+                </div>`;
+
+        var btnRemoverHtml = esVendedor ? `
                     <div class="col-md-1 d-flex align-items-end">
                         <button type="button" class="btn btn-danger btn-sm removeItemPago">
                             <i class="fa fa-times"></i>
                         </button>
+                    </div>` : '';
+
+        return `
+            <div class="card p-3 mb-3 pago-item">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Entidad</label>
+                        <select name="entidad_id[]" class="form-control js-pago-select" ${esAuditor ? 'disabled' : 'required'}>
+                            ${getEntidadOptions(forma)}
+                        </select>
                     </div>
+                    <div class="col-md-3">
+                        <label>Importe</label>
+                        <input type="text" name="monto[]" class="form-control formato-numero-pago" ${esAuditor ? 'readonly' : 'required'}>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="labelFechaPago">${labelFecha}</label>
+                        <input type="date" name="fecha_pago[]" class="form-control" ${esAuditor ? 'readonly' : 'required'}>
+                    </div>
+                    ${camposAuditorHtml}
+                </div>
+                ${fechaContadoraHtml}
+                ${comprobanteHtml}
+                <div class="row mt-2">
+                    <div class="col-5">
+                        <label>Observaciones vendedor</label>
+                        <textarea name="detalle[]" class="form-control" rows="2" ${esAuditor ? 'readonly' : ''}></textarea>
+                    </div>
+                    <div class="col-5">
+                        <label>Observaciones</label>
+                        <textarea name="observaciones[]" class="form-control" rows="2" ${esAuditor ? 'readonly' : ''}></textarea>
+                    </div>
+                    ${btnRemoverHtml}
                 </div>
             </div>`;
     }
@@ -64,6 +107,8 @@ $(document).ready(function () {
             decimalPlaces: 2,
             unformatOnSubmit: true
         });
+        // Inicializar visibilidad del comprobante segun la entidad seleccionada
+        toggleComprobante($row.find('.js-pago-select'));
         actualizarTotalesPago();
     }
 
@@ -87,11 +132,34 @@ $(document).ready(function () {
         if (elAcreditado) elAcreditado.set(totalAcreditado);
     }
 
+    // Muestra u oculta el bloque de comprobante segun si la entidad seleccionada requiere autorizacion
+    function toggleComprobante($select) {
+        var $row = $select.closest('.pago-item');
+        var $wrapper = $row.find('.comprobante-wrapper');
+        if ($wrapper.length === 0) return; // No existe en contexto auditor
+
+        var requiere = parseInt($select.find('option:selected').data('autorizacion'), 10) === 1;
+
+        if (requiere) {
+            $wrapper.css('display', 'flex');
+        } else {
+            $wrapper.hide();
+            // Clear input and preview when entity changes to one not requiring auth
+            $row.find('.comprobante-file').val('');
+            $row.find('.comprobante-preview').hide().attr('src', '');
+        }
+    }
+
     $(document).on('forma:changed', function (e, forma) {
+        // En contexto auditor no manipulamos visibilidad por forma
+        if (esAuditor) {
+            $('#cuerpoPago, #totalesPago').show();
+            return;
+        }
+
         if (forma === '') {
             $('#addItemPago, #cuerpoPago, #totalesPago').hide();
         } else {
-            //$('.labelFechaPago').text(forma === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito');
             $('#addItemPago, #cuerpoPago, #totalesPago').show();
             if ($('#cuerpoPago .pago-item').length === 0) {
                 agregarFilaPago(forma);
@@ -109,4 +177,104 @@ $(document).ready(function () {
     });
 
     $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotalesPago);
+
+    // Toggle comprobante on entity change
+    $('body').on('change', '.js-pago-select', function () {
+        toggleComprobante($(this));
+    });
+
+    // Tambien inicializar el estado al cargar para los pagos pre-existentes (edit)
+    $('.pago-item .js-pago-select').each(function () {
+        toggleComprobante($(this));
+    });
+
+
+    // ============================================================
+    // Captura de comprobante con camara
+    // ============================================================
+    if (esVendedor) {
+        var $filaActiva = null;  // Track which payment row triggered the camera
+        var streamActivo = null;
+        var $modalCamara = $('#capturarComprobanteModal');
+
+        $('body').on('click', '.btn-capturar-comprobante', function () {
+            $filaActiva = $(this).closest('.pago-item');
+            $modalCamara.modal('show');
+        });
+
+        $modalCamara.on('shown.bs.modal', function () {
+            var video = document.getElementById('videoComprobante');
+            navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false
+            }).then(function (stream) {
+                streamActivo = stream;
+                video.srcObject = stream;
+                video.play();
+            }).catch(function (err) {
+                alert('No se pudo acceder a la cámara:\n' + err.name + '\n' + err.message);
+            });
+        });
+
+        $modalCamara.on('hidden.bs.modal', function () {
+            if (streamActivo) {
+                streamActivo.getTracks().forEach(function (t) { t.stop(); });
+                streamActivo = null;
+            }
+        });
+
+        $('#btnTomarFotoComprobante').on('click', function () {
+            if (!$filaActiva) return;
+
+            var video = document.getElementById('videoComprobante');
+            var canvas = document.getElementById('canvasComprobante');
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(function (blob) {
+                // Crear File desde el Blob y meterlo en el input file
+                var file = new File([blob], 'comprobante_' + Date.now() + '.png', { type: 'image/png' });
+                var dt = new DataTransfer();
+                dt.items.add(file);
+                var $fileInput = $filaActiva.find('.comprobante-file');
+                $fileInput[0].files = dt.files;
+
+                // Preview
+                var dataUrl = canvas.toDataURL('image/png');
+                $filaActiva.find('.comprobante-preview').attr('src', dataUrl).show();
+
+                $modalCamara.modal('hide');
+            }, 'image/png');
+        });
+
+        // Preview cuando el usuario elige un archivo manualmente
+        $('body').on('change', '.comprobante-file', function () {
+            var file = this.files[0];
+            var $preview = $(this).closest('.pago-item').find('.comprobante-preview');
+
+            if (!file) {
+                $preview.hide().attr('src', '');
+                return;
+            }
+
+            // Validate size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('El archivo supera los 5MB. Por favor seleccione uno más chico.');
+                this.value = '';
+                $preview.hide().attr('src', '');
+                return;
+            }
+
+            // Preview only for images, not PDFs
+            if (file.type.startsWith('image/')) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $preview.attr('src', e.target.result).show();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                $preview.hide().attr('src', '');
+            }
+        });
+    }
 });

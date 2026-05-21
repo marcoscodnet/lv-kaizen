@@ -77,7 +77,14 @@ class VentaPiezaController extends Controller
             INNER JOIN piezas p ON p.id = pvp.pieza_id
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as piezas_codigos"),
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
+            DB::raw("CASE
+                    WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
+                     AND NOT EXISTS (
+                         SELECT 1 FROM pagos p2
+                         LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                         WHERE p2.venta_pieza_id = venta_piezas.id AND a2.id IS NULL
+                     )
+                    THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -106,15 +113,18 @@ class VentaPiezaController extends Controller
             INNER JOIN piezas p ON p.id = pvp.pieza_id
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as piezas_codigos"),
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
+            DB::raw("CASE
+                WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
+                 AND NOT EXISTS (
+                     SELECT 1 FROM pagos p2
+                     LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                     WHERE p2.venta_pieza_id = venta_piezas.id AND a2.id IS NULL
+                 )
+                THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
-            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
-            ->leftJoin('autorizacions', function ($join) {
-                $join->on('autorizacions.autorizable_id', '=', 'venta_piezas.id')
-                    ->where('autorizacions.autorizable_type', '=', 'App\\Models\\VentaPieza');
-            });
+            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id');
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('venta_piezas.user_id', $user_id);
