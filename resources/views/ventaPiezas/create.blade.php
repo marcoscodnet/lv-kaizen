@@ -96,16 +96,16 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="text" name="costo[]" class="form-control formato-numero" value="{{ old('costo.' . $i) }}">
+                                            <input type="text" name="costo[]" class="form-control formato-numero input-monto" value="{{ old('costo.' . $i) }}">
                                         </td>
                                         <td>
-                                            <input type="text" name="precio_minimo[]" class="form-control formato-numero" value="{{ old('precio_minimo.' . $i) }}">
+                                            <input type="text" name="precio_minimo[]" class="form-control formato-numero input-monto" value="{{ old('precio_minimo.' . $i) }}">
                                         </td>
                                         <td>
-                                            <input type="number" name="cantidad[]" class="form-control" value="{{ old('cantidad.' . $i) }}">
+                                            <input type="number" name="cantidad[]" class="form-control input-cantidad" value="{{ old('cantidad.' . $i) }}">
                                         </td>
                                         <td>
-                                            <input type="text" name="precio[]" class="form-control formato-numero" value="{{ old('precio.' . $i) }}">
+                                            <input type="text" name="precio[]" class="form-control formato-numero input-monto" value="{{ old('precio.' . $i) }}">
                                         </td>
                                         <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
                                     </tr>
@@ -555,10 +555,10 @@
                         <option value="">Seleccionar...</option>
                     </select>
                 </td>
-                <td style="width: 12%;"><input type="text" name="costo[]" class="form-control formato-numero costo" readonly></td>
-                <td style="width: 12%;"><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo" readonly></td>
-                <td style="width: 8%;"><input type="number" name="cantidad[]" class="form-control cantidad" required></td>
-                <td style="width: 14%;"><input type="text" name="precio[]" class="form-control formato-numero precio" required></td>
+                <td style="width: 12%;"><input type="text" name="costo[]" class="form-control formato-numero costo input-monto" readonly></td>
+                <td style="width: 12%;"><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo input-monto" readonly></td>
+                <td style="width: 8%;"><input type="number" name="cantidad[]" class="form-control cantidad input-cantidad" required></td>
+                <td style="width: 14%;"><input type="text" name="precio[]" class="form-control formato-numero precio input-monto" required></td>
                 <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
             </tr>
         `;

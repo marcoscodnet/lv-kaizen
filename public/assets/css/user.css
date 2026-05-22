@@ -34,3 +34,15 @@ select.form-control {
   padding-right: 2rem;
 }
 /*# sourceMappingURL=user.css.map */
+
+.input-monto{
+    width: 200px;
+    min-width: 200px;
+    text-align: right;
+}
+
+.input-cantidad{
+    width: 50px;
+    min-width: 50px;
+    text-align: center;
+}

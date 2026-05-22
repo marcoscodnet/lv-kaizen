@@ -71,11 +71,11 @@
                             </div>-->
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
-                                    <input type="hidden" name="tangible" value="0">
-                                    <input class="form-check-input" type="checkbox" id="tangible" name="tangible" value="1"
-                                        {{ old('tangible', $entidad->tangible ?? true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="tangible">
-                                        Tangible
+                                    <input type="hidden" name="autorizacion" value="0">
+                                    <input class="form-check-input" type="checkbox" id="autorizacion" name="autorizacion" value="1"
+                                        {{ old('autorizacion', $entidad->autorizacion ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="autorizacion">
+                                        Autorización
                                     </label>
                                 </div>
 
@@ -87,6 +87,17 @@
                                         {{ old('cuenta', $entidad->cuenta ?? true) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="cuenta">
                                         Cuenta
+                                    </label>
+                                </div>
+
+                            </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="tangible" value="0">
+                                    <input class="form-check-input" type="checkbox" id="tangible" name="tangible" value="1"
+                                        {{ old('tangible', $entidad->tangible ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="tangible">
+                                        Tangible
                                     </label>
                                 </div>
 

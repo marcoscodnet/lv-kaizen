@@ -72,11 +72,11 @@
                             </div>-->
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
-                                    <input type="hidden" name="tangible" value="0">
-                                    <input class="form-check-input" type="checkbox" id="tangible" name="tangible" value="1"
-                                        {{ old('tangible', $obj->tangible ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="tangible">
-                                        Tangible
+                                    <input type="hidden" name="autorizacion" value="0">
+                                    <input class="form-check-input" type="checkbox" id="autorizacion" name="autorizacion" value="1"
+                                        {{ old('autorizacion', $obj->autorizacion ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="autorizacion">
+                                        Autorización
                                     </label>
                                 </div>
 
@@ -87,11 +87,23 @@
                                     <input class="form-check-input" type="checkbox" id="cuenta" name="cuenta" value="1"
                                         {{ old('cuenta', $obj->cuenta ?? false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="cuenta">
-                                        cuenta
+                                        Cuenta
                                     </label>
                                 </div>
 
                             </div>
+                            <div class="col-12 col-lg-3">
+                                <div class="form-check mt-4">
+                                    <input type="hidden" name="tangible" value="0">
+                                    <input class="form-check-input" type="checkbox" id="tangible" name="tangible" value="1"
+                                        {{ old('tangible', $obj->tangible ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="tangible">
+                                        Tangible
+                                    </label>
+                                </div>
+
+                            </div>
+
                             <div class="col-12 col-lg-3">
                                 <div class="form-check mt-4">
                                     <input type="hidden" name="activa" value="0">
