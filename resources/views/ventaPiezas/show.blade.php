@@ -221,12 +221,12 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-3">
+                            <!--<div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="pedido">Nro. Pedido Reparación</label>
                                     <input type="text" class="form-control" id="pedido_sucursal" name="pedido_sucursal" placeholder="Nro. Pedido Reparación" value="{{ old('pedido', $ventaPieza->pedido) }}" disabled>
                                 </div>
-                            </div>
+                            </div>-->
 
 
 

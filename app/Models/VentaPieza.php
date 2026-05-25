@@ -38,7 +38,14 @@ class VentaPieza extends Model
 
     public function autorizaciones()
     {
-        return $this->morphMany(\App\Models\Autorizacion::class, 'autorizable');
+        return $this->hasManyThrough(
+            \App\Models\Autorizacion::class,
+            \App\Models\Pago::class,
+            'venta_pieza_id', // FK en pagos
+            'pago_id',        // FK en autorizacions
+            'id',             // PK en venta_piezas
+            'id'              // PK en pagos
+        );
     }
 
 }

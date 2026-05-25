@@ -123,6 +123,7 @@
                         <th scope="col">Sucursal</th>
                         <th scope="col">Vendedor</th>
                         <th scope="col">Estado</th>
+                        <th scope="col">Cerrado</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -241,6 +242,7 @@
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
                     { data: 'usuario_nombre', name: 'usuario_nombre' },
                     { data: 'autorizacion', name: 'autorizacion' },
+                    { data: 'pagado', name: 'pagado' },
 
 
                     // Actions column

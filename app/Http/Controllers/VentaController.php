@@ -59,6 +59,24 @@ class VentaController extends Controller
             THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
     }
 
+    // Save uploaded proof file under public/files/comprobantes/{year}/{month}
+    private function guardarComprobante($file): string
+    {
+        $year = date('Y');
+        $month = date('m');
+        $dir = "files/comprobantes/$year/$month";
+        $fullDir = public_path($dir);
+
+        if (!file_exists($fullDir)) {
+            mkdir($fullDir, 0775, true);
+        }
+
+        $filename = uniqid('comp_') . '.' . $file->getClientOriginalExtension();
+        $file->move($fullDir, $filename);
+
+        return "$dir/$filename";
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -279,20 +297,14 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
         return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
     }
 
     public function store(Request $request)
     {
-        //dd($request->all());
-
         $precioSugerido = $request->input('precio', 0);
-
-// Sumamos los montos ingresados
         $totalMonto = $request->input('totalMonto', 0);
-        $totalAcreditado = $request->input('totalAcreditado', 0);
-
 
         $rules = [
             'unidad_id' => 'required',
@@ -305,14 +317,10 @@ class VentaController extends Controller
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:1',
             'fecha_pago.*' => 'required|date',
-            'pagado.*' => 'nullable|numeric|min:0',
-            'contadora.*' => 'nullable|date',
+            'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
-
-        // Definir los mensajes de error personalizados
         $messages = [
-
             'fecha.required' => 'La fecha es obligatoria.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
             'entidad_id.required' => 'Debe agregar al menos un pago.',
@@ -320,11 +328,10 @@ class VentaController extends Controller
             'entidad_id.*.required' => 'Debe seleccionar una entidad.',
             'monto.*.required' => 'El importe es obligatorio.',
             'fecha_pago.*.required' => 'La fecha de pago es obligatoria.',
+            'comprobante.*.mimes' => 'El comprobante debe ser JPG, PNG o PDF.',
+            'comprobante.*.max' => 'El comprobante no puede superar los 5MB.',
         ];
 
-
-
-        // Crear el validador con las reglas y mensajes
         $validator = Validator::make($request->all(), $rules, $messages);
 
         $validator->after(function ($validator) use ($totalMonto, $precioSugerido) {
@@ -333,24 +340,18 @@ class VentaController extends Controller
             }
         });
 
-        // Validar y verificar si hay errores
         if ($validator->fails()) {
             $cliente = Cliente::find($request->input('cliente_id'));
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput($request->all() + [
-                        'cliente_nombre' => optional($cliente)->full_name_phone, // 👈 tu accessor
+                        'cliente_nombre' => optional($cliente)->full_name_phone,
                     ]);
         }
 
-
-        $input = $this->sanitizeInput($request->all());
-
-
         DB::beginTransaction();
-        $ok=1;
+        $ok = 1;
         try {
-            // Guardar la venta principal
             $venta = new Venta();
             $venta->unidad_id = $this->sanitizeInput($request->unidad_id);
             $venta->user_id = $this->sanitizeInput($request->user_id);
@@ -362,23 +363,25 @@ class VentaController extends Controller
             $venta->monto = $this->sanitizeInput($request->precio);
             $venta->total = $this->sanitizeInput($request->precio);
             $venta->forma = $this->sanitizeInput($request->forma);
-
             $venta->save();
 
-            // Guardar piezas relacionadas
             foreach ($request->entidad_id as $i => $entidadId) {
                 $detalle = new Pago();
                 $detalle->venta_id = $venta->id;
                 $detalle->entidad_id = $entidadId;
                 $detalle->monto = $this->sanitizeInput($request->monto[$i]);
                 $detalle->fecha = $this->sanitizeInput($request->fecha_pago[$i]);
-                $detalle->pagado = $this->sanitizeInput($request->pagado[$i]);
-                $detalle->contadora = $this->sanitizeInput($request->contadora[$i]);
-                $detalle->detalle = $this->sanitizeInput($request->detalle[$i]);
-                $detalle->observacion = $this->sanitizeInput($request->observaciones[$i]);
+                // pagado and contadora are filled by the auditor, not the seller
+                $detalle->detalle = $this->sanitizeInput($request->detalle[$i] ?? null);
+                $detalle->observacion = $this->sanitizeInput($request->observaciones[$i] ?? null);
+
+                // Store proof file if uploaded for this payment
+                if ($request->hasFile("comprobante.$i")) {
+                    $detalle->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
+                }
+
                 $detalle->save();
 
-                // ✅ Solo generar movimiento si hay caja abierta y entidad tangible
                 $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
                     ->where('user_id', $request->user_id)
                     ->where('estado', 'Abierta')
@@ -403,14 +406,13 @@ class VentaController extends Controller
                             'entidad_id'  => $entidad->id,
                             'venta_id'    => $venta->id,
                             'tipo'        => 'Ingreso',
-                            'monto'       => $detalle->pagado,
+                            'monto'       => $detalle->monto,
                             'acreditado'  => 1,
                             'fecha'       => now(),
                             'user_id'     => $request->user_id,
                             'referencia'  => $detalle->detalle,
                         ]);
                     }
-
                     if ($entidad->cuenta) {
                         // Account payment: impacts entity account
                         \App\Models\MovimientoCuenta::create([
@@ -425,39 +427,24 @@ class VentaController extends Controller
                         ]);
                     }
                 }
-
-            }
-            $autorizada = $this->sanitizeInput($request->autorizada);
-            if ($autorizada){
-                $autorizacion = new Autorizacion();
-                $autorizacion->user_id = $this->sanitizeInput($request->user_id);
-                $autorizacion->unidad_id = $this->sanitizeInput($request->unidad_id);
-                $autorizacion->fecha = $request->filled('fecha')
-                    ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d')
-                    : null;
-                $autorizacion->save();
             }
 
-        }catch(QueryException $ex){
+        } catch (QueryException $ex) {
             $error = $ex->getMessage();
-            $ok=0;
-
+            $ok = 0;
         }
-        if ($ok){
+
+        if ($ok) {
             DB::commit();
-            $respuestaID='success';
-            $respuestaMSJ='Registro creado satisfactoriamente';
-        }
-        else{
+            $respuestaID = 'success';
+            $respuestaMSJ = 'Registro creado satisfactoriamente';
+        } else {
             DB::rollback();
-            $respuestaID='error';
-            $respuestaMSJ=$error;
+            $respuestaID = 'error';
+            $respuestaMSJ = $error;
         }
 
-        return redirect()->route('ventas.index')->with($respuestaID,$respuestaMSJ);
-
-
-
+        return redirect()->route('ventas.index')->with($respuestaID, $respuestaMSJ);
     }
 
     public function edit($id) {
@@ -469,7 +456,7 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
 
         return view('ventas.edit', compact('venta', 'users', 'sucursals', 'entidads','provincias'));
     }
@@ -480,7 +467,6 @@ class VentaController extends Controller
 
         $precioSugerido = $request->input('precio', 0);
         $totalMonto = $request->input('totalMonto', 0);
-        $totalAcreditado = $request->input('totalAcreditado', 0);
 
         $rules = [
             'unidad_id' => 'required',
@@ -493,8 +479,7 @@ class VentaController extends Controller
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:0',
             'fecha_pago.*' => 'required|date',
-            'pagado.*' => 'nullable|numeric|min:0',
-            'contadora.*' => 'nullable|date',
+            'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
         $messages = [
@@ -506,6 +491,8 @@ class VentaController extends Controller
             'monto.*.required' => 'El importe es obligatorio.',
             'fecha_pago.*.required' => 'La fecha de pago es obligatoria.',
             'monto.*.min' => 'El importe es obligatorio.',
+            'comprobante.*.mimes' => 'El comprobante debe ser JPG, PNG o PDF.',
+            'comprobante.*.max' => 'El comprobante no puede superar los 5MB.',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -525,41 +512,53 @@ class VentaController extends Controller
                     ]);
         }
 
-        $input = $this->sanitizeInput($request->all());
-
         DB::beginTransaction();
         $ok = 1;
         try {
-            // Actualizar la venta
-            $venta->unidad_id = $input['unidad_id'];
-            $venta->user_id = $input['user_id'];
-            $venta->cliente_id = $input['cliente_id'];
-            $venta->sucursal_id = $input['sucursal_id'];
+            $venta->unidad_id = $this->sanitizeInput($request->unidad_id);
+            $venta->user_id = $this->sanitizeInput($request->user_id);
+            $venta->cliente_id = $this->sanitizeInput($request->cliente_id);
+            $venta->sucursal_id = $this->sanitizeInput($request->sucursal_id);
             $venta->fecha = $request->filled('fecha')
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d H:i:s')
                 : null;
-            $venta->monto = $input['precio'];
-            $venta->total = $input['precio'];
-            $venta->forma = $input['forma'];
+            $venta->monto = $this->sanitizeInput($request->precio);
+            $venta->total = $this->sanitizeInput($request->precio);
+            $venta->forma = $this->sanitizeInput($request->forma);
             $venta->save();
 
-            // Eliminar pagos anteriores
+            // Preserve auditor data and existing proofs before deleting payments
+            // Map old payments by their index order so we can re-link proofs/audit data
+            $pagosViejos = $venta->pagos->values();
+
             $venta->pagos()->delete();
 
-            // Guardar pagos nuevos
             foreach ($request->entidad_id as $i => $entidadId) {
+                $pagoViejo = $pagosViejos[$i] ?? null;
+
                 $detalle = new Pago();
                 $detalle->venta_id = $venta->id;
                 $detalle->entidad_id = $entidadId;
-                $detalle->monto = $input['monto'][$i];
-                $detalle->fecha = $input['fecha_pago'][$i];
-                $detalle->pagado = $input['pagado'][$i] ?? null;
-                $detalle->contadora = $input['contadora'][$i] ?? null;
-                $detalle->detalle = $input['detalle'][$i] ?? null;
-                $detalle->observacion = $input['observaciones'][$i] ?? null;
+                $detalle->monto = $this->sanitizeInput($request->monto[$i]);
+                $detalle->fecha = $this->sanitizeInput($request->fecha_pago[$i]);
+                $detalle->detalle = $this->sanitizeInput($request->detalle[$i] ?? null);
+                $detalle->observacion = $this->sanitizeInput($request->observaciones[$i] ?? null);
+
+                // Keep auditor fields (pagado/contadora) from the old payment, seller does not touch them
+                if ($pagoViejo) {
+                    $detalle->pagado = $pagoViejo->pagado;
+                    $detalle->contadora = $pagoViejo->contadora;
+                }
+
+                // New upload replaces; otherwise keep the prior proof for that row
+                if ($request->hasFile("comprobante.$i")) {
+                    $detalle->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
+                } elseif ($pagoViejo) {
+                    $detalle->comprobante_path = $pagoViejo->comprobante_path;
+                }
+
                 $detalle->save();
 
-                // ✅ Generar movimiento de caja si corresponde
                 $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
                     ->where('user_id', $request->user_id)
                     ->where('estado', 'Abierta')
@@ -584,7 +583,7 @@ class VentaController extends Controller
                             'entidad_id' => $entidad->id,
                             'venta_id' => $venta->id,
                             'tipo' => 'Ingreso',
-                            'monto' => $detalle->pagado,
+                            'monto' => $detalle->monto,
                             'acreditado' => 1,
                             'fecha' => now(),
                             'user_id' => $request->user_id,
@@ -607,9 +606,7 @@ class VentaController extends Controller
                 }
             }
 
-
-
-        } catch(QueryException $ex) {
+        } catch (QueryException $ex) {
             $error = $ex->getMessage();
             $ok = 0;
         }

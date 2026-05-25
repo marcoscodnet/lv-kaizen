@@ -185,6 +185,11 @@ $(document).ready(function () {
         toggleComprobante($(this));
     });
 
+    // Recalculate totals on load for pre-existing payments (edit view)
+    setTimeout(function () {
+        actualizarTotalesPago();
+    }, 500);
+
     // ============================================================
     // Proof capture with camera (seller only)
     // ============================================================

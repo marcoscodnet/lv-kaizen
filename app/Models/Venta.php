@@ -35,6 +35,13 @@ class Venta extends Model
 
     public function autorizaciones()
     {
-        return $this->morphMany(\App\Models\Autorizacion::class, 'autorizable');
+        return $this->hasManyThrough(
+            \App\Models\Autorizacion::class,
+            \App\Models\Pago::class,
+            'venta_id', // FK in pagos
+            'pago_id',  // FK in autorizacions
+            'id',       // PK in ventas
+            'id'        // PK in pagos
+        );
     }
 }

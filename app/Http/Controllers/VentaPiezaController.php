@@ -56,6 +56,24 @@ class VentaPiezaController extends Controller
             THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
     }
 
+    // Save uploaded proof file under public/files/comprobantes/{year}/{month}
+    private function guardarComprobante($file): string
+    {
+        $year = date('Y');
+        $month = date('m');
+        $dir = "files/comprobantes/$year/$month";
+        $fullDir = public_path($dir);
+
+        if (!file_exists($fullDir)) {
+            mkdir($fullDir, 0775, true);
+        }
+
+        $filename = uniqid('comp_') . '.' . $file->getClientOriginalExtension();
+        $file->move($fullDir, $filename);
+
+        return "$dir/$filename";
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -217,7 +235,7 @@ class VentaPiezaController extends Controller
             ->orderBy('id', 'desc')
             ->get(['id', 'modelo', 'motor', 'chasis']);
 
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
         return view('ventaPiezas.create', compact('users', 'stockPiezasJson', 'sucursals', 'provincias', 'serviciosAbiertos', 'entidads'));
     }
 
@@ -285,15 +303,6 @@ class VentaPiezaController extends Controller
 
         // Save payments only for Salón
         if ($input['destino'] === 'Salón' && $request->filled('entidad_id')) {
-            // Check for open cash register
-            $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                ->where('user_id', $request->user_id)
-                ->where('estado', 'Abierta')
-                ->first();
-
-            if (!$cajaAbierta) {
-                throw new \Exception("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.");
-            }
 
             $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de pieza']);
 
@@ -303,16 +312,30 @@ class VentaPiezaController extends Controller
                 $pago->entidad_id     = $entidadId;
                 $pago->monto          = $this->sanitizeInput($request->monto[$i]);
                 $pago->fecha          = $this->sanitizeInput($request->fecha_pago[$i]);
-                $pago->pagado         = $this->sanitizeInput($request->pagado[$i]);
-                $pago->contadora      = $this->sanitizeInput($request->contadora[$i]);
-                $pago->detalle        = $this->sanitizeInput($request->detalle[$i]);
-                $pago->observacion    = $this->sanitizeInput($request->observaciones[$i]);
+                // pagado and contadora are filled by the auditor, not the seller
+                $pago->detalle        = $this->sanitizeInput($request->detalle[$i] ?? null);
+                $pago->observacion    = $this->sanitizeInput($request->observaciones[$i] ?? null);
+
+                // Store proof file if uploaded for this payment
+                if ($request->hasFile("comprobante.$i")) {
+                    $pago->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
+                }
+
                 $pago->save();
 
                 $entidad = Entidad::find($entidadId);
                 if ($entidad) {
-
                     if ($entidad->tangible) {
+                        // Cash payment requires an open cash register
+                        $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                            ->where('user_id', $request->user_id)
+                            ->where('estado', 'Abierta')
+                            ->first();
+
+                        if (!$cajaAbierta) {
+                            throw new \Exception("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago en efectivo.");
+                        }
+
                         // Cash payment: impacts physical cash register
                         MovimientoCaja::create([
                             'caja_id'        => $cajaAbierta->id,
@@ -320,7 +343,7 @@ class VentaPiezaController extends Controller
                             'entidad_id'     => $entidad->id,
                             'venta_pieza_id' => $venta->id,
                             'tipo'           => 'Ingreso',
-                            'monto'       => $pago->pagado ,
+                            'monto'          => $pago->monto,
                             'acreditado'     => 1,
                             'fecha'          => now(),
                             'user_id'        => $request->user_id,
@@ -330,14 +353,14 @@ class VentaPiezaController extends Controller
                     if ($entidad->cuenta) {
                         // Non-tangible payment: impacts entity account only
                         \App\Models\MovimientoCuenta::create([
-                            'entidad_id' => $entidad->id,
-                            'tipo'       => 'Ingreso',
-                            'monto'      => $pago->monto,
-                            'fecha'      => $pago->fecha,
-                            'concepto'   => $conceptoVenta->nombre,
-                            'venta_pieza_id'   => $venta->id,
-                            'pago_id'    => $pago->id,
-                            'user_id'    => $request->user_id,
+                            'entidad_id'     => $entidad->id,
+                            'tipo'           => 'Ingreso',
+                            'monto'          => $pago->monto,
+                            'fecha'          => $pago->fecha,
+                            'concepto'       => $conceptoVenta->nombre,
+                            'venta_pieza_id' => $venta->id,
+                            'pago_id'        => $pago->id,
+                            'user_id'        => $request->user_id,
                         ]);
                     }
                 }
@@ -354,6 +377,7 @@ class VentaPiezaController extends Controller
             'fecha'        => 'required|date',
             'pieza_id'     => 'required|array|min:1',
             'pieza_id.*'   => 'required|distinct',
+            'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
         $messages = [
@@ -362,6 +386,8 @@ class VentaPiezaController extends Controller
             'pieza_id.min'          => 'Debe agregar al menos una pieza.',
             'pieza_id.*.required'   => 'Debe seleccionar una pieza.',
             'pieza_id.*.distinct'   => 'No puede repetir piezas.',
+            'comprobante.*.mimes'   => 'El comprobante debe ser JPG, PNG o PDF.',
+            'comprobante.*.max'     => 'El comprobante no puede superar los 5MB.',
         ];
 
         switch ($request->input('destino')) {
@@ -399,6 +425,7 @@ class VentaPiezaController extends Controller
             'fecha'        => 'required|date',
             'pieza_id'     => 'required|array|min:1',
             'pieza_id.*'   => 'required|distinct',
+            'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
         $messages = [
@@ -407,6 +434,8 @@ class VentaPiezaController extends Controller
             'pieza_id.min'          => 'Debe agregar al menos una pieza.',
             'pieza_id.*.required'   => 'Debe seleccionar una pieza.',
             'pieza_id.*.distinct'   => 'No puede repetir piezas.',
+            'comprobante.*.mimes'   => 'El comprobante debe ser JPG, PNG o PDF.',
+            'comprobante.*.max'     => 'El comprobante no puede superar los 5MB.',
         ];
 
         switch ($request->input('destino')) {
@@ -473,7 +502,7 @@ class VentaPiezaController extends Controller
 
     public function edit($id)
     {
-        $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal'])->findOrFail($id);
+        $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal', 'pagos', 'cliente'])->findOrFail($id);
 
         $user = auth()->user();
         $esAdministrador = $user->hasRole('Administrador');
@@ -511,7 +540,7 @@ class VentaPiezaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
         return view('ventaPiezas.edit', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals', 'provincias', 'entidads'));
     }
 

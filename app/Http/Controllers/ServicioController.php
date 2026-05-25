@@ -47,6 +47,38 @@ class ServicioController extends Controller
         $this->middleware('permission:servicio-eliminar', ['only' => ['destroy']]);
     }
 
+    // SQL CASE that returns 'Autorizada' when the service has payments and all are authorized
+    private function autorizacionCase(string $alias = ''): string
+    {
+        $as = $alias ? " as $alias" : '';
+        return "CASE
+        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.servicio_id = servicios.id)
+         AND NOT EXISTS (
+             SELECT 1 FROM pagos p2
+             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+             WHERE p2.servicio_id = servicios.id AND a2.id IS NULL
+         )
+        THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
+    }
+
+    // Save uploaded proof file under public/files/comprobantes/{year}/{month}
+    private function guardarComprobante($file): string
+    {
+        $year = date('Y');
+        $month = date('m');
+        $dir = "files/comprobantes/$year/$month";
+        $fullDir = public_path($dir);
+
+        if (!file_exists($fullDir)) {
+            mkdir($fullDir, 0775, true);
+        }
+
+        $filename = uniqid('comp_') . '.' . $file->getClientOriginalExtension();
+        $file->move($fullDir, $filename);
+
+        return "$dir/$filename";
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -230,8 +262,14 @@ class ServicioController extends Controller
             DB::raw("IFNULL(users.name, ventas.user_name)"),
             'sucursals.nombre',
             'ventas.fecha',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
-            'ventas.forma'
+            DB::raw("CASE
+    WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
+     AND NOT EXISTS (
+         SELECT 1 FROM pagos p2
+         LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+         WHERE p2.venta_id = ventas.id AND a2.id IS NULL
+     )
+    THEN 'Autorizada' ELSE 'No autorizada' END")
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -250,16 +288,21 @@ class ServicioController extends Controller
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
             'ventas.fecha',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
-            'ventas.forma'
+            DB::raw("CASE
+    WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
+     AND NOT EXISTS (
+         SELECT 1 FROM pagos p2
+         LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+         WHERE p2.venta_id = ventas.id AND a2.id IS NULL
+     )
+    THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
             ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', 'autorizacions.unidad_id', '=', 'unidads.id');
+            ->leftJoin('users', 'ventas.user_id', '=', 'users.id');
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);
@@ -323,7 +366,7 @@ class ServicioController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
         $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         return view('servicios.registrar', compact('sucursals', 'venta', 'provincias', 'tipos', 'entidads','marcas','modelos'));
@@ -347,6 +390,7 @@ class ServicioController extends Controller
             'ingreso' => 'required|date_format:d/m/Y H:i:s',
             'entrega' => 'required|date',
             'mano_de_obra' => 'required|numeric|min:0',
+            'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
 
@@ -362,6 +406,8 @@ class ServicioController extends Controller
             'ingreso.required' => 'La fecha de ingreso es obligatoria.',
             'ingreso.date_format' => 'La fecha de ingreso no coincide con el formato d/m/Y H:i:s.',
             'entrega.required' => 'La fecha de compromiso entrega es obligatoria.',
+            'comprobante.*.mimes' => 'El comprobante debe ser JPG, PNG o PDF.',
+            'comprobante.*.max' => 'El comprobante no puede superar los 5MB.',
         ];
 
 
@@ -395,6 +441,7 @@ class ServicioController extends Controller
             unset($input['contadora']);
             unset($input['detalle']);
             unset($input['observaciones']);
+            unset($input['comprobante']);
 
             $input['ingreso']=$request->filled('ingreso')
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $request->ingreso)->format('Y-m-d H:i:s')
@@ -405,7 +452,8 @@ class ServicioController extends Controller
             // Calculate total from labor and parts costs
             $input['mano_de_obra']   = $request->input('mano_de_obra', 0);
             $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
-            $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
+            $input['insumos']         = $request->input('insumos', 0);
+            $input['monto']           = $input['mano_de_obra'] + $input['costo_repuestos'] + $input['insumos'];
 
             //dd(array_filter($input, function($v) { return is_array($v); }));
             $servicio = Servicio::create($input);
@@ -413,62 +461,67 @@ class ServicioController extends Controller
 
             // Save service payments and impact cash register
             if ($request->filled('entidad_id')) {
+                $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+
                 foreach ($request->entidad_id as $i => $entidadId) {
                     $pago = new Pago();
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
                     $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
-                    $pago->pagado       = $this->sanitizeInput($request->pagado[$i]);
-                    $pago->contadora    = $this->sanitizeInput($request->contadora[$i]);
-                    $pago->detalle      = $this->sanitizeInput($request->detalle[$i]);
-                    $pago->observacion  = $this->sanitizeInput($request->observaciones[$i]);
-                    $pago->save();
+                    // pagado and contadora are filled by the auditor, not the seller
+                    $pago->detalle      = $this->sanitizeInput($request->detalle[$i] ?? null);
+                    $pago->observacion  = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
-                    // Check for open cash register
-                    $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                        ->where('user_id', auth()->id())
-                        ->where('estado', 'Abierta')
-                        ->first();
-
-                    if (!$cajaAbierta) {
-                        DB::rollBack();
-                        return redirect()->back()
-                            ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
-                            ->withInput();
+                    // Store proof file if uploaded for this payment
+                    if ($request->hasFile("comprobante.$i")) {
+                        $pago->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
                     }
 
-                    $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+                    $pago->save();
 
                     $entidad = Entidad::find($entidadId);
                     if ($entidad) {
-
                         if ($entidad->tangible) {
-                            // Cash payment: impacts physical cash register
+                            // Cash payment requires an open cash register
+                            $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                                ->where('user_id', auth()->id())
+                                ->where('estado', 'Abierta')
+                                ->first();
+
+                            if (!$cajaAbierta) {
+                                DB::rollBack();
+                                return redirect()->back()
+                                    ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago en efectivo.")
+                                    ->withInput();
+                            }
+
+                            $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+
                             MovimientoCaja::create([
-                                'caja_id'    => $cajaAbierta->id,
-                                'concepto_id'=> $concepto->id,
-                                'entidad_id' => $entidad->id,
-                                'servicio_id'   => $servicio->id,
-                                'tipo'       => 'Ingreso',
-                                'monto'       => $pago->pagado,
-                                'acreditado' => 1,
-                                'fecha'      => now(),
-                                'user_id'    => auth()->id(),
-                                'referencia' => $pago->detalle,
+                                'caja_id'     => $cajaAbierta->id,
+                                'concepto_id' => $concepto->id,
+                                'entidad_id'  => $entidad->id,
+                                'servicio_id' => $servicio->id,
+                                'tipo'        => 'Ingreso',
+                                'monto'       => $pago->monto,
+                                'acreditado'  => 1,
+                                'fecha'       => now(),
+                                'user_id'     => auth()->id(),
+                                'referencia'  => $pago->detalle,
                             ]);
                         }
                         if ($entidad->cuenta) {
                             // Non-tangible payment: impacts entity account only
                             \App\Models\MovimientoCuenta::create([
-                                'entidad_id' => $entidad->id,
-                                'tipo'       => 'Ingreso',
-                                'monto'      => $pago->monto,
-                                'fecha'      => $pago->fecha,
-                                'concepto'   => $concepto->nombre,
-                                'servicio_id'   => $servicio->id,
-                                'pago_id'    => $pago->id,
-                                'user_id'    => $request->user_id,
+                                'entidad_id'  => $entidad->id,
+                                'tipo'        => 'Ingreso',
+                                'monto'       => $pago->monto,
+                                'fecha'       => $pago->fecha,
+                                'concepto'    => 'Servicio',
+                                'servicio_id' => $servicio->id,
+                                'pago_id'     => $pago->id,
+                                'user_id'     => auth()->id(),
                             ]);
                         }
                     }
@@ -505,7 +558,7 @@ class ServicioController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $tipos = TipoServicio::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
         $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
@@ -531,6 +584,7 @@ class ServicioController extends Controller
             'ingreso' => 'required|date_format:d/m/Y H:i:s',
             'entrega' => 'required|date',
             'mano_de_obra' => 'required|numeric|min:0',
+            'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
 
@@ -546,6 +600,8 @@ class ServicioController extends Controller
             'ingreso.required' => 'La fecha de ingreso es obligatoria.',
             'ingreso.date_format' => 'La fecha de ingreso no coincide con el formato d/m/Y H:i:s.',
             'entrega.required' => 'La fecha de compromiso entrega es obligatoria.',
+            'comprobante.*.mimes' => 'El comprobante debe ser JPG, PNG o PDF.',
+            'comprobante.*.max' => 'El comprobante no puede superar los 5MB.',
         ];
 
 
@@ -579,69 +635,81 @@ class ServicioController extends Controller
             // Calculate total from labor and parts costs
             $input['mano_de_obra']   = $request->input('mano_de_obra', 0);
             $input['costo_repuestos'] = $request->input('costo_repuestos', 0);
-            $input['monto']          = $input['mano_de_obra'] + $input['costo_repuestos'];
+            $input['insumos']         = $request->input('insumos', 0);
+            $input['monto']           = $input['mano_de_obra'] + $input['costo_repuestos'] + $input['insumos'];
             $servicio->update($input);
 
-            // Replace all payments on update
+            // Preserve auditor data and proofs from existing payments before deleting
+            $pagosViejos = Pago::where('servicio_id', $servicio->id)->orderBy('id')->get()->values();
             Pago::where('servicio_id', $servicio->id)->delete();
 
             if ($request->filled('entidad_id')) {
                 foreach ($request->entidad_id as $i => $entidadId) {
+                    $pagoViejo = $pagosViejos[$i] ?? null;
+
                     $pago = new Pago();
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
                     $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
-                    $pago->pagado       = $this->sanitizeInput($request->pagado[$i]);
-                    $pago->contadora    = $this->sanitizeInput($request->contadora[$i]);
-                    $pago->detalle      = $this->sanitizeInput($request->detalle[$i]);
-                    $pago->observacion  = $this->sanitizeInput($request->observaciones[$i]);
-                    $pago->save();
+                    $pago->detalle      = $this->sanitizeInput($request->detalle[$i] ?? null);
+                    $pago->observacion  = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
-                    // Check for open cash register
-                    $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                        ->where('user_id', auth()->id())
-                        ->where('estado', 'Abierta')
-                        ->first();
-
-                    if (!$cajaAbierta) {
-                        DB::rollBack();
-                        return redirect()->back()
-                            ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
-                            ->withInput();
+                    // Keep auditor fields from the old payment
+                    if ($pagoViejo) {
+                        $pago->pagado = $pagoViejo->pagado;
+                        $pago->contadora = $pagoViejo->contadora;
                     }
 
-                    $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+                    // New upload replaces; otherwise keep prior proof
+                    if ($request->hasFile("comprobante.$i")) {
+                        $pago->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
+                    } elseif ($pagoViejo) {
+                        $pago->comprobante_path = $pagoViejo->comprobante_path;
+                    }
+
+                    $pago->save();
 
                     $entidad = Entidad::find($entidadId);
                     if ($entidad) {
-
                         if ($entidad->tangible) {
-                            // Cash payment: impacts physical cash register
+                            $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                                ->where('user_id', auth()->id())
+                                ->where('estado', 'Abierta')
+                                ->first();
+
+                            if (!$cajaAbierta) {
+                                DB::rollBack();
+                                return redirect()->back()
+                                    ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago en efectivo.")
+                                    ->withInput();
+                            }
+
+                            $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
+
                             MovimientoCaja::create([
-                                'caja_id'    => $cajaAbierta->id,
-                                'concepto_id'=> $concepto->id,
-                                'entidad_id' => $entidad->id,
-                                'servicio_id'   => $servicio->id,
-                                'tipo'       => 'Ingreso',
-                                'monto'       => $entidad->tangible ? $pago->pagado : $pago->monto,
-                                'acreditado' => $entidad->tangible,
-                                'fecha'      => now(),
-                                'user_id'    => auth()->id(),
-                                'referencia' => $pago->detalle,
+                                'caja_id'     => $cajaAbierta->id,
+                                'concepto_id' => $concepto->id,
+                                'entidad_id'  => $entidad->id,
+                                'servicio_id' => $servicio->id,
+                                'tipo'        => 'Ingreso',
+                                'monto'       => $pago->monto,
+                                'acreditado'  => 1,
+                                'fecha'       => now(),
+                                'user_id'     => auth()->id(),
+                                'referencia'  => $pago->detalle,
                             ]);
                         }
                         if ($entidad->cuenta) {
-                            // Non-tangible payment: impacts entity account only
                             \App\Models\MovimientoCuenta::create([
-                                'entidad_id' => $entidad->id,
-                                'tipo'       => 'Ingreso',
-                                'monto'      => $pago->monto,
-                                'fecha'      => $pago->fecha,
-                                'concepto'   => $concepto->nombre,
-                                'servicio_id'   => $servicio->id,
-                                'pago_id'    => $pago->id,
-                                'user_id'    => $request->user_id,
+                                'entidad_id'  => $entidad->id,
+                                'tipo'        => 'Ingreso',
+                                'monto'       => $pago->monto,
+                                'fecha'       => $pago->fecha,
+                                'concepto'    => 'Servicio',
+                                'servicio_id' => $servicio->id,
+                                'pago_id'     => $pago->id,
+                                'user_id'     => auth()->id(),
                             ]);
                         }
                     }

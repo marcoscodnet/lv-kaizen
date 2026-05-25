@@ -9,7 +9,7 @@ class Servicio extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['carga','tipo_servicio_id','cliente_id','sucursal_id','kilometros','ingreso','observacion','descripcion','diagnostico','repuestos','mecanicos','instrumentos','tiempo','entrega','monto','pagado','modelo','year','chasis','motor','venta','user_id','mano_de_obra','costo_repuestos','forma','marca_id','modelo_id'];
+    protected $fillable = ['carga','tipo_servicio_id','cliente_id','sucursal_id','kilometros','ingreso','observacion','descripcion','diagnostico','repuestos','mecanicos','instrumentos','tiempo','entrega','monto','pagado','modelo','year','chasis','motor','venta','user_id','mano_de_obra','costo_repuestos','forma','marca_id','modelo_id','insumos'];
 
 
     public function user() {
@@ -56,7 +56,14 @@ class Servicio extends Model
 
     public function autorizaciones()
     {
-        return $this->morphMany(\App\Models\Autorizacion::class, 'autorizable');
+        return $this->hasManyThrough(
+            \App\Models\Autorizacion::class,
+            \App\Models\Pago::class,
+            'servicio_id', // FK in pagos
+            'pago_id',     // FK in autorizacions
+            'id',          // PK in servicios
+            'id'           // PK in pagos
+        );
     }
 
 }

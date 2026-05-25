@@ -92,7 +92,6 @@
                         <th scope="col">Sucursal</th>
                         <th scope="col">Fecha</th>
                         <th scope="col">Estado</th>
-                        <th scope="col">Pago</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -182,7 +181,7 @@
 
                     { data: 'autorizacion', name: 'autorizacion' },
 
-                    { data: 'forma', name: 'forma' },
+
 
                     // Actions column
                     {

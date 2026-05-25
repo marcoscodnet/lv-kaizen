@@ -208,17 +208,20 @@
                                 <div class="form-group d-flex align-items-end gap-2">
                                     <div class="flex-grow-1">
                                         <label for="cliente_id">Cliente</label>
+
                                         <select name="cliente_id" id="cliente_id" class="form-control js-example-basic-single">
                                             @if(old('cliente_id'))
                                                 {{-- Mostrar cliente seleccionado por old() --}}
                                                 <option value="{{ old('cliente_id') }}" selected>
                                                     {{ old('cliente_nombre', '') }}
                                                 </option>
-                                            @elseif(isset($ventaPieza) && $ventaPieza->cliente)
-                                                {{-- Mostrar cliente existente en la venta --}}
-                                                <option value="{{ $ventaPieza->cliente_id }}" selected>
-                                                    {{ $ventaPieza->cliente->full_name_phone }}
-                                                </option>
+                                            @elseif(isset($ventaPieza) && $ventaPieza->cliente_id)
+                                                @php $clienteVenta = \App\Models\Cliente::find($ventaPieza->cliente_id); @endphp
+                                                @if($clienteVenta)
+                                                    <option value="{{ $clienteVenta->id }}" selected>
+                                                        {{ $clienteVenta->full_name_phone }}
+                                                    </option>
+                                                @endif
                                             @endif
                                         </select>
                                     </div>
@@ -471,6 +474,17 @@
 
     <!-- page script -->
     <script>
+        var entidadsData = {!! json_encode($entidads->map(function($e) {
+            return [
+                'id' => $e->id,
+                'nombre' => $e->nombre,
+                'forma' => $e->forma,
+                'autorizacion' => $e->autorizacion,
+            ];
+        })) !!};
+    </script>
+    <script src="{{ asset('assets/js/cobro.js') }}"></script>
+    <script>
         const stockPiezas = @json($stockPiezasJson);
         var localidadUrl = "{{ url('localidads') }}";
         $(document).ready(function () {
@@ -489,6 +503,7 @@
                 // Mostrar el que corresponde
                 if (valor === 'Salón') {
                     $('#divSalon').show();
+                    $(document).trigger('forma:changed', [$('#forma').val()]);
                 } else if (valor === 'Sucursal') {
                     $('#divSucursal').show();
                 } else if (valor === 'Taller') {
@@ -676,6 +691,17 @@
                     cache: true
                 }
             });
+
+            // Preload the existing client into select2 (edit mode)
+            @php $clienteVenta = $ventaPieza->cliente_id ? \App\Models\Cliente::find($ventaPieza->cliente_id) : null; @endphp
+            @if($clienteVenta)
+                var clienteOption = new Option(
+                    @json($clienteVenta->full_name_phone),
+                    @json($clienteVenta->id),
+                    true, true
+                );
+                $('#cliente_id').append(clienteOption).trigger('change');
+            @endif
 
             // Select2 para clientes con búsqueda AJAX
             $('#cliente_id').on('select2:select', function (e) {

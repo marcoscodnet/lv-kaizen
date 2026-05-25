@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('ventaPiezas.store') }}" method="post" >
+            <form role="form" action="{{ route('ventaPiezas.store') }}" method="post" enctype="multipart/form-data">
                 {{ csrf_field() }}
                 <div class="tab-content">
                     <div class="box-body">
@@ -230,12 +230,12 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-3">
+                            <!--<div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="pedido">Nro. Pedido Reparación</label>
                                     <input type="text" class="form-control" id="pedido_sucursal" name="pedido_sucursal" placeholder="Nro. Pedido Reparación" value="{{ old('pedido') }}">
                                 </div>
-                            </div>
+                            </div>-->
 
 
 
@@ -256,13 +256,13 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-3">
+                            <!--<div class="col-12 col-lg-3">
                                 <div class="form-group">
                                     <label for="pedido_taller">Nro. Pedido Reparación</label>
                                     <input type="text" class="form-control" id="pedido_taller" name="pedido_taller"
                                            placeholder="Nro. Pedido Reparación" value="{{ old('pedido') }}">
                                 </div>
-                            </div>
+                            </div>-->
                             <input type="hidden" name="pedido" id="pedido_hidden" value="{{ old('pedido') }}">
                         </div>
 
@@ -463,8 +463,13 @@
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         var entidadsData = {!! json_encode($entidads->map(function($e) {
-        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
-    })) !!};
+                        return [
+                            'id' => $e->id,
+                            'nombre' => $e->nombre,
+                            'forma' => $e->forma,
+                            'autorizacion' => $e->autorizacion,
+                        ];
+                    })) !!};
     </script>
     <script src="{{ asset('assets/js/cobro.js') }}"></script>
 

@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form id="formVenta" role="form" action="{{ route('servicios.store') }}" method="post">
+            <form id="formVenta" role="form" action="{{ route('servicios.store') }}" method="post" enctype="multipart/form-data">
                 {{ csrf_field() }}
 
                 <div class="tab-content">
@@ -266,6 +266,13 @@
                                     </div>
                                     <div class="col-lg-2">
                                         <div class="form-group">
+                                            <label for="insumos">Insumos</label>
+                                            <input type="text" class="form-control formato-numero" id="insumos" name="insumos"
+                                                   value="{{ old('insumos', $servicio->insumos ?? 0) }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
                                             <label for="total">Total</label>
                                             <input type="text" class="form-control formato-numero" id="total" name="total"
                                                    value="{{ old('total') }}" readonly>
@@ -277,7 +284,7 @@
                                             <input class="form-check-input" type="checkbox" id="pagado" name="pagado" value="1"
                                                 {{ old('pagado', $obj->pagado ?? false) ? 'checked' : '' }}>
                                             <label class="form-check-label" for="pagado">
-                                                Pagado
+                                                Cerrado
                                             </label>
                                         </div>
                                 </div>
@@ -479,8 +486,13 @@
     {{-- Cobro module -- after jQuery and AutoNumeric --}}
     <script>
         var entidadsData = {!! json_encode($entidads->map(function($e) {
-        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
-    })) !!};
+            return [
+                'id' => $e->id,
+                'nombre' => $e->nombre,
+                'forma' => $e->forma,
+                'autorizacion' => $e->autorizacion,
+            ];
+        })) !!};
     </script>
     <script src="{{ asset('assets/js/cobro.js') }}"></script>
     <script>
@@ -766,14 +778,20 @@
             toggleConyuge();
 
             // Recalculate total when labor cost changes
-            $('#mano_de_obra').on('change', function () {
+            function recalcularTotal() {
                 var manoDeObra = AutoNumeric.getNumericString('#mano_de_obra') || 0;
                 var repuestos  = AutoNumeric.getNumericString('#costo_repuestos') || 0;
-                var total = parseFloat(manoDeObra) + parseFloat(repuestos);
+                var insumos    = AutoNumeric.getNumericString('#insumos') || 0;
+                var total = parseFloat(manoDeObra) + parseFloat(repuestos) + parseFloat(insumos);
                 AutoNumeric.set('#total', total);
-            });
+            }
+
+            $('#mano_de_obra, #costo_repuestos, #insumos').on('change', recalcularTotal);
+            // Calculate total on load
+            recalcularTotal();
 
         });
+
     </script>
 
 
