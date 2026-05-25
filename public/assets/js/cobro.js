@@ -1,6 +1,6 @@
 $(document).ready(function () {
 
-    // Contexto: 'vendedor' por defecto. La vista de auditoría seteará window.cobroContexto = 'auditor'
+    // Context: 'vendedor' by default. The audit view sets window.cobroContexto = 'auditor'
     var contexto = window.cobroContexto || 'vendedor';
     var esVendedor = contexto === 'vendedor';
     var esAuditor = contexto === 'auditor';
@@ -17,7 +17,7 @@ $(document).ready(function () {
     function getPagoHtml(forma) {
         var labelFecha = forma === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito';
 
-        // Bloque de comprobante (solo vendedor lo puede cargar)
+        // Proof block (only seller can upload)
         var comprobanteHtml = esVendedor ? `
                 <div class="row mt-2 comprobante-wrapper" style="display:none;">
                     <div class="col-md-12">
@@ -41,7 +41,7 @@ $(document).ready(function () {
                     </div>
                 </div>` : '';
 
-        // Campos del auditor (Acreditado + Fecha Contadora). Solo visibles para auditor.
+        // Auditor fields (Acreditado). Only visible for auditor.
         var camposAuditorHtml = `
                 <div class="col-md-2 campos-auditor" style="display:${esAuditor ? 'block' : 'none'};">
                     <label>Acreditado</label>
@@ -107,7 +107,6 @@ $(document).ready(function () {
             decimalPlaces: 2,
             unformatOnSubmit: true
         });
-        // Inicializar visibilidad del comprobante segun la entidad seleccionada
         toggleComprobante($row.find('.js-pago-select'));
         actualizarTotalesPago();
     }
@@ -132,11 +131,11 @@ $(document).ready(function () {
         if (elAcreditado) elAcreditado.set(totalAcreditado);
     }
 
-    // Muestra u oculta el bloque de comprobante segun si la entidad seleccionada requiere autorizacion
+    // Show/hide the proof block based on whether the selected entity requires authorization
     function toggleComprobante($select) {
         var $row = $select.closest('.pago-item');
         var $wrapper = $row.find('.comprobante-wrapper');
-        if ($wrapper.length === 0) return; // No existe en contexto auditor
+        if ($wrapper.length === 0) return; // Not present in auditor context
 
         var requiere = parseInt($select.find('option:selected').data('autorizacion'), 10) === 1;
 
@@ -144,14 +143,12 @@ $(document).ready(function () {
             $wrapper.css('display', 'flex');
         } else {
             $wrapper.hide();
-            // Clear input and preview when entity changes to one not requiring auth
             $row.find('.comprobante-file').val('');
             $row.find('.comprobante-preview').hide().attr('src', '');
         }
     }
 
     $(document).on('forma:changed', function (e, forma) {
-        // En contexto auditor no manipulamos visibilidad por forma
         if (esAuditor) {
             $('#cuerpoPago, #totalesPago').show();
             return;
@@ -178,22 +175,21 @@ $(document).ready(function () {
 
     $('body').on('input', 'input[name="monto[]"], input[name="pagado[]"]', actualizarTotalesPago);
 
-    // Toggle comprobante on entity change
+    // Toggle proof block on entity change
     $('body').on('change', '.js-pago-select', function () {
         toggleComprobante($(this));
     });
 
-    // Tambien inicializar el estado al cargar para los pagos pre-existentes (edit)
+    // Initialize state on load for pre-existing payments (edit view)
     $('.pago-item .js-pago-select').each(function () {
         toggleComprobante($(this));
     });
 
-
     // ============================================================
-    // Captura de comprobante con camara
+    // Proof capture with camera (seller only)
     // ============================================================
     if (esVendedor) {
-        var $filaActiva = null;  // Track which payment row triggered the camera
+        var $filaActiva = null;
         var streamActivo = null;
         var $modalCamara = $('#capturarComprobanteModal');
 
@@ -232,14 +228,12 @@ $(document).ready(function () {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             canvas.toBlob(function (blob) {
-                // Crear File desde el Blob y meterlo en el input file
                 var file = new File([blob], 'comprobante_' + Date.now() + '.png', { type: 'image/png' });
                 var dt = new DataTransfer();
                 dt.items.add(file);
                 var $fileInput = $filaActiva.find('.comprobante-file');
                 $fileInput[0].files = dt.files;
 
-                // Preview
                 var dataUrl = canvas.toDataURL('image/png');
                 $filaActiva.find('.comprobante-preview').attr('src', dataUrl).show();
 
@@ -247,7 +241,7 @@ $(document).ready(function () {
             }, 'image/png');
         });
 
-        // Preview cuando el usuario elige un archivo manualmente
+        // Preview when user selects a file manually
         $('body').on('change', '.comprobante-file', function () {
             var file = this.files[0];
             var $preview = $(this).closest('.pago-item').find('.comprobante-preview');
@@ -257,7 +251,6 @@ $(document).ready(function () {
                 return;
             }
 
-            // Validate size (5MB)
             if (file.size > 5 * 1024 * 1024) {
                 alert('El archivo supera los 5MB. Por favor seleccione uno más chico.');
                 this.value = '';
@@ -265,7 +258,6 @@ $(document).ready(function () {
                 return;
             }
 
-            // Preview only for images, not PDFs
             if (file.type.startsWith('image/')) {
                 var reader = new FileReader();
                 reader.onload = function (e) {

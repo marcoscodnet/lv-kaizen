@@ -45,6 +45,20 @@ class VentaController extends Controller
         $this->middleware('permission:venta-eliminar', ['only' => ['destroy']]);
     }
 
+    // SQL CASE that returns 'Autorizada' when the sale has payments and all of them are authorized
+    private function autorizacionCase(string $alias = ''): string
+    {
+        $as = $alias ? " as $alias" : '';
+        return "CASE
+            WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
+             AND NOT EXISTS (
+                 SELECT 1 FROM pagos p2
+                 LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                 WHERE p2.venta_id = ventas.id AND a2.id IS NULL
+             )
+            THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -73,14 +87,7 @@ class VentaController extends Controller
             'modelos.nombre',
             DB::raw("IFNULL(users.name, ventas.user_name)"),
             'sucursals.nombre',
-            DB::raw("CASE
-                        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
-                         AND NOT EXISTS (
-                             SELECT 1 FROM pagos p2
-                             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                             WHERE p2.venta_id = ventas.id AND a2.id IS NULL
-                         )
-                        THEN 'Autorizada' ELSE 'No autorizada' END")
+            DB::raw($this->autorizacionCase()),
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -99,14 +106,7 @@ class VentaController extends Controller
             'modelos.nombre as modelo',
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
-            DB::raw("CASE
-                        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
-                         AND NOT EXISTS (
-                             SELECT 1 FROM pagos p2
-                             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                             WHERE p2.venta_id = ventas.id AND a2.id IS NULL
-                         )
-                        THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
+            DB::raw($this->autorizacionCase('autorizacion'))
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
@@ -150,6 +150,7 @@ class VentaController extends Controller
         // Totales
         $totalVentas = (clone $baseQuery)->count();
 
+        // A sale is authorized when it has payments and none of them are missing an authorization
         $ventasAutorizadas = (clone $baseQuery)
             ->whereExists(function ($q) {
                 $q->select(DB::raw(1))
@@ -278,8 +279,7 @@ class VentaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        //$entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
-        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
+        $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma']);
         return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
     }
 
@@ -877,8 +877,7 @@ class VentaController extends Controller
             'modelos.nombre',
             DB::raw("IFNULL(users.name, ventas.user_name)"),
             'sucursals.nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
-            'ventas.forma'
+            DB::raw($this->autorizacionCase()),
         ];
         $busqueda = $request->search;
         $user_id = $request->user_id;
@@ -905,19 +904,15 @@ class VentaController extends Controller
             'modelos.nombre as modelo',
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
-            'ventas.forma'
+            DB::raw($this->autorizacionCase('autorizacion'))
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
             ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', function($join) {
-    $join->on('autorizacions.autorizable_id', '=', 'ventas.id')
-         ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Venta');
-});
+            ->leftJoin('users', 'ventas.user_id', '=', 'users.id');
+
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);
@@ -989,7 +984,7 @@ class VentaController extends Controller
         // ------------------------------
         $headers = [
            "Fecha", "Cliente", "Nro. Motor", "Modelo", "Vendedor",
-             "Sucursal", "Estado", "Pago"
+             "Sucursal", "Estado"
         ];
 
         $col = 1;
@@ -1017,13 +1012,13 @@ class VentaController extends Controller
             $sheet->setCellValue("E{$row}", $p->usuario_nombre);
             $sheet->setCellValue("F{$row}", $p->sucursal_nombre);
             $sheet->setCellValue("G{$row}", $p->autorizacion);
-            $sheet->setCellValue("H{$row}", $p->forma);
+
 
             $row++;
         }
 
         // AutoSize de columnas
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'G') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -1056,8 +1051,7 @@ class VentaController extends Controller
             'modelos.nombre',
             DB::raw("IFNULL(users.name, ventas.user_name)"),
             'sucursals.nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END"),
-            'ventas.forma'
+            DB::raw($this->autorizacionCase())
         ];
 
         $busqueda = $request->search;
@@ -1097,19 +1091,15 @@ class VentaController extends Controller
             'modelos.nombre as modelo',
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
-            DB::raw("CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
-            'ventas.forma'
+            DB::raw($this->autorizacionCase('autorizacion'))
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
             ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('users', 'ventas.user_id', '=', 'users.id')
-            ->leftJoin('autorizacions', function($join) {
-                $join->on('autorizacions.autorizable_id', '=', 'ventas.id')
-                     ->where('autorizacions.autorizable_type', '=', 'App\\Models\\Venta');
-            });
+            ->leftJoin('users', 'ventas.user_id', '=', 'users.id');
+
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('ventas.sucursal_id', $sucursal_id);

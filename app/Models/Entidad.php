@@ -13,6 +13,7 @@ class Entidad extends Model
         'nombre',
         'ticket',
         'referencia',
+        'autorizacion',
         'tangible',
         'activa',
         'forma',

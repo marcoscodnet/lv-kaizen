@@ -79,6 +79,7 @@
         <th>Sucursal</th>
         <th>Vendedor</th>
         <th>Piezas</th>
+        <th>Estado</th>
     </tr>
     </thead>
 
@@ -94,6 +95,7 @@
             <td>{{ $p->sucursal_nombre }}</td>
             <td>{{ $p->usuario_nombre }}</td>
             <td>{{ $p->piezas_codigos }}</td>
+            <td>{{ $p->autorizacion }}</td>
         </tr>
     @empty
         <tr>

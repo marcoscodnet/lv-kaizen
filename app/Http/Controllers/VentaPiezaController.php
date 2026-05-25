@@ -41,6 +41,21 @@ class VentaPiezaController extends Controller
         $this->middleware('permission:venta-pieza-eliminar', ['only' => ['destroy']]);
     }
 
+
+    // SQL CASE that returns 'Autorizada' when the sale has payments and all of them are authorized
+    private function autorizacionCase(string $alias = ''): string
+    {
+        $as = $alias ? " as $alias" : '';
+        return "CASE
+            WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
+             AND NOT EXISTS (
+                 SELECT 1 FROM pagos p2
+                 LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                 WHERE p2.venta_pieza_id = venta_piezas.id AND a2.id IS NULL
+             )
+            THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -77,14 +92,7 @@ class VentaPiezaController extends Controller
             INNER JOIN piezas p ON p.id = pvp.pieza_id
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as piezas_codigos"),
-            DB::raw("CASE
-                    WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
-                     AND NOT EXISTS (
-                         SELECT 1 FROM pagos p2
-                         LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                         WHERE p2.venta_pieza_id = venta_piezas.id AND a2.id IS NULL
-                     )
-                    THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+            DB::raw($this->autorizacionCase()),
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
@@ -107,20 +115,14 @@ class VentaPiezaController extends Controller
         ) as precio_total"),
             'sucursals.nombre as sucursal_nombre',
             DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
+            DB::raw($this->autorizacionCase('autorizacion')),
             DB::raw("(
             SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
             FROM pieza_venta_piezas pvp
             INNER JOIN piezas p ON p.id = pvp.pieza_id
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as piezas_codigos"),
-            DB::raw("CASE
-                WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
-                 AND NOT EXISTS (
-                     SELECT 1 FROM pagos p2
-                     LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                     WHERE p2.venta_pieza_id = venta_piezas.id AND a2.id IS NULL
-                 )
-                THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
+
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
@@ -677,7 +679,8 @@ class VentaPiezaController extends Controller
     FROM pieza_venta_piezas pvp
     INNER JOIN piezas p ON p.id = pvp.pieza_id
     WHERE pvp.venta_pieza_id = venta_piezas.id
-) as piezas_codigos")
+) as piezas_codigos"),
+            DB::raw($this->autorizacionCase())
 
         ]; // Define las columnas disponibles
 
@@ -709,7 +712,8 @@ class VentaPiezaController extends Controller
     FROM pieza_venta_piezas pvp
     INNER JOIN piezas p ON p.id = pvp.pieza_id
     WHERE pvp.venta_pieza_id = venta_piezas.id
-) as piezas_codigos")
+) as piezas_codigos"),
+            DB::raw($this->autorizacionCase('autorizacion'))
 
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
@@ -775,7 +779,7 @@ class VentaPiezaController extends Controller
         // ------------------------------
         $headers = [
             "Fecha", "Cliente", "Pedido", "Destino",
-            "Monto", "Sucursal", "Vendedor", "Piezas"
+            "Monto", "Sucursal", "Vendedor", "Piezas","Estado"
         ];
 
         $col = 1;
@@ -805,13 +809,13 @@ class VentaPiezaController extends Controller
             $sheet->setCellValue("F{$row}", $p->sucursal_nombre);
             $sheet->setCellValue("G{$row}", $p->usuario_nombre);
             $sheet->setCellValue("H{$row}", $p->piezas_codigos);
-
+            $sheet->setCellValue("I{$row}", $p->autorizacion);
 
             $row++;
         }
 
         // AutoSize de columnas
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'I') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -842,12 +846,14 @@ class VentaPiezaController extends Controller
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
     ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+            DB::raw($this->autorizacionCase()),
             DB::raw("(
     SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
     FROM pieza_venta_piezas pvp
     INNER JOIN piezas p ON p.id = pvp.pieza_id
     WHERE pvp.venta_pieza_id = venta_piezas.id
 ) as piezas_codigos")
+
 
         ]; // Define las columnas disponibles
 
@@ -879,7 +885,8 @@ class VentaPiezaController extends Controller
     FROM pieza_venta_piezas pvp
     INNER JOIN piezas p ON p.id = pvp.pieza_id
     WHERE pvp.venta_pieza_id = venta_piezas.id
-) as piezas_codigos")
+) as piezas_codigos"),
+            DB::raw($this->autorizacionCase('autorizacion'))
 
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')

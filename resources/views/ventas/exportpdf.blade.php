@@ -78,7 +78,7 @@
         <th>Vendedor</th>
         <th>Sucursal</th>
         <th>Estado</th>
-        <th>Pago</th>
+
 
     </tr>
     </thead>
@@ -94,7 +94,7 @@
             <td>{{ $p->usuario_nombre }}</td>
             <td>{{ $p->sucursal_nombre }}</td>
             <td>{{ $p->autorizacion }}</td>
-            <td>{{ $p->forma }}</td>
+
 
 
 
