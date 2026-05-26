@@ -11,7 +11,7 @@
         <div class="col-lg-3">
             <div class="form-group">
                 <label for="forma">Forma de pago</label>
-                <select name="forma" id="forma" class="form-control" required>
+                <select name="forma" id="forma" class="form-control">
                     <option value="">Seleccionar...</option>
                     @foreach (config('formas') as $key => $label)
                         <option value="{{ $key }}" {{ old('forma', $formaActual ?? '') == $key ? 'selected' : '' }}>

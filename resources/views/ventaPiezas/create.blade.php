@@ -215,6 +215,11 @@
                             ])
 
 
+                            {{-- Payment control notice (Salón only) --}}
+                            <div class="col-12 mt-2">
+                                <div id="avisoCobro" class="alert" style="display:none;"></div>
+                            </div>
+
                         </div>
 
                         <div class="row" id="divSucursal" style="display: none">
@@ -892,6 +897,138 @@
                 });
                 $('#cuil').inputmask('99-99999999-9', { placeholder: 'XX-XXXXXXXX-X' });
             });
+
+            // Init select2 on the open service orders dropdown (Taller destination)
+            $('#servicio_id').select2({ language: 'es', width: '100%' });
+
+
+            // Compute total from parts rows (price * quantity)
+            function calcularTotalPiezas() {
+                var total = 0;
+                $('#cuerpoPieza tr').each(function () {
+                    var precioEl = $(this).find('input[name="precio[]"]')[0];
+                    var cantidad = parseFloat($(this).find('input[name="cantidad[]"]').val() || 0);
+                    var precio = precioEl ? parseFloat(AutoNumeric.getNumericString(precioEl) || 0) : 0;
+                    total += precio * cantidad;
+                });
+                return total;
+            }
+
+// Compute total from payment rows
+            function calcularTotalPagos() {
+                var total = 0;
+                $('input[name="monto[]"]').each(function () {
+                    var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+                    total += val;
+                });
+                return total;
+            }
+
+// Show informational notice comparing parts total vs payments (Salón only)
+            function controlarCobro() {
+                var $aviso = $('#avisoCobro');
+
+                // Only relevant for Salón
+                if ($('#destino').val() !== 'Salón') {
+                    $aviso.hide();
+                    return;
+                }
+
+                var totalPiezas = calcularTotalPiezas();
+                var totalPagos = calcularTotalPagos();
+
+                // No payments yet: nothing to warn about
+                if (totalPagos === 0) {
+                    $aviso.hide();
+                    return;
+                }
+
+                var fmt = function (n) {
+                    return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                };
+
+                var diff = totalPagos - totalPiezas;
+
+                $aviso.show();
+                if (Math.abs(diff) < 0.01) {
+                    $aviso.removeClass('alert-warning alert-danger').addClass('alert-success')
+                        .html('Cobro completo ✓ — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos));
+                } else if (diff < 0) {
+                    $aviso.removeClass('alert-success alert-danger').addClass('alert-warning')
+                        .html('Cobro parcial — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Falta: $' + fmt(Math.abs(diff)));
+                } else {
+                    $aviso.removeClass('alert-success alert-warning').addClass('alert-danger')
+                        .html('Cobrado de más — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Excedente: $' + fmt(diff));
+                }
+            }
+
+// Recalculate notice on any relevant change
+            $('body').on('input change', 'input[name="monto[]"], input[name="precio[]"], input[name="cantidad[]"]', controlarCobro);
+            $('#destino').on('change', controlarCobro);
+
+            // Compute total from parts rows (price * quantity)
+            function calcularTotalPiezas() {
+                var total = 0;
+                $('#cuerpoPieza tr').each(function () {
+                    var precioEl = $(this).find('input[name="precio[]"]')[0];
+                    var cantidad = parseFloat($(this).find('input[name="cantidad[]"]').val() || 0);
+                    var precio = precioEl ? parseFloat(AutoNumeric.getNumericString(precioEl) || 0) : 0;
+                    total += precio * cantidad;
+                });
+                return total;
+            }
+
+// Compute total from payment rows
+            function calcularTotalPagos() {
+                var total = 0;
+                $('input[name="monto[]"]').each(function () {
+                    var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+                    total += val;
+                });
+                return total;
+            }
+
+// Show informational notice comparing parts total vs payments (Salón only)
+            function controlarCobro() {
+                var $aviso = $('#avisoCobro');
+
+                // Only relevant for Salón
+                if ($('#destino').val() !== 'Salón') {
+                    $aviso.hide();
+                    return;
+                }
+
+                var totalPiezas = calcularTotalPiezas();
+                var totalPagos = calcularTotalPagos();
+
+                // No payments yet: nothing to warn about
+                if (totalPagos === 0) {
+                    $aviso.hide();
+                    return;
+                }
+
+                var fmt = function (n) {
+                    return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                };
+
+                var diff = totalPagos - totalPiezas;
+
+                $aviso.show();
+                if (Math.abs(diff) < 0.01) {
+                    $aviso.removeClass('alert-warning alert-danger').addClass('alert-success')
+                        .html('Cobro completo ✓ — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos));
+                } else if (diff < 0) {
+                    $aviso.removeClass('alert-success alert-danger').addClass('alert-warning')
+                        .html('Cobro parcial — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Falta: $' + fmt(Math.abs(diff)));
+                } else {
+                    $aviso.removeClass('alert-success alert-warning').addClass('alert-danger')
+                        .html('Cobrado de más — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Excedente: $' + fmt(diff));
+                }
+            }
+
+// Recalculate notice on any relevant change
+            $('body').on('input change', 'input[name="monto[]"], input[name="precio[]"], input[name="cantidad[]"]', controlarCobro);
+            $('#destino').on('change', controlarCobro);
 
 
         });

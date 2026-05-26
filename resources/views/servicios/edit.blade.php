@@ -207,7 +207,7 @@
                                     <div class="col-lg-5">
                                         <div class="form-group">
                                             <label for="repuestos">Repuestos utilizados</label>
-                                            <textarea class="form-control" id="repuestos" name="repuestos" rows="3">{{ old('repuestos',$servicio->repuestos) }}</textarea>
+                                            <textarea class="form-control" id="repuestos" name="repuestos" rows="3" readonly>{{ old('repuestos', $repuestosTexto) }}</textarea>
                                         </div>
                                     </div>
 
@@ -250,10 +250,16 @@
                                         <div class="form-group">
                                             <label for="costo_repuestos">Repuestos</label>
                                             <input type="text" class="form-control formato-numero" id="costo_repuestos" name="costo_repuestos"
-                                                   value="{{ old('costo_repuestos', $servicio->costo_repuestos) }}" readonly>
+                                                   value="{{ old('costo_repuestos', $costoRepuestosCalculado) }}" readonly>
                                         </div>
                                     </div>
-
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="insumos">Insumos</label>
+                                            <input type="text" class="form-control formato-numero" id="insumos" name="insumos"
+                                                   value="{{ old('insumos', $servicio->insumos ?? 0) }}" required>
+                                        </div>
+                                    </div>
                                     <div class="col-lg-2">
                                         <div class="form-group">
                                             <label for="total">Total</label>
@@ -470,8 +476,13 @@
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         var entidadsData = {!! json_encode($entidads->map(function($e) {
-        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
-    })) !!};
+                return [
+                    'id' => $e->id,
+                    'nombre' => $e->nombre,
+                    'forma' => $e->forma,
+                    'autorizacion' => $e->autorizacion,
+                ];
+            })) !!};
     </script>
     <script src="{{ asset('assets/js/cobro.js') }}"></script>
     <script>
@@ -728,12 +739,17 @@
                 $(this).closest('.pago-item').remove();
             });
 
-            // Recalculate total when labor cost changes
-            $('#mano_de_obra').on('change', function () {
-                var manoDeObra = parseFloat(AutoNumeric.getNumericString('#mano_de_obra') || 0);
-                var repuestos  = parseFloat(AutoNumeric.getNumericString('#costo_repuestos') || 0);
-                AutoNumeric.set('#total', manoDeObra + repuestos);
-            });
+            // Recalculate total from labor + parts + supplies
+            function recalcularTotal() {
+                var manoDeObra = AutoNumeric.getNumericString('#mano_de_obra') || 0;
+                var repuestos  = AutoNumeric.getNumericString('#costo_repuestos') || 0;
+                var insumos    = AutoNumeric.getNumericString('#insumos') || 0;
+                var total = parseFloat(manoDeObra) + parseFloat(repuestos) + parseFloat(insumos);
+                AutoNumeric.set('#total', total);
+            }
+
+            $('#mano_de_obra, #costo_repuestos, #insumos').on('change', recalcularTotal);
+            recalcularTotal();
 
 
 

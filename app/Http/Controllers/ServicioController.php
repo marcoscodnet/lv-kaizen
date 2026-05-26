@@ -550,10 +550,38 @@ class ServicioController extends Controller
 
     }
 
-    public function edit($id=null)
+    public function edit($id = null)
     {
         $servicio = Servicio::find($id);
 
+        // Defaults: keep stored values (used when service is closed)
+        $repuestosTexto = $servicio->repuestos;
+        $costoRepuestosCalculado = $servicio->costo_repuestos;
+
+        // Recalculate parts only while the service is open (not closed/pagado)
+        if (!$servicio->pagado) {
+            $piezasTaller = \App\Models\PiezaVentaPieza::query()
+                ->join('venta_piezas', 'pieza_venta_piezas.venta_pieza_id', '=', 'venta_piezas.id')
+                ->join('piezas', 'pieza_venta_piezas.pieza_id', '=', 'piezas.id')
+                ->where('venta_piezas.servicio_id', $servicio->id)
+                ->where('venta_piezas.destino', 'Taller')
+                ->get([
+                    'piezas.codigo',
+                    'piezas.descripcion',
+                    'pieza_venta_piezas.cantidad',
+                    'pieza_venta_piezas.precio',
+                ]);
+
+            // Build parts description text (code - name xQty)
+            $repuestosTexto = $piezasTaller->map(function ($p) {
+                return $p->codigo . ' - ' . $p->descripcion . ' (x' . $p->cantidad . ')';
+            })->implode("\n");
+
+            // Sum parts cost (price * quantity)
+            $costoRepuestosCalculado = $piezasTaller->sum(function ($p) {
+                return $p->precio * $p->cantidad;
+            });
+        }
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
@@ -562,7 +590,10 @@ class ServicioController extends Controller
         $modelos = Modelo::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $marcas = Marca::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('servicios.edit', compact('sucursals', 'servicio','provincias','tipos', 'entidads','modelos','marcas'));
+        return view('servicios.edit', compact(
+            'sucursals', 'servicio', 'provincias', 'tipos', 'entidads', 'modelos', 'marcas',
+            'repuestosTexto', 'costoRepuestosCalculado'
+        ));
     }
 
     public function update(Request $request, $id)
@@ -622,7 +653,8 @@ class ServicioController extends Controller
 
 
         $input = $this->sanitizeInput($request->all());
-
+        // Normalize the "Cerrado" checkbox to a clean integer (sanitizer mangles it)
+        $input['pagado'] = $request->input('pagado') == 1 ? 1 : 0;
 
         DB::beginTransaction();
         $ok=1;
