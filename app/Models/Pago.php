@@ -32,4 +32,14 @@ class Pago extends Model
         return $this->belongsTo(\App\Models\VentaPieza::class, 'venta_pieza_id');
     }
 
+    public function autorizacion()
+    {
+        return $this->hasOne(\App\Models\Autorizacion::class, 'pago_id');
+    }
+
+    public function movimientoCuenta()
+    {
+        return $this->hasOne(\App\Models\MovimientoCuenta::class, 'pago_id');
+    }
+
 }

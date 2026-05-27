@@ -219,6 +219,14 @@
                             </a>
                         </li>
                         @endcan
+                    @can('autorizacion-listar')
+                        <a class="nav-link {{ request()->routeIs('auditoria.*') ? 'active' : '' }}" href="{{ route('auditoria.index') }}" role="button">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon"><span class="fas fa-check-double"></span></span>
+                                <span class="nav-link-text ps-1">Auditoría</span>
+                            </div>
+                        </a>
+                        @endcan
                     </li>
                     <li class="nav-item">
                         <!-- label-->

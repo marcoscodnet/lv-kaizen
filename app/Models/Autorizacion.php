@@ -9,16 +9,16 @@ class Autorizacion extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'user_name', 'autorizable_id', 'autorizable_type', 'fecha'];
+    protected $fillable = ['user_id', 'user_name', 'pago_id', 'fecha', 'observaciones'];
 
     public function user()
     {
         return $this->belongsTo('App\Models\User', 'user_id');
     }
 
-    // Polymorphic: points to Venta, VentaPieza or Servicio
-    public function autorizable()
+    // Authorization belongs to a single payment
+    public function pago()
     {
-        return $this->morphTo();
+        return $this->belongsTo('App\Models\Pago', 'pago_id');
     }
 }

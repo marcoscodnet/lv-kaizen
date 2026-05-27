@@ -31,6 +31,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Exports\PiezasExport;
 use App\Http\Controllers\MovimientoPiezaController;
 use App\Http\Controllers\MovimientoCuentaController;
+use App\Http\Controllers\AuditoriaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -300,6 +301,16 @@ Route::group(['middleware' => ['auth']], function() {
     Route::delete('/cuentas/movimiento/{id}', [MovimientoCuentaController::class, 'destroy'])->name('cuentas.destroy');
     Route::post('/cuentas/{id}/transferencia', [MovimientoCuentaController::class, 'storeTransferencia'])
         ->name('cuentas.transferencia');
+
+
+    Route::prefix('auditoria')->group(function () {
+        Route::get('/', [AuditoriaController::class, 'index'])->name('auditoria.index');
+        Route::post('/datatable', [AuditoriaController::class, 'dataTable'])->name('auditoria.dataTable');
+        Route::get('/{pago}/datos', [AuditoriaController::class, 'datos'])->name('auditoria.datos');
+        Route::post('/{pago}/autorizar', [AuditoriaController::class, 'autorizar'])->name('auditoria.autorizar');
+        Route::post('/lote', [AuditoriaController::class, 'autorizarLote'])->name('auditoria.autorizarLote');
+        Route::delete('/{pago}/desautorizar', [AuditoriaController::class, 'desautorizar'])->name('auditoria.desautorizar');
+    });
 
 });
 

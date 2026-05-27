@@ -292,6 +292,9 @@
                                         'formaActual'     => $servicio->forma ?? '',
                                         'pagosExistentes' => $servicio->pagos,
                                     ])
+
+                                    {{-- Payment control notice --}}
+                                    <div id="avisoCobro" class="alert mt-2" style="display:none;"></div>
                                 </div>
                             </div>
                         </div>
@@ -746,12 +749,54 @@
                 var insumos    = AutoNumeric.getNumericString('#insumos') || 0;
                 var total = parseFloat(manoDeObra) + parseFloat(repuestos) + parseFloat(insumos);
                 AutoNumeric.set('#total', total);
+                controlarCobro();
             }
 
             $('#mano_de_obra, #costo_repuestos, #insumos').on('change', recalcularTotal);
             recalcularTotal();
 
+            // Compute total from payment rows
+            function calcularTotalPagos() {
+                var total = 0;
+                $('input[name="monto[]"]').each(function () {
+                    var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
+                    total += val;
+                });
+                return total;
+            }
 
+// Informational notice: service total vs payments
+            function controlarCobro() {
+                var $aviso = $('#avisoCobro');
+                var totalServicio = parseFloat(AutoNumeric.getNumericString('#total') || 0);
+                var totalPagos = calcularTotalPagos();
+
+                // No payments yet: charging is optional, show nothing
+                if (totalPagos === 0) {
+                    $aviso.hide();
+                    return;
+                }
+
+                var fmt = function (n) {
+                    return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                };
+
+                var diff = totalPagos - totalServicio;
+
+                $aviso.show();
+                if (Math.abs(diff) < 0.01) {
+                    $aviso.removeClass('alert-warning alert-danger').addClass('alert-success')
+                        .html('Cobro completo ✓ — Servicio: $' + fmt(totalServicio) + ' · Pagado: $' + fmt(totalPagos));
+                } else if (diff < 0) {
+                    $aviso.removeClass('alert-success alert-danger').addClass('alert-warning')
+                        .html('Cobro parcial — Servicio: $' + fmt(totalServicio) + ' · Pagado: $' + fmt(totalPagos) + ' · Falta: $' + fmt(Math.abs(diff)));
+                } else {
+                    $aviso.removeClass('alert-success alert-warning').addClass('alert-danger')
+                        .html('Cobrado de más — Servicio: $' + fmt(totalServicio) + ' · Pagado: $' + fmt(totalPagos) + ' · Excedente: $' + fmt(diff));
+                }
+            }
+
+            $('body').on('input change', 'input[name="monto[]"]', controlarCobro);
 
         });
     </script>
