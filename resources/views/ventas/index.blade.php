@@ -283,29 +283,10 @@
 
 
 
-                            /*if (row.autorizacion == 'No autorizada') {
-                                @can('unidad-autorizar')
-                                    actionsHtml += '<form id="admit-form-' + row.id + '" method="post" action="{{ route('ventas.autorizar', '') }}/' + row.id + '" style="display: none">';
-                                actionsHtml += '{{ csrf_field() }}';
-
-                                actionsHtml += '</form>';
-                                actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'admit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Autorizar" title="Autorizar"><i class="fa fa-check-circle text-500"></i></a>';
-                                @endcan
-
-                            }*/
                             if (row.autorizacion == 'Autorizada') {
-                                /*@can('unidad-autorizar')
-                                    actionsHtml += '<form id="noadmit-form-' + row.id + '" method="post" action="{{ route('ventas.desautorizar', '') }}/' + row.id + '" style="display: none">';
-                                actionsHtml += '{{ csrf_field() }}';
-
-                                actionsHtml += '</form>';
-                                actionsHtml += '<a href="" onclick="if(confirm(\'Está seguro?\')) {event.preventDefault(); document.getElementById(\'noadmit-form-' + row.id + '\').submit();} else {event.preventDefault();}" alt="Desautorizar" title="Desautorizar"><i class="fa fa-times-circle text-500"></i></a>';*/
-
-                                @endcan
-                                    @can('imprimir-formulario-12')
+                                @can('imprimir-formulario-12')
                                     actionsHtml += '<a href="{{ route("ventas.formulario") }}?venta_id=' + row.id + '" alt="Descargar formulario" title="Descargar formulario" target="_blank" class="btn btn-link p-0"><span class="fas fa-scroll text-500"></span></a>';
                                 @endcan
-
                             }
 
                             // Agregar formulario de eliminación si el venta_ tiene permiso
