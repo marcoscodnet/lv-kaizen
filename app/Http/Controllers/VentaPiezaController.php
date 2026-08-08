@@ -306,6 +306,12 @@ class VentaPiezaController extends Controller
 
             $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de pieza']);
 
+            // On Salón sales there is no top-level sucursal_id (it stays null),
+            // so resolve the branch from the sold items, falling back to the seller's branch.
+            $sucursalCaja = $request->sucursal_id
+                ?: ($request->input('sucursal_id_item.0')
+                    ?: optional(\App\Models\User::find($request->user_id))->sucursal_id);
+
             foreach ($request->entidad_id as $i => $entidadId) {
                 $pago = new Pago();
                 $pago->venta_pieza_id = $venta->id;
@@ -327,7 +333,7 @@ class VentaPiezaController extends Controller
                 if ($entidad) {
                     if ($entidad->tangible) {
                         // Cash payment requires an open cash register
-                        $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
+                        $cajaAbierta = Caja::where('sucursal_id', $sucursalCaja)
                             ->where('user_id', $request->user_id)
                             ->where('estado', 'Abierta')
                             ->first();
@@ -549,6 +555,10 @@ class VentaPiezaController extends Controller
     {
         $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal'])->findOrFail($id);
 
+        // Cliente name via the relationship (the model also has a legacy free-text "cliente" column
+        // that shadows the relation, so resolve it explicitly by cliente_id).
+        $clienteNombre = optional($ventaPieza->cliente()->first())->nombre;
+
         $user = auth()->user();
         $esAdministrador = $user->hasRole('Administrador');
 
@@ -585,7 +595,7 @@ class VentaPiezaController extends Controller
 
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
-        return view('ventaPiezas.show', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals'));
+        return view('ventaPiezas.show', compact('ventaPieza', 'users', 'stockPiezasJson', 'sucursals', 'clienteNombre'));
     }
 
     /**

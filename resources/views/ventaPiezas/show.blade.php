@@ -58,8 +58,8 @@
 
                                 <th>Pieza</th>
                                 <th>Sucursal</th>
-                                <th>Costo</th>
-                                <th>$ min.</th>
+                                {{-- <th>Costo</th> --}}
+                                {{-- <th>$ min.</th> --}}
                                 <th>Cantidad</th>
                                 <th>Precio</th>
 
@@ -102,16 +102,19 @@
                                         </td>
                                         <td style="width: 20%;">
                                             <select name="sucursal_id_item[]" class="form-control sucursalSelect" required disabled>
-                                                <option value="">Seleccione...</option>
-                                                <!-- Las opciones se llenan con JS -->
+                                                @if(is_object($pieza))
+                                                    <option value="{{ $pieza->sucursal_id }}" selected>{{ optional($pieza->sucursal)->nombre ?? 'Seleccione...' }}</option>
+                                                @else
+                                                    <option value="">Seleccione...</option>
+                                                @endif
                                             </select>
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             <input type="text" name="costo[]" class="form-control formato-numero" value="{{ $costo }}" disabled>
                                         </td>
                                         <td>
                                             <input type="text" name="precio_minimo[]" class="form-control formato-numero" value="{{ $precioMinimo }}" disabled>
-                                        </td>
+                                        </td> --}}
                                         <td>
                                             <input type="number" name="cantidad[]" class="form-control" value="{{ $cantidad }}" disabled>
                                         </td>
@@ -182,7 +185,7 @@
                             <div class="col-12 col-lg-4">
                                 <div class="form-group">
                                     <label for="cliente">Cliente</label>
-                                    <input type="text" class="form-control" id="cliente" name="cliente" placeholder="Cliente" value="{{ old('cliente', $ventaPieza->cliente) }}" disabled>
+                                    <input type="text" class="form-control" id="cliente" name="cliente" placeholder="Cliente" value="{{ old('cliente', $clienteNombre) }}" disabled>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-2">

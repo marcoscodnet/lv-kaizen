@@ -204,13 +204,6 @@
 
                                 <div class="row">
 
-                                    <div class="col-lg-5">
-                                        <div class="form-group">
-                                            <label for="repuestos">Repuestos utilizados</label>
-                                            <textarea class="form-control" id="repuestos" name="repuestos" rows="3" readonly>{{ old('repuestos', $repuestosTexto) }}</textarea>
-                                        </div>
-                                    </div>
-
                                     <div class="col-lg-4">
                                         <div class="form-group">
                                             <label for="instrumentos">Instrumentos de medición utilizados</label>
@@ -218,6 +211,60 @@
                                         </div>
                                     </div>
 
+                                </div>
+
+                                {{-- Repuestos utilizados: se toman de las ventas de pieza asignadas (destino Taller).
+                                     El texto se sigue guardando en un campo oculto para no perder compatibilidad. --}}
+                                <input type="hidden" name="repuestos" value="{{ old('repuestos', $repuestosTexto) }}">
+                                @php
+                                    $repuestosAsignados = collect();
+                                    foreach(($servicio->ventaPiezas ?? []) as $vp){
+                                        foreach($vp->piezas as $pvp){
+                                            $repuestosAsignados->push($pvp);
+                                        }
+                                    }
+                                    $totalRepuestos = $repuestosAsignados->sum(function($p){ return (float)$p->precio * (float)$p->cantidad; });
+                                @endphp
+                                <div class="row">
+                                    <div class="col-lg-9">
+                                        <div class="form-group">
+                                            <label>Repuestos utilizados</label>
+                                            <table class="table table-sm table-bordered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Código</th>
+                                                        <th>Descripción</th>
+                                                        <th>Sucursal</th>
+                                                        <th>Cantidad</th>
+                                                        <th>Precio</th>
+                                                        <th>Subtotal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($repuestosAsignados as $pvp)
+                                                        <tr>
+                                                            <td>{{ optional($pvp->pieza)->codigo ?? '-' }}</td>
+                                                            <td>{{ optional($pvp->pieza)->descripcion ?? '-' }}</td>
+                                                            <td>{{ optional($pvp->sucursal)->nombre ?? '-' }}</td>
+                                                            <td>{{ $pvp->cantidad }}</td>
+                                                            <td>${{ number_format((float)$pvp->precio, 2, ',', '.') }}</td>
+                                                            <td>${{ number_format((float)$pvp->precio * (float)$pvp->cantidad, 2, ',', '.') }}</td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr><td colspan="6" class="text-center text-muted">Sin repuestos asignados a esta orden.</td></tr>
+                                                    @endforelse
+                                                </tbody>
+                                                @if($repuestosAsignados->isNotEmpty())
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th colspan="5" class="text-end">Total repuestos</th>
+                                                            <th>${{ number_format($totalRepuestos, 2, ',', '.') }}</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                @endif
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-lg-3">

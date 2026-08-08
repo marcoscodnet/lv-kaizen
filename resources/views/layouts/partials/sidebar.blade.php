@@ -209,15 +209,13 @@
                                 </a>
                             @endif
                         @endcan
-                    @can('cuenta-listar')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('cuentas.*') ? 'active' : '' }}"
-                               href="{{ route('cuentas.index') }}" role="button">
-
-                                <span class="nav-link-icon"><span class="fas fa-university"></span></span>
-                                <span class="nav-link-text ps-1">Cuentas</span>
+                        @can('cuenta-listar')
+                            <a class="nav-link {{ request()->routeIs('cuentas.*') ? 'active' : '' }}" href="{{ route('cuentas.index') }}" role="button">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon"><span class="fas fa-university"></span></span>
+                                    <span class="nav-link-text ps-1">Cuentas</span>
+                                </div>
                             </a>
-                        </li>
                         @endcan
                     @can('autorizacion-listar')
                         <a class="nav-link {{ request()->routeIs('auditoria.*') ? 'active' : '' }}" href="{{ route('auditoria.index') }}" role="button">
@@ -268,7 +266,7 @@
 
                         @can('stock-pieza-listar')
                             <a class="nav-link {{ request()->routeIs('stockPiezas.*') ? 'active' : '' }}" href="{{ route('stockPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Stock Piezas</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Alta de stock Piezas</span>
                                 </div>
                             </a>
                         @endcan

@@ -57,8 +57,8 @@
 
                                 <th>Pieza</th>
                                 <th>Sucursal</th>
-                                <th>Costo</th>
-                                <th>$ min.</th>
+                                {{-- <th>Costo</th> --}}
+                                {{-- <th>$ min.</th> --}}
                                 <th>Cantidad</th>
                                 <th>Precio</th>
 
@@ -75,7 +75,7 @@
 
                                 @foreach($oldPiezas as $i => $piezaId)
                                     <tr>
-                                        <td style="width: 25%;">
+                                        <td style="width: 40%;">
                                             <select name="pieza_id[]" class="form-control select-simple selectPieza" required>
                                                 <option value="">Seleccione...</option>
                                                 @foreach($stockPiezasJson as $id => $piezas)
@@ -95,16 +95,16 @@
                                                 @endforeach
                                             </select>
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             <input type="text" name="costo[]" class="form-control formato-numero input-monto" value="{{ old('costo.' . $i) }}">
                                         </td>
                                         <td>
                                             <input type="text" name="precio_minimo[]" class="form-control formato-numero input-monto" value="{{ old('precio_minimo.' . $i) }}">
-                                        </td>
+                                        </td> --}}
                                         <td>
                                             <input type="number" name="cantidad[]" class="form-control input-cantidad" value="{{ old('cantidad.' . $i) }}">
                                         </td>
-                                        <td>
+                                        <td style="width: 10%;">
                                             <input type="text" name="precio[]" class="form-control formato-numero input-monto" value="{{ old('precio.' . $i) }}">
                                         </td>
                                         <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
@@ -118,6 +118,11 @@
 
 
                             </table>
+                            <div class="d-flex justify-content-end mt-2">
+                                <div class="fs-6 fw-bold">
+                                    Total: $<span id="totalPiezasLabel">0,00</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">
@@ -559,16 +564,16 @@
             function addRowPieza() {
                 const tr = `
             <tr>
-                <td style="width: 22%;">${piezaSelectHtml}</td>
+                <td style="width: 40%;">${piezaSelectHtml}</td>
                 <td style="width: 18%;">
                     <select name="sucursal_id_item[]" class="form-control sucursalSelect">
                         <option value="">Seleccionar...</option>
                     </select>
                 </td>
-                <td style="width: 12%;"><input type="text" name="costo[]" class="form-control formato-numero costo input-monto" readonly></td>
-                <td style="width: 12%;"><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo input-monto" readonly></td>
+                {{-- <td style="width: 12%;"><input type="text" name="costo[]" class="form-control formato-numero costo input-monto" readonly></td>
+                <td style="width: 12%;"><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo input-monto" readonly></td> --}}
                 <td style="width: 8%;"><input type="number" name="cantidad[]" class="form-control cantidad input-cantidad" required></td>
-                <td style="width: 14%;"><input type="text" name="precio[]" class="form-control formato-numero precio input-monto" required></td>
+                <td style="width: 10%;"><input type="text" name="precio[]" class="form-control formato-numero precio input-monto" required></td>
                 <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
             </tr>
         `;
@@ -597,13 +602,14 @@
                 const piezaId = $(this).val();
                 const row = $(this).closest('tr');
                 const sucursalSelect = row.find('.sucursalSelect');
-                const costoInput = row.find('.costo');
-                const precioMinimoInput = row.find('.precio_minimo');
+                // Costo y $ mínimo ocultos: no se rellenan
+                // const costoInput = row.find('.costo');
+                // const precioMinimoInput = row.find('.precio_minimo');
 
                 sucursalSelect.empty();
                 // Clear via AutoNumeric API
-                AutoNumeric.getAutoNumericElement(costoInput[0])?.set(0);
-                AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(0);
+                // AutoNumeric.getAutoNumericElement(costoInput[0])?.set(0);
+                // AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(0);
 
                 if (piezaId && stockPiezas[piezaId]) {
                     const opciones = stockPiezas[piezaId];
@@ -619,29 +625,30 @@
                         sucursalSelect.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
                     });
 
-                    if (opcionesFiltradas.length > 0) {
-                        const primeraOpcion = opcionesFiltradas[0];
-                        // Set via AutoNumeric API
-                        AutoNumeric.getAutoNumericElement(costoInput[0])?.set(primeraOpcion.costo);
-                        AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(primeraOpcion.precio_minimo);
-                    }
+                    // Costo y $ mínimo ocultos: no se rellenan
+                    // if (opcionesFiltradas.length > 0) {
+                    //     const primeraOpcion = opcionesFiltradas[0];
+                    //     AutoNumeric.getAutoNumericElement(costoInput[0])?.set(primeraOpcion.costo);
+                    //     AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(primeraOpcion.precio_minimo);
+                    // }
                 }
             });
 
             $('body').on('change', '.sucursalSelect', function () {
-                const sucursalId = $(this).val();
-                const row = $(this).closest('tr');
-                const piezaId = row.find('.selectPieza').val();
-                const costoInput = row.find('.costo');
-                const precioMinimoInput = row.find('.precio_minimo');
-
-                if (piezaId && stockPiezas[piezaId]) {
-                    const match = stockPiezas[piezaId].find(sp => sp.sucursal_id == sucursalId);
-                    if (match) {
-                        AutoNumeric.getAutoNumericElement(costoInput[0])?.set(match.costo);
-                        AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(match.precio_minimo);
-                    }
-                }
+                // Costo y $ mínimo ocultos: no se rellenan
+                // const sucursalId = $(this).val();
+                // const row = $(this).closest('tr');
+                // const piezaId = row.find('.selectPieza').val();
+                // const costoInput = row.find('.costo');
+                // const precioMinimoInput = row.find('.precio_minimo');
+                //
+                // if (piezaId && stockPiezas[piezaId]) {
+                //     const match = stockPiezas[piezaId].find(sp => sp.sucursal_id == sucursalId);
+                //     if (match) {
+                //         AutoNumeric.getAutoNumericElement(costoInput[0])?.set(match.costo);
+                //         AutoNumeric.getAutoNumericElement(precioMinimoInput[0])?.set(match.precio_minimo);
+                //     }
+                // }
             });
 
             $('form').on('submit', function (e) {
@@ -1029,6 +1036,16 @@
 // Recalculate notice on any relevant change
             $('body').on('input change', 'input[name="monto[]"], input[name="precio[]"], input[name="cantidad[]"]', controlarCobro);
             $('#destino').on('change', controlarCobro);
+
+            // Live total of the parts being loaded (price * quantity)
+            function actualizarTotalPiezas() {
+                var total = calcularTotalPiezas();
+                $('#totalPiezasLabel').text(total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            }
+            $('body').on('input change', 'input[name="precio[]"], input[name="cantidad[]"]', actualizarTotalPiezas);
+            $('.addRowPieza').on('click', function () { setTimeout(actualizarTotalPiezas, 0); });
+            $('body').on('click', '.removeRow', function () { setTimeout(actualizarTotalPiezas, 0); });
+            $(document).ready(actualizarTotalPiezas);
 
 
         });

@@ -121,7 +121,7 @@ class ServicioController extends Controller
                              LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
                              WHERE p2.servicio_id = servicios.id AND a2.id IS NULL
                          )
-                        THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion"),
+                        THEN 'Autorizada' ELSE 'No autorizada' END"),
 
         ];
 
@@ -552,7 +552,11 @@ class ServicioController extends Controller
 
     public function edit($id = null)
     {
-        $servicio = Servicio::find($id);
+        // Load parts assigned to this service order (venta de pieza with destino Taller)
+        $servicio = Servicio::with([
+            'ventaPiezas.piezas.pieza',
+            'ventaPiezas.piezas.sucursal',
+        ])->find($id);
 
         // Defaults: keep stored values (used when service is closed)
         $repuestosTexto = $servicio->repuestos;
@@ -793,7 +797,11 @@ class ServicioController extends Controller
 
     public function show($id=null)
     {
-        $servicio = Servicio::find($id);
+        // Load parts assigned to this service order (venta de pieza with destino Taller)
+        $servicio = Servicio::with([
+            'ventaPiezas.piezas.pieza',
+            'ventaPiezas.piezas.sucursal',
+        ])->find($id);
 
 
         $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
