@@ -79,6 +79,41 @@ class ServicioController extends Controller
         return "$dir/$filename";
     }
 
+    // Save every proof file uploaded for a payment row (supports one or many files)
+    private function guardarComprobantesPago(Pago $pago, Request $request, int $i): void
+    {
+        $uid = $request->input("pago_uid.$i");
+        if ($uid === null) {
+            return;
+        }
+
+        $files = $request->file("comprobantes_$uid");
+        if (empty($files)) {
+            return;
+        }
+
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        foreach ($files as $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, ['jpeg', 'jpg', 'png', 'pdf'])) {
+                continue;
+            }
+            if ($file->getSize() > 5 * 1024 * 1024) {
+                continue;
+            }
+            \App\Models\Comprobante::create([
+                'pago_id' => $pago->id,
+                'path'    => $this->guardarComprobante($file),
+            ]);
+        }
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -473,12 +508,10 @@ class ServicioController extends Controller
                     $pago->detalle      = $this->sanitizeInput($request->detalle[$i] ?? null);
                     $pago->observacion  = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
-                    // Store proof file if uploaded for this payment
-                    if ($request->hasFile("comprobante.$i")) {
-                        $pago->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
-                    }
-
                     $pago->save();
+
+                    // Store proof files (one or many) uploaded for this payment
+                    $this->guardarComprobantesPago($pago, $request, $i);
 
                     $entidad = Entidad::find($entidadId);
                     if ($entidad) {
@@ -697,14 +730,10 @@ class ServicioController extends Controller
                         $pago->contadora = $pagoViejo->contadora;
                     }
 
-                    // New upload replaces; otherwise keep prior proof
-                    if ($request->hasFile("comprobante.$i")) {
-                        $pago->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
-                    } elseif ($pagoViejo) {
-                        $pago->comprobante_path = $pagoViejo->comprobante_path;
-                    }
-
                     $pago->save();
+
+                    // Store proof files (one or many) uploaded for this payment
+                    $this->guardarComprobantesPago($pago, $request, $i);
 
                     $entidad = Entidad::find($entidadId);
                     if ($entidad) {

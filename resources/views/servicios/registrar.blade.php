@@ -494,6 +494,7 @@
                 'nombre' => $e->nombre,
                 'forma' => $e->forma,
                 'autorizacion' => $e->autorizacion,
+                'tangible' => $e->tangible,
             ];
         })) !!};
     </script>

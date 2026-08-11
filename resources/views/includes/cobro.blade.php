@@ -39,9 +39,11 @@
         @foreach($pagosExistentes as $i => $pago)
             @php
                 $entidadPago = $entidads->firstWhere('id', $pago->entidad_id);
-                $requiereAutorizacion = $entidadPago && $entidadPago->autorizacion;
+                $esEfectivo = $entidadPago && $entidadPago->tangible;
+                $uid = 'e' . $i;
             @endphp
-            <div class="card p-3 mb-3 pago-item">
+            <div class="card p-3 mb-3 pago-item" data-uid="{{ $uid }}">
+                <input type="hidden" name="pago_uid[]" value="{{ $uid }}">
                 <div class="row">
                     <div class="col-md-4">
                         <label>Entidad</label>
@@ -50,6 +52,7 @@
                             @foreach($entidads as $entidad)
                                 <option value="{{ $entidad->id }}"
                                         data-autorizacion="{{ $entidad->autorizacion }}"
+                                        data-tangible="{{ $entidad->tangible }}"
                                     {{ $pago->entidad_id == $entidad->id ? 'selected' : '' }}>
                                     {{ $entidad->nombre }}
                                 </option>
@@ -89,38 +92,41 @@
                     </div>
                 </div>
 
-                {{-- Comprobante: visible si la entidad requiere autorización --}}
-                <div class="row mt-2 comprobante-wrapper" style="display: {{ $requiereAutorizacion ? 'flex' : 'none' }};">
+                {{-- Comprobantes: visibles salvo efectivo --}}
+                <div class="row mt-2 comprobante-wrapper" style="display: {{ $esEfectivo ? 'none' : 'flex' }};">
                     <div class="col-md-12">
-                        <label>Comprobante</label>
-                        @if(!empty($pago->comprobante_path))
-                            <div class="mb-2 comprobante-actual">
-                                <a href="{{ asset($pago->comprobante_path) }}" target="_blank" class="btn btn-sm btn-info">
-                                    <i class="fa fa-file"></i> Ver comprobante actual
-                                </a>
-                                @if($esVendedor)
-                                    <small class="text-muted">Subir uno nuevo lo reemplaza.</small>
-                                @endif
+                        <label>Comprobantes</label>
+
+                        @if($pago->comprobantes && $pago->comprobantes->count())
+                            <div class="d-flex flex-wrap gap-2 mb-2 comprobante-actual">
+                                @foreach($pago->comprobantes as $comp)
+                                    @php $ext = strtolower(pathinfo($comp->path, PATHINFO_EXTENSION)); @endphp
+                                    <a href="{{ asset($comp->path) }}" target="_blank" class="border rounded p-1 text-center" style="text-decoration:none;">
+                                        @if(in_array($ext, ['jpg','jpeg','png']))
+                                            <img src="{{ asset($comp->path) }}" style="max-width:120px; max-height:90px; display:block;">
+                                        @else
+                                            <span class="badge bg-secondary">📄 Ver PDF</span>
+                                        @endif
+                                    </a>
+                                @endforeach
                             </div>
                         @endif
 
                         @if($esVendedor)
                             <div class="d-flex gap-2 align-items-start flex-wrap">
                                 <div>
-                                    <input type="file" name="comprobante[]"
+                                    <input type="file" name="comprobantes_{{ $uid }}[]" multiple data-uid="{{ $uid }}"
                                            class="form-control form-control-sm comprobante-file"
                                            accept="image/jpeg,image/png,application/pdf">
-                                    <small class="text-muted">JPG, PNG o PDF (max 5MB)</small>
+                                    <small class="text-muted">JPG, PNG o PDF (max 5MB c/u). Podés agregar varios.</small>
                                 </div>
                                 <div>
                                     <button type="button" class="btn btn-sm btn-primary btn-capturar-comprobante">
                                         📸 Capturar
                                     </button>
                                 </div>
-                                <div>
-                                    <img class="comprobante-preview border" style="display:none; max-width: 150px; max-height: 100px;">
-                                </div>
                             </div>
+                            <div class="comprobante-previews d-flex flex-wrap gap-2 mt-2"></div>
                         @endif
                     </div>
                 </div>

@@ -42,4 +42,9 @@ class Pago extends Model
         return $this->hasOne(\App\Models\MovimientoCuenta::class, 'pago_id');
     }
 
+    public function comprobantes()
+    {
+        return $this->hasMany(\App\Models\Comprobante::class, 'pago_id');
+    }
+
 }

@@ -209,6 +209,28 @@
                                                 </div>
 
                                             </div>
+
+                                            <div class="row mt-2">
+                                                <div class="col-12">
+                                                    <label>Comprobantes</label>
+                                                    @if($pago->comprobantes && $pago->comprobantes->count())
+                                                        <div class="d-flex flex-wrap gap-2">
+                                                            @foreach($pago->comprobantes as $comp)
+                                                                @php $ext = strtolower(pathinfo($comp->path, PATHINFO_EXTENSION)); @endphp
+                                                                <a href="{{ asset($comp->path) }}" target="_blank" class="border rounded p-1 text-center" style="text-decoration:none;">
+                                                                    @if(in_array($ext, ['jpg','jpeg','png']))
+                                                                        <img src="{{ asset($comp->path) }}" style="max-width:120px; max-height:90px; display:block;">
+                                                                    @else
+                                                                        <span class="badge bg-secondary">📄 Ver PDF</span>
+                                                                    @endif
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <p class="text-muted mb-0">Sin comprobantes.</p>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
                                     @endforeach
 

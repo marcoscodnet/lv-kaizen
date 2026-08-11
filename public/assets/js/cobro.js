@@ -5,39 +5,95 @@ $(document).ready(function () {
     var esVendedor = contexto === 'vendedor';
     var esAuditor = contexto === 'auditor';
 
+    // Unique id per payment row + accumulated files per row (allows many files per payment)
+    var pagoUidSeq = 0;
+    var rowFilesByUid = {};
+
+    // Rebuild the file input's FileList from the accumulated files and refresh previews
+    function syncInputFiles(uid) {
+        var dt = new DataTransfer();
+        (rowFilesByUid[uid] || []).forEach(function (f) { dt.items.add(f); });
+        var $input = $('.comprobante-file[data-uid="' + uid + '"]');
+        if ($input.length) $input[0].files = dt.files;
+        renderPreviews(uid);
+    }
+
+    function addFilesToRow(uid, fileList) {
+        if (!rowFilesByUid[uid]) rowFilesByUid[uid] = [];
+        Array.prototype.forEach.call(fileList, function (f) {
+            if (f.size > 5 * 1024 * 1024) {
+                alert('El archivo "' + f.name + '" supera los 5MB y no se agregó.');
+                return;
+            }
+            rowFilesByUid[uid].push(f);
+        });
+        syncInputFiles(uid);
+    }
+
+    function removeFileFromRow(uid, idx) {
+        if (rowFilesByUid[uid]) {
+            rowFilesByUid[uid].splice(idx, 1);
+            syncInputFiles(uid);
+        }
+    }
+
+    function clearRowFiles(uid) {
+        rowFilesByUid[uid] = [];
+        syncInputFiles(uid);
+    }
+
+    function renderPreviews(uid) {
+        var $row = $('.pago-item[data-uid="' + uid + '"]');
+        var $cont = $row.find('.comprobante-previews');
+        if ($cont.length === 0) return;
+        $cont.empty();
+        (rowFilesByUid[uid] || []).forEach(function (f, idx) {
+            var inner = f.type && f.type.indexOf('image/') === 0
+                ? '<img src="' + URL.createObjectURL(f) + '" style="max-width:80px; max-height:60px; display:block;">'
+                : '<span class="badge bg-secondary" style="white-space:normal;">' + (f.name || 'archivo') + '</span>';
+            var $chip = $(
+                '<div class="comprobante-chip border rounded p-1 text-center" style="position:relative;">' +
+                    inner +
+                    '<button type="button" class="btn btn-danger btn-sm comprobante-remove" ' +
+                    'data-uid="' + uid + '" data-idx="' + idx + '" ' +
+                    'style="position:absolute; top:-8px; right:-8px; padding:0 6px; line-height:1.2;">&times;</button>' +
+                '</div>'
+            );
+            $cont.append($chip);
+        });
+    }
+
     function getEntidadOptions(forma) {
         return entidadsData
             .filter(function (e) { return e.forma === forma; })
             .map(function (e) {
-                return '<option value="' + e.id + '" data-autorizacion="' + (e.autorizacion ? 1 : 0) + '">' + e.nombre + '</option>';
+                return '<option value="' + e.id + '" data-autorizacion="' + (e.autorizacion ? 1 : 0) + '" data-tangible="' + (e.tangible ? 1 : 0) + '">' + e.nombre + '</option>';
             })
             .join('');
     }
 
-    function getPagoHtml(forma) {
+    function getPagoHtml(forma, uid) {
         var labelFecha = forma === 'Contado' ? 'Fecha de pago' : 'Aprobación Crédito';
 
         // Proof block (only seller can upload)
         var comprobanteHtml = esVendedor ? `
                 <div class="row mt-2 comprobante-wrapper" style="display:none;">
                     <div class="col-md-12">
-                        <label>Comprobante</label>
+                        <label>Comprobantes</label>
                         <div class="d-flex gap-2 align-items-start flex-wrap">
                             <div>
-                                <input type="file" name="comprobante[]"
+                                <input type="file" name="comprobantes_${uid}[]" multiple data-uid="${uid}"
                                        class="form-control form-control-sm comprobante-file"
                                        accept="image/jpeg,image/png,application/pdf">
-                                <small class="text-muted">JPG, PNG o PDF (max 5MB)</small>
+                                <small class="text-muted">JPG, PNG o PDF (max 5MB c/u). Podés agregar varios.</small>
                             </div>
                             <div>
                                 <button type="button" class="btn btn-sm btn-primary btn-capturar-comprobante">
                                     📸 Capturar
                                 </button>
                             </div>
-                            <div>
-                                <img class="comprobante-preview border" style="display:none; max-width: 150px; max-height: 100px;">
-                            </div>
                         </div>
+                        <div class="comprobante-previews d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
                 </div>` : '';
 
@@ -64,7 +120,8 @@ $(document).ready(function () {
                     </div>` : '';
 
         return `
-            <div class="card p-3 mb-3 pago-item">
+            <div class="card p-3 mb-3 pago-item" data-uid="${uid}">
+                <input type="hidden" name="pago_uid[]" value="${uid}">
                 <div class="row">
                     <div class="col-md-4">
                         <label>Entidad</label>
@@ -99,7 +156,8 @@ $(document).ready(function () {
     }
 
     function agregarFilaPago(forma) {
-        var $row = $(getPagoHtml(forma)).appendTo('#cuerpoPago');
+        var uid = ++pagoUidSeq;
+        var $row = $(getPagoHtml(forma, uid)).appendTo('#cuerpoPago');
         $row.find('.js-pago-select').select2({ language: 'es' });
         new AutoNumeric.multiple($row.find('.formato-numero-pago').get(), {
             digitGroupSeparator: '.',
@@ -137,14 +195,14 @@ $(document).ready(function () {
         var $wrapper = $row.find('.comprobante-wrapper');
         if ($wrapper.length === 0) return; // Not present in auditor context
 
-        var requiere = parseInt($select.find('option:selected').data('autorizacion'), 10) === 1;
+        // Show the proof block for every payment method EXCEPT physical cash (tangible entity)
+        var esEfectivo = parseInt($select.find('option:selected').data('tangible'), 10) === 1;
 
-        if (requiere) {
+        if (!esEfectivo) {
             $wrapper.css('display', 'flex');
         } else {
             $wrapper.hide();
-            $row.find('.comprobante-file').val('');
-            $row.find('.comprobante-preview').hide().attr('src', '');
+            clearRowFiles($row.data('uid'));
         }
     }
 
@@ -234,44 +292,21 @@ $(document).ready(function () {
 
             canvas.toBlob(function (blob) {
                 var file = new File([blob], 'comprobante_' + Date.now() + '.png', { type: 'image/png' });
-                var dt = new DataTransfer();
-                dt.items.add(file);
-                var $fileInput = $filaActiva.find('.comprobante-file');
-                $fileInput[0].files = dt.files;
-
-                var dataUrl = canvas.toDataURL('image/png');
-                $filaActiva.find('.comprobante-preview').attr('src', dataUrl).show();
-
+                addFilesToRow($filaActiva.data('uid'), [file]);
                 $modalCamara.modal('hide');
             }, 'image/png');
         });
 
-        // Preview when user selects a file manually
+        // Accumulate files when the user selects them manually (supports multiple)
         $('body').on('change', '.comprobante-file', function () {
-            var file = this.files[0];
-            var $preview = $(this).closest('.pago-item').find('.comprobante-preview');
-
-            if (!file) {
-                $preview.hide().attr('src', '');
-                return;
+            if (this.files && this.files.length) {
+                addFilesToRow($(this).data('uid'), this.files);
             }
+        });
 
-            if (file.size > 5 * 1024 * 1024) {
-                alert('El archivo supera los 5MB. Por favor seleccione uno más chico.');
-                this.value = '';
-                $preview.hide().attr('src', '');
-                return;
-            }
-
-            if (file.type.startsWith('image/')) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    $preview.attr('src', e.target.result).show();
-                };
-                reader.readAsDataURL(file);
-            } else {
-                $preview.hide().attr('src', '');
-            }
+        // Remove a single accumulated file
+        $('body').on('click', '.comprobante-remove', function () {
+            removeFileFromRow($(this).data('uid'), parseInt($(this).data('idx'), 10));
         });
     }
 });

@@ -147,6 +147,19 @@ class CajaController extends Controller
             'inicial' => 'required|numeric|min:0',
         ]);
 
+        // No permitir abrir una caja nueva si ya hay una abierta para esta sucursal y usuario.
+        // Evita que el efectivo caiga en una caja vieja que quedó sin cerrar.
+        $cajaAbierta = Caja::where('sucursal_id', $this->sanitizeInput($request->input('sucursal_id')))
+            ->where('user_id', auth()->id())
+            ->where('estado', 'Abierta')
+            ->first();
+
+        if ($cajaAbierta) {
+            return back()
+                ->withErrors("Ya tenés una caja abierta (#{$cajaAbierta->id}) en esta sucursal. Cerrala antes de abrir una nueva.")
+                ->withInput();
+        }
+
         DB::beginTransaction();
 
         try {

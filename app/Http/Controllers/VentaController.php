@@ -77,6 +77,41 @@ class VentaController extends Controller
         return "$dir/$filename";
     }
 
+    // Save every proof file uploaded for a payment row (supports one or many files)
+    private function guardarComprobantesPago(Pago $pago, Request $request, int $i): void
+    {
+        $uid = $request->input("pago_uid.$i");
+        if ($uid === null) {
+            return;
+        }
+
+        $files = $request->file("comprobantes_$uid");
+        if (empty($files)) {
+            return;
+        }
+
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        foreach ($files as $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, ['jpeg', 'jpg', 'png', 'pdf'])) {
+                continue;
+            }
+            if ($file->getSize() > 5 * 1024 * 1024) {
+                continue;
+            }
+            \App\Models\Comprobante::create([
+                'pago_id' => $pago->id,
+                'path'    => $this->guardarComprobante($file),
+            ]);
+        }
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -375,12 +410,10 @@ class VentaController extends Controller
                 $detalle->detalle = $this->sanitizeInput($request->detalle[$i] ?? null);
                 $detalle->observacion = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
-                // Store proof file if uploaded for this payment
-                if ($request->hasFile("comprobante.$i")) {
-                    $detalle->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
-                }
-
                 $detalle->save();
+
+                // Store proof files (one or many) uploaded for this payment
+                $this->guardarComprobantesPago($detalle, $request, $i);
 
                 $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
                     ->where('user_id', $request->user_id)
@@ -531,6 +564,12 @@ class VentaController extends Controller
             // Map old payments by their index order so we can re-link proofs/audit data
             $pagosViejos = $venta->pagos->values();
 
+            // Capture existing proof paths (indexed like the payments) before deleting,
+            // since comprobantes rows cascade-delete when their payments are removed.
+            $comprobantesViejos = $pagosViejos->map(function ($p) {
+                return $p->comprobantes->pluck('path')->all();
+            })->all();
+
             $venta->pagos()->delete();
 
             foreach ($request->entidad_id as $i => $entidadId) {
@@ -550,14 +589,18 @@ class VentaController extends Controller
                     $detalle->contadora = $pagoViejo->contadora;
                 }
 
-                // New upload replaces; otherwise keep the prior proof for that row
-                if ($request->hasFile("comprobante.$i")) {
-                    $detalle->comprobante_path = $this->guardarComprobante($request->file("comprobante.$i"));
-                } elseif ($pagoViejo) {
-                    $detalle->comprobante_path = $pagoViejo->comprobante_path;
+                $detalle->save();
+
+                // Re-link the proofs that already existed for this payment row
+                foreach (($comprobantesViejos[$i] ?? []) as $pathViejo) {
+                    \App\Models\Comprobante::create([
+                        'pago_id' => $detalle->id,
+                        'path'    => $pathViejo,
+                    ]);
                 }
 
-                $detalle->save();
+                // Add any newly uploaded proof files (one or many)
+                $this->guardarComprobantesPago($detalle, $request, $i);
 
                 $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
                     ->where('user_id', $request->user_id)
@@ -621,7 +664,7 @@ class VentaController extends Controller
     }
 
     public function show($id) {
-        $venta = Venta::with('pagos', 'unidad', 'cliente')->findOrFail($id);
+        $venta = Venta::with('pagos.comprobantes', 'unidad', 'cliente')->findOrFail($id);
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('', '');

@@ -320,7 +320,7 @@
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
     <script>
         var entidadsData = {!! json_encode($entidads->map(function($e) {
-        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma];
+        return ['id' => $e->id, 'nombre' => $e->nombre, 'forma' => $e->forma, 'autorizacion' => $e->autorizacion, 'tangible' => $e->tangible];
     })) !!};
     </script>
     <script src="{{ asset('assets/js/cobro.js') }}"></script>
