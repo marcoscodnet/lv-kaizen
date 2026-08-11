@@ -36,7 +36,7 @@
                 <div class="col-md-3">
                     <strong>Monto Inicial:</strong> ${{ number_format($caja->inicial, 2, ',', '.') }}
                 </div>
-                @if($caja->estado === 'cerrada')
+                @if($caja->estado === 'Cerrada')
                     <div class="col-md-3">
                         <strong>Monto Final:</strong> ${{ number_format($caja->final, 2, ',', '.') }}
                     </div>

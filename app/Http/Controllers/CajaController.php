@@ -125,7 +125,7 @@ class CajaController extends Controller
 
     public function arqueoActual()
     {
-        $caja = Caja::where('estado','abierta')->firstOrFail();
+        $caja = Caja::where('estado','Abierta')->firstOrFail();
         return redirect()->route('cajas.arqueo', $caja->id);
     }
 
@@ -147,17 +147,16 @@ class CajaController extends Controller
             'inicial' => 'required|numeric|min:0',
         ]);
 
-        // No permitir abrir una caja nueva si ya hay una abierta para esta sucursal y usuario.
-        // Evita que el efectivo caiga en una caja vieja que quedó sin cerrar.
-        $cajaAbierta = Caja::where('sucursal_id', $this->sanitizeInput($request->input('sucursal_id')))
-            ->where('user_id', auth()->id())
-            ->where('estado', 'Abierta')
-            ->first();
+        $sucursalId = $this->sanitizeInput($request->input('sucursal_id'));
+
+        // Regla de negocio: una sola caja por sucursal y por día.
+        // Si ya hay una caja abierta hoy para esta sucursal, todos los usuarios
+        // de la sucursal trabajan sobre esa misma caja: redirigimos a ella.
+        $cajaAbierta = Caja::abiertaDelDia($sucursalId);
 
         if ($cajaAbierta) {
-            return back()
-                ->withErrors("Ya tenés una caja abierta (#{$cajaAbierta->id}) en esta sucursal. Cerrala antes de abrir una nueva.")
-                ->withInput();
+            return redirect()->route('cajas.show', ['caja' => $cajaAbierta->id])
+                ->with('info', "La caja del día de esta sucursal ya está abierta (#{$cajaAbierta->id}).");
         }
 
         DB::beginTransaction();
@@ -166,7 +165,8 @@ class CajaController extends Controller
             $inicial = $this->sanitizeInput($request->input('inicial'));
 
             $caja = Caja::create([
-                'sucursal_id' => $this->sanitizeInput($request->input('sucursal_id')),
+                'sucursal_id' => $sucursalId,
+                'fecha' => now()->toDateString(),
                 'user_id' => auth()->id(),
                 'apertura' => now(),
                 'inicial' => $inicial,
@@ -181,7 +181,7 @@ class CajaController extends Controller
                 'concepto_id' => $conceptoApertura->id,
                 'entidad_id' => null,
                 'venta_id' => null,
-                'tipo' => 'ingreso',
+                'tipo' => 'Ingreso',
                 'monto' => $request->inicial,
                 'acreditado' => true,
                 'fecha' => now(),
@@ -216,7 +216,15 @@ class CajaController extends Controller
     {
         $caja = Caja::with('movimientos')->findOrFail($id);
 
-        // Calcular monto final automáticamente (sin sumar el inicial)
+        // Evitar cerrar dos veces la misma caja.
+        if ($caja->estado === 'Cerrada') {
+            return redirect()->route('cajas.arqueo', $caja->id)
+                ->withErrors('La caja ya está cerrada.');
+        }
+
+        // Monto final = efectivo total en la caja al cerrar.
+        // Incluye el fondo inicial (registrado como movimiento de "Apertura"),
+        // más los ingresos acreditados del día, menos los egresos.
         $ingresosAcreditados = $caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto');
         $egresos = $caja->movimientos->where('tipo', 'Egreso')->sum('monto');
 
@@ -237,9 +245,9 @@ class CajaController extends Controller
 
         // Totales separados por tipo y acreditado
         $totales = [
-            'ingresosAcreditados' => $caja->movimientos()->where('tipo','ingreso')->where('acreditado',true)->sum('monto'),
-            'ingresosPendientes' => $caja->movimientos()->where('tipo','ingreso')->where('acreditado',false)->sum('monto'),
-            'egresos' => $caja->movimientos()->where('tipo','egreso')->sum('monto'),
+            'ingresosAcreditados' => $caja->movimientos()->where('tipo','Ingreso')->where('acreditado',true)->sum('monto'),
+            'ingresosPendientes' => $caja->movimientos()->where('tipo','Ingreso')->where('acreditado',false)->sum('monto'),
+            'egresos' => $caja->movimientos()->where('tipo','Egreso')->sum('monto'),
         ];
 
         return view('cajas.arqueo', compact('caja','totales'));

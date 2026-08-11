@@ -366,13 +366,11 @@ class VentaPiezaController extends Controller
                 if ($entidad) {
                     if ($entidad->tangible) {
                         // Cash payment requires an open cash register
-                        $cajaAbierta = Caja::where('sucursal_id', $sucursalCaja)
-                            ->where('user_id', $request->user_id)
-                            ->where('estado', 'Abierta')
-                            ->first();
+                        // Regla de negocio: una sola caja por sucursal y por día.
+                        $cajaAbierta = Caja::abiertaDelDia($sucursalCaja);
 
                         if (!$cajaAbierta) {
-                            throw new \Exception("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago en efectivo.");
+                            throw new \Exception("No hay caja abierta para esta sucursal. No se puede registrar el pago en efectivo.");
                         }
 
                         // Cash payment: impacts physical cash register

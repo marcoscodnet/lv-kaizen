@@ -136,6 +136,27 @@ class AuditoriaController extends Controller
             ->take($request->input('length'))
             ->get();
 
+        // Adjuntar los comprobantes (tabla comprobantes: uno o varios por pago),
+        // con fallback a la columna vieja comprobante_path.
+        $pagoIds = $datos->pluck('id')->all();
+        $comprobantesPorPago = \App\Models\Comprobante::whereIn('pago_id', $pagoIds)
+            ->get(['id', 'pago_id', 'path'])
+            ->groupBy('pago_id');
+
+        $datos->transform(function ($row) use ($comprobantesPorPago) {
+            $lista = collect($comprobantesPorPago->get($row->id, collect()))
+                ->map(function ($c) {
+                    return asset($c->path);
+                })->values();
+
+            if ($lista->isEmpty() && !empty($row->comprobante_path)) {
+                $lista = collect([asset($row->comprobante_path)]);
+            }
+
+            $row->comprobantes = $lista;
+            return $row;
+        });
+
         return response()->json([
             'data' => $datos,
             'recordsTotal' => $recordsTotal,
@@ -147,7 +168,18 @@ class AuditoriaController extends Controller
     // Return single payment data for the authorize modal
     public function datos($pagoId)
     {
-        $pago = Pago::with('entidad')->findOrFail($pagoId);
+        $pago = Pago::with(['entidad', 'comprobantes'])->findOrFail($pagoId);
+
+        // Comprobantes de la tabla comprobantes (uno o varios), con fallback
+        // a la columna vieja comprobante_path.
+        $comprobantes = $pago->comprobantes
+            ->map(function ($c) {
+                return asset($c->path);
+            })->values();
+
+        if ($comprobantes->isEmpty() && $pago->comprobante_path) {
+            $comprobantes = collect([asset($pago->comprobante_path)]);
+        }
 
         return response()->json([
             'id'           => $pago->id,
@@ -155,7 +187,8 @@ class AuditoriaController extends Controller
             'pagado'       => $pago->pagado,
             'contadora'    => $pago->contadora,
             'entidad'      => $pago->entidad->nombre ?? '',
-            'comprobante'  => $pago->comprobante_path ? asset($pago->comprobante_path) : null,
+            'comprobante'  => $comprobantes->first(), // compatibilidad
+            'comprobantes' => $comprobantes,
         ]);
     }
 

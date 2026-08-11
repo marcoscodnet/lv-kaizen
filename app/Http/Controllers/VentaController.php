@@ -415,15 +415,14 @@ class VentaController extends Controller
                 // Store proof files (one or many) uploaded for this payment
                 $this->guardarComprobantesPago($detalle, $request, $i);
 
-                $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                    ->where('user_id', $request->user_id)
-                    ->where('estado', 'Abierta')
-                    ->first();
+                // Regla de negocio: una sola caja por sucursal y por día.
+                // El pago impacta la caja del día de la sucursal, sin importar qué usuario lo registre.
+                $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
 
                 if (!$cajaAbierta) {
                     DB::rollBack();
                     return redirect()->back()
-                        ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
+                        ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago.")
                         ->withInput();
                 }
 
@@ -602,15 +601,14 @@ class VentaController extends Controller
                 // Add any newly uploaded proof files (one or many)
                 $this->guardarComprobantesPago($detalle, $request, $i);
 
-                $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                    ->where('user_id', $request->user_id)
-                    ->where('estado', 'Abierta')
-                    ->first();
+                // Regla de negocio: una sola caja por sucursal y por día.
+                // El pago impacta la caja del día de la sucursal, sin importar qué usuario lo registre.
+                $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
 
                 if (!$cajaAbierta) {
                     DB::rollBack();
                     return redirect()->back()
-                        ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago.")
+                        ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago.")
                         ->withInput();
                 }
 

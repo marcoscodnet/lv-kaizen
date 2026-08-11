@@ -4,7 +4,7 @@
 <p>Usuario: {{ $caja->user->name }}</p>
 <p>Estado: {{ ucfirst($caja->estado) }}</p>
 <p>Monto Inicial: ${{ number_format($caja->inicial,2, ',', '.') }}</p>
-@if($caja->estado === 'cerrada')
+@if($caja->estado === 'Cerrada')
     <p>Monto Final: ${{ number_format($caja->final,2, ',', '.') }}</p>
 @endif
 

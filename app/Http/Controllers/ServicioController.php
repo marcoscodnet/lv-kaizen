@@ -517,15 +517,13 @@ class ServicioController extends Controller
                     if ($entidad) {
                         if ($entidad->tangible) {
                             // Cash payment requires an open cash register
-                            $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                                ->where('user_id', auth()->id())
-                                ->where('estado', 'Abierta')
-                                ->first();
+                            // Regla de negocio: una sola caja por sucursal y por día.
+                            $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
 
                             if (!$cajaAbierta) {
                                 DB::rollBack();
                                 return redirect()->back()
-                                    ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago en efectivo.")
+                                    ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago en efectivo.")
                                     ->withInput();
                             }
 
@@ -738,15 +736,13 @@ class ServicioController extends Controller
                     $entidad = Entidad::find($entidadId);
                     if ($entidad) {
                         if ($entidad->tangible) {
-                            $cajaAbierta = Caja::where('sucursal_id', $request->sucursal_id)
-                                ->where('user_id', auth()->id())
-                                ->where('estado', 'Abierta')
-                                ->first();
+                            // Regla de negocio: una sola caja por sucursal y por día.
+                            $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
 
                             if (!$cajaAbierta) {
                                 DB::rollBack();
                                 return redirect()->back()
-                                    ->withErrors("No hay caja abierta para esta sucursal y usuario. No se puede registrar el pago en efectivo.")
+                                    ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago en efectivo.")
                                     ->withInput();
                             }
 

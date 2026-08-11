@@ -111,13 +111,9 @@
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <label>Comprobante</label>
-                            <div id="autComprobanteWrapper" class="border rounded p-2 text-center bg-light">
+                            <label>Comprobantes</label>
+                            <div id="autComprobantesWrapper" class="border rounded p-2 text-center bg-light">
                                 <span id="autSinComprobante" class="text-muted">Sin comprobante</span>
-                                <img id="autComprobanteImg" src="" style="display:none; max-width:100%; max-height:400px;">
-                                <a id="autComprobantePdf" href="#" target="_blank" style="display:none;" class="btn btn-outline-primary btn-sm">
-                                    <i class="fa fa-file-pdf"></i> Ver PDF
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -200,11 +196,14 @@
                     },
                     { data: 'autorizado_por' },
                     {
-                        data: 'comprobante_path', orderable: false, searchable: false,
+                        data: 'comprobantes', orderable: false, searchable: false,
                         render: function (data) {
-                            if (!data) return '<span class="text-muted">—</span>';
-                            var url = "{{ asset('') }}" + data;
-                            return '<a href="' + url + '" target="_blank" class="btn btn-link p-0"><i class="fas fa-file-image text-500"></i></a>';
+                            if (!data || !data.length) return '<span class="text-muted">—</span>';
+                            return data.map(function (url) {
+                                var esPdf = url.toLowerCase().indexOf('.pdf') !== -1;
+                                var icono = esPdf ? 'fa-file-pdf' : 'fa-file-image';
+                                return '<a href="' + url + '" target="_blank" class="btn btn-link p-0 me-1" title="Ver comprobante"><i class="fas ' + icono + ' text-500"></i></a>';
+                            }).join('');
                         }
                     },
                     {
@@ -268,16 +267,19 @@
                     $('#autContadora').val(p.contadora || '');
                     $('#autObservaciones').val('');
 
-                    // Show proof
-                    $('#autComprobanteImg, #autComprobantePdf, #autSinComprobante').hide();
-                    if (p.comprobante) {
-                        if (p.comprobante.toLowerCase().endsWith('.pdf')) {
-                            $('#autComprobantePdf').attr('href', p.comprobante).show();
-                        } else {
-                            $('#autComprobanteImg').attr('src', p.comprobante).show();
-                        }
+                    // Mostrar comprobantes (uno o varios)
+                    var $wrap = $('#autComprobantesWrapper').empty();
+                    var comps = p.comprobantes || (p.comprobante ? [p.comprobante] : []);
+                    if (!comps.length) {
+                        $wrap.append('<span class="text-muted">Sin comprobante</span>');
                     } else {
-                        $('#autSinComprobante').show();
+                        comps.forEach(function (url) {
+                            if (url.toLowerCase().indexOf('.pdf') !== -1) {
+                                $wrap.append('<a href="' + url + '" target="_blank" class="btn btn-outline-primary btn-sm m-1"><i class="fa fa-file-pdf"></i> Ver PDF</a>');
+                            } else {
+                                $wrap.append('<a href="' + url + '" target="_blank" class="d-inline-block m-1"><img src="' + url + '" style="max-width:100%; max-height:300px;"></a>');
+                            }
+                        });
                     }
 
                     $('#autorizarModal').modal('show');

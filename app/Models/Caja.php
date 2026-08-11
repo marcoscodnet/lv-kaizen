@@ -11,6 +11,7 @@ class Caja extends Model
 
     protected $fillable = [
         'sucursal_id',
+        'fecha',
         'user_id',
         'apertura',
         'cierre',
@@ -19,7 +20,22 @@ class Caja extends Model
         'estado',
     ];
 
-    protected $dates = ['apertura', 'cierre']; // <-- esto convierte automáticamente a Carbon
+    protected $dates = ['fecha', 'apertura', 'cierre']; // <-- esto convierte automáticamente a Carbon
+
+    /**
+     * Caja abierta del día para una sucursal.
+     * Regla de negocio: una sola caja por sucursal y por día, compartida
+     * por todos los usuarios asignados a esa sucursal.
+     */
+    public static function abiertaDelDia($sucursalId, $fecha = null)
+    {
+        $fecha = $fecha ?: now()->toDateString();
+
+        return static::where('sucursal_id', $sucursalId)
+            ->whereDate('fecha', $fecha)
+            ->where('estado', 'Abierta')
+            ->first();
+    }
 
     public function sucursal()
     {

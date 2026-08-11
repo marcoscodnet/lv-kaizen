@@ -37,7 +37,7 @@
                 <div class="col-md-3"><strong>Apertura:</strong> {{ $caja->apertura->format('d/m/Y H:i:s') }}</div>
                 <div class="col-md-3"><strong>Usuario:</strong> {{ $caja->user->name }}</div>
                 <div class="col-md-3"><strong>Monto Inicial:</strong> ${{ number_format($caja->inicial, 2, ',', '.') }}</div>
-                @if($caja->estado === 'cerrada')
+                @if($caja->estado === 'Cerrada')
                     <div class="col-md-3"><strong>Monto Final:</strong> ${{ number_format($caja->final, 2, ',', '.') }}</div>
                     <div class="col-md-3"><strong>Cierre:</strong> {{ $caja->cierre->format('d/m/Y H:i:s') }}</div>
                 @endif
