@@ -245,6 +245,7 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('abrir', [CajaController::class, 'abrir'])->name('abrir');
         Route::post('store', [CajaController::class, 'store'])->name('store');
         Route::post('cerrar/{caja}', [CajaController::class, 'cerrar'])->name('cerrar');
+        Route::post('reabrir/{caja}', [CajaController::class, 'reabrir'])->name('reabrir');
         Route::get('{caja}', [CajaController::class, 'show'])->name('show');
 
         // 📌 Arqueo de Cajas

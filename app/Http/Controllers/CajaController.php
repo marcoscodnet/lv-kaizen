@@ -29,6 +29,7 @@ class CajaController extends Controller
         $this->middleware('permission:caja-abrir', ['only' => ['abrir','store']]);
 
         $this->middleware('permission:caja-cerrar', ['only' => ['cerrar']]);
+        $this->middleware('permission:caja-reabrir', ['only' => ['reabrir']]);
         $this->middleware('permission:caja-arqueo', ['only' => ['arqueo']]);
 
     }
@@ -235,6 +236,31 @@ class CajaController extends Controller
 
         return redirect()->route('cajas.arqueo', $caja->id)
             ->with('success', 'Caja cerrada correctamente.');
+    }
+
+
+    // Reabrir caja (solo administradores con permiso caja-reabrir).
+    // Caso de uso: un usuario cerró la caja del día por error y, por la regla de
+    // una sola caja por sucursal y por día, no puede abrir otra. El administrador
+    // la reabre para poder seguir operando y volver a cerrarla al final del día.
+    public function reabrir($id)
+    {
+        $caja = Caja::findOrFail($id);
+
+        if ($caja->estado === 'Abierta') {
+            return redirect()->route('cajas.arqueo', $caja->id)
+                ->withErrors('La caja ya está abierta.');
+        }
+
+        // Al reabrir se limpian el cierre y el monto final; se recalculan cuando
+        // la caja vuelva a cerrarse.
+        $caja->estado = 'Abierta';
+        $caja->final = null;
+        $caja->cierre = null;
+        $caja->save();
+
+        return redirect()->route('cajas.show', $caja->id)
+            ->with('success', 'Caja reabierta correctamente.');
     }
 
 

@@ -19,6 +19,17 @@
                         </button>
                     </form>
                 @endif
+                @if($caja->estado === 'Cerrada')
+                    @can('caja-reabrir')
+                        <form action="{{ route('cajas.reabrir', $caja->id) }}" method="POST" style="display:inline;">
+                            @csrf
+                            <button type="submit" class="btn btn-warning btn-sm"
+                                    onclick="return confirm('¿Reabrir esta caja? Podrá volver a registrar movimientos y cerrarla nuevamente.')">
+                                <i class="fas fa-lock-open"></i> Reabrir Caja
+                            </button>
+                        </form>
+                    @endcan
+                @endif
             </div>
         </div>
         @include('includes.messages')

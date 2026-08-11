@@ -163,6 +163,12 @@
                                 actionsHtml += '<a href="#" onclick="event.preventDefault(); if(confirm(\'Cerrar caja?\')) { document.getElementById(\'cerrar-form-' + row.id + '\').submit(); }" class="btn btn-link p-0" title="Cerrar"><i class="fas fa-lock text-500"></i></a>';
                             }
                             @endcan
+                                @can('caja-reabrir')
+                            if(row.estado === 'Cerrada') {
+                                actionsHtml += '<form id="reabrir-form-' + row.id + '" method="post" action="{{ route("cajas.reabrir", "") }}/' + row.id + '" style="display:none;">{{ csrf_field() }}</form>';
+                                actionsHtml += '<a href="#" onclick="event.preventDefault(); if(confirm(\'Reabrir caja?\')) { document.getElementById(\'reabrir-form-' + row.id + '\').submit(); }" class="btn btn-link p-0" title="Reabrir"><i class="fas fa-lock-open text-500"></i></a>';
+                            }
+                            @endcan
                                 actionsHtml += '</div>';
                             return actionsHtml;
                         }
