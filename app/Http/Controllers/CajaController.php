@@ -291,7 +291,12 @@ class CajaController extends Controller
 
     public function generateArqueoPDF($cajaId, $attach = false)
     {
-        $caja = Caja::with('movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal')->findOrFail($cajaId);
+        $caja = Caja::with([
+            'movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal',
+            'movimientos.venta.unidad',
+            'movimientos.ventaPieza.piezas.pieza',
+            'movimientos.servicio.cliente', 'movimientos.servicio.marca',
+        ])->findOrFail($cajaId);
 
         $data = [
             'caja' => $caja
@@ -312,7 +317,12 @@ class CajaController extends Controller
 
     public function generateArqueoExcel($cajaId)
     {
-        $caja = Caja::with('movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal')->findOrFail($cajaId);
+        $caja = Caja::with([
+            'movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal',
+            'movimientos.venta.unidad',
+            'movimientos.ventaPieza.piezas.pieza',
+            'movimientos.servicio.cliente', 'movimientos.servicio.marca',
+        ])->findOrFail($cajaId);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -336,9 +346,10 @@ class CajaController extends Controller
         $sheet->setCellValue('A'.$startRow, 'Fecha');
         $sheet->setCellValue('B'.$startRow, 'Concepto');
         $sheet->setCellValue('C'.$startRow, 'Entidad');
-        $sheet->setCellValue('D'.$startRow, 'Tipo');
-        $sheet->setCellValue('E'.$startRow, 'Monto');
-        $sheet->setCellValue('F'.$startRow, 'Acreditado');
+        $sheet->setCellValue('D'.$startRow, 'Origen');
+        $sheet->setCellValue('E'.$startRow, 'Tipo');
+        $sheet->setCellValue('F'.$startRow, 'Monto');
+        $sheet->setCellValue('G'.$startRow, 'Acreditado');
 
         $row = $startRow + 1;
 
@@ -346,9 +357,10 @@ class CajaController extends Controller
             $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i:s'));
             $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
             $sheet->setCellValue('C'.$row, optional($mov->entidad)->nombre ?? '-');
-            $sheet->setCellValue('D'.$row, ucfirst($mov->tipo));
-            $sheet->setCellValue('E'.$row, $mov->monto);
-            $sheet->setCellValue('F'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');
+            $sheet->setCellValue('D'.$row, $mov->origen);
+            $sheet->setCellValue('E'.$row, ucfirst($mov->tipo));
+            $sheet->setCellValue('F'.$row, $mov->monto);
+            $sheet->setCellValue('G'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');
             $row++;
         }
 
@@ -357,20 +369,20 @@ class CajaController extends Controller
         $totalEgresos = $caja->movimientos->where('tipo','Egreso')->sum('monto');
         $saldo = $totalIngresos - $totalEgresos;
 
-        $sheet->setCellValue('D'.$row, 'Total Ingresos Acreditados:');
-        $sheet->setCellValue('E'.$row, $totalIngresos);
+        $sheet->setCellValue('E'.$row, 'Total Ingresos Acreditados:');
+        $sheet->setCellValue('F'.$row, $totalIngresos);
         $row++;
-        $sheet->setCellValue('D'.$row, 'Total Egresos:');
-        $sheet->setCellValue('E'.$row, $totalEgresos);
+        $sheet->setCellValue('E'.$row, 'Total Egresos:');
+        $sheet->setCellValue('F'.$row, $totalEgresos);
         $row++;
-        $sheet->setCellValue('D'.$row, 'Saldo Actual:');
-        $sheet->setCellValue('E'.$row, $saldo);
+        $sheet->setCellValue('E'.$row, 'Saldo Actual:');
+        $sheet->setCellValue('F'.$row, $saldo);
 
         // Formato de moneda
-        $sheet->getStyle('E'.($startRow+1).':E'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('F'.($startRow+1).':F'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
 
         // Autoajustar ancho de columnas
-        foreach(range('A','F') as $col){
+        foreach(range('A','G') as $col){
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
