@@ -7,6 +7,7 @@ use App\Models\Entidad;
 use App\Models\MovimientoCuenta;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
+use DB;
 
 class MovimientoCuentaController extends Controller
 {
@@ -69,6 +70,37 @@ class MovimientoCuentaController extends Controller
         $fechaDesde   = $request->input('fecha_desde');
         $fechaHasta   = $request->input('fecha_hasta');
 
+        // Identifying detail for the origin document:
+        // venta -> nro de motor; venta_pieza -> codigo - descripcion;
+        // servicio -> cliente - unidad (marca modelo motor).
+        $origenDetalleSql = "CASE
+            WHEN movimiento_cuentas.venta_id IS NOT NULL THEN (
+                SELECT NULLIF(CONCAT('Motor ', u.motor), 'Motor ')
+                FROM ventas v
+                LEFT JOIN unidads u ON u.id = v.unidad_id
+                WHERE v.id = movimiento_cuentas.venta_id
+            )
+            WHEN movimiento_cuentas.venta_pieza_id IS NOT NULL THEN (
+                SELECT GROUP_CONCAT(CONCAT(p.codigo, ' - ', p.descripcion) SEPARATOR ', ')
+                FROM pieza_venta_piezas pvp
+                INNER JOIN piezas p ON p.id = pvp.pieza_id
+                WHERE pvp.venta_pieza_id = movimiento_cuentas.venta_pieza_id
+            )
+            WHEN movimiento_cuentas.servicio_id IS NOT NULL THEN (
+                SELECT NULLIF(TRIM(BOTH ' - ' FROM CONCAT_WS(' - ',
+                    IFNULL(NULLIF(c.nombre, ''), ''),
+                    IFNULL(NULLIF(TRIM(CONCAT_WS(' ',
+                        (SELECT m.nombre FROM marcas m WHERE m.id = s.marca_id),
+                        IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = s.modelo_id), s.modelo),
+                        NULLIF(s.motor, '')
+                    )), ''), '')
+                )), '')
+                FROM servicios s
+                LEFT JOIN clientes c ON c.id = s.cliente_id
+                WHERE s.id = movimiento_cuentas.servicio_id
+            )
+            ELSE NULL END";
+
         $query = MovimientoCuenta::select(
             'movimiento_cuentas.id',
             'movimiento_cuentas.fecha',
@@ -81,7 +113,8 @@ class MovimientoCuentaController extends Controller
             'movimiento_cuentas.servicio_id',
             'movimiento_cuentas.pago_id',
             'movimiento_cuentas.transferencia_id',
-            'users.name as usuario_nombre'
+            'users.name as usuario_nombre',
+            DB::raw("$origenDetalleSql as origen_detalle")
         )
             ->leftJoin('users', 'movimiento_cuentas.user_id', '=', 'users.id')
             ->where('movimiento_cuentas.entidad_id', $id);

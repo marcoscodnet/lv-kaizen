@@ -323,12 +323,18 @@
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
+                            function esc(s) {
+                                return $('<div>').text(s == null ? '' : s).html();
+                            }
+                            var detalle = row.origen_detalle
+                                ? '<div class="text-700 fs-11 mt-1">' + esc(row.origen_detalle) + '</div>'
+                                : '';
                             if (row.venta_id)
-                                return '<span class="badge bg-primary">Venta #' + row.venta_id + '</span>';
+                                return '<span class="badge bg-primary">Venta</span>' + detalle;
                             if (row.venta_pieza_id)
-                                return '<span class="badge bg-secondary">Pieza #' + row.venta_pieza_id + '</span>';
+                                return '<span class="badge bg-secondary">Pieza</span>' + detalle;
                             if (row.servicio_id)
-                                return '<span class="badge bg-info text-dark">Servicio #' + row.servicio_id + '</span>';
+                                return '<span class="badge bg-info text-dark">Servicio</span>' + detalle;
                             if (row.transferencia_id)
                                 return '<span class="badge bg-warning text-dark"><i class="fas fa-exchange-alt"></i> Transferencia</span>';
                             return '<span class="badge bg-dark">Manual</span>';

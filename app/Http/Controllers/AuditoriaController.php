@@ -55,11 +55,29 @@ class AuditoriaController extends Controller
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
 
-        // Origin label: which document the payment belongs to
+        // Origin label: which document the payment belongs to, enriched with
+        // identifying detail: unidad -> nro de motor; pieza -> codigo - descripcion;
+        // servicio -> cliente / unidad (marca modelo motor).
         $origenSql = "CASE
-            WHEN pagos.venta_id IS NOT NULL THEN CONCAT('Unidad #', pagos.venta_id)
-            WHEN pagos.venta_pieza_id IS NOT NULL THEN CONCAT('Pieza #', pagos.venta_pieza_id)
-            WHEN pagos.servicio_id IS NOT NULL THEN CONCAT('Servicio #', pagos.servicio_id)
+            WHEN pagos.venta_id IS NOT NULL THEN
+                CONCAT('Unidad',
+                    IFNULL(CONCAT(' — Motor ', NULLIF(unidads.motor, '')), ''))
+            WHEN pagos.venta_pieza_id IS NOT NULL THEN
+                CONCAT('Pieza',
+                    IFNULL(CONCAT(' — ', (
+                        SELECT GROUP_CONCAT(CONCAT(p.codigo, ' - ', p.descripcion) SEPARATOR ', ')
+                        FROM pieza_venta_piezas pvp
+                        INNER JOIN piezas p ON p.id = pvp.pieza_id
+                        WHERE pvp.venta_pieza_id = pagos.venta_pieza_id
+                    )), ''))
+            WHEN pagos.servicio_id IS NOT NULL THEN
+                CONCAT('Servicio',
+                    IFNULL(CONCAT(' — ', NULLIF(cs.nombre, '')), ''),
+                    IFNULL(CONCAT(' / ', NULLIF(TRIM(CONCAT_WS(' ',
+                        (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id),
+                        IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo),
+                        NULLIF(servicios.motor, '')
+                    )), '')), ''))
             ELSE '—' END";
 
         $estadoSql = "CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizado' ELSE 'Pendiente' END";
@@ -92,6 +110,7 @@ class AuditoriaController extends Controller
             ->leftJoin('autorizacions', 'autorizacions.pago_id', '=', 'pagos.id')
             // join clients via each origin
             ->leftJoin('ventas', 'pagos.venta_id', '=', 'ventas.id')
+            ->leftJoin('unidads', 'ventas.unidad_id', '=', 'unidads.id')
             ->leftJoin('clientes as cv', 'ventas.cliente_id', '=', 'cv.id')
             ->leftJoin('venta_piezas', 'pagos.venta_pieza_id', '=', 'venta_piezas.id')
             ->leftJoin('clientes as cvp', 'venta_piezas.cliente_id', '=', 'cvp.id')
