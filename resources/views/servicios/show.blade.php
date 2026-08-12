@@ -262,11 +262,34 @@
                                                    value="@if (old('entrega')){{ old('entrega') }}@else{{ (optional($servicio)->entrega)?date('Y-m-d', strtotime($servicio->entrega)):'' }}@endif" disabled>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-lg-2">
                                         <div class="form-group">
-                                            <label for="monto">Precio</label>
-                                            <input type="text" class="form-control formato-numero" id="monto" name="monto"
-                                                   value="{{ old('monto',$servicio->monto) }}" disabled>
+                                            <label for="mano_de_obra">Mano de obra</label>
+                                            <input type="text" class="form-control formato-numero" id="mano_de_obra" name="mano_de_obra"
+                                                   value="{{ old('mano_de_obra', $servicio->mano_de_obra) }}" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="costo_repuestos">Repuestos</label>
+                                            <input type="text" class="form-control formato-numero" id="costo_repuestos" name="costo_repuestos"
+                                                   value="{{ old('costo_repuestos', $totalRepuestos) }}" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="insumos">Insumos</label>
+                                            <input type="text" class="form-control formato-numero" id="insumos" name="insumos"
+                                                   value="{{ old('insumos', $servicio->insumos ?? 0) }}" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2">
+                                        <div class="form-group">
+                                            <label for="total">Total</label>
+                                            <input type="text" class="form-control formato-numero" id="total" name="total"
+                                                   value="{{ old('total', $servicio->monto) }}" disabled>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">

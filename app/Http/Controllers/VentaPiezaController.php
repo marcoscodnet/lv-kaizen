@@ -59,6 +59,24 @@ class VentaPiezaController extends Controller
             THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
     }
 
+    // SQL predicate (for servicios queries) that is TRUE when the service order is NOT authorized.
+    // A service order is "Autorizada" when it has payments and all payments requiring authorization
+    // already have their autorizacions row. Parts can only be assigned while it is still "No autorizada".
+    private function servicioNoAutorizadaRaw(): string
+    {
+        return "NOT (
+            EXISTS (SELECT 1 FROM pagos WHERE pagos.servicio_id = servicios.id)
+            AND NOT EXISTS (
+                SELECT 1 FROM pagos p2
+                JOIN entidads e2 ON e2.id = p2.entidad_id
+                LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
+                WHERE p2.servicio_id = servicios.id
+                  AND e2.autorizacion = 1
+                  AND a2.id IS NULL
+            )
+        )";
+    }
+
     // Save uploaded proof file under public/files/comprobantes/{year}/{month}
     private function guardarComprobante($file): string
     {
@@ -281,8 +299,10 @@ class VentaPiezaController extends Controller
 
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
-        // Load open service orders for the Taller destination dropdown
+        // Load selectable service orders for the Taller destination dropdown:
+        // only orders that are still OPEN (not closed / pagado = 0) AND NOT authorized.
         $serviciosAbiertos = \App\Models\Servicio::where('pagado', 0)
+            ->whereRaw($this->servicioNoAutorizadaRaw())
             ->orderBy('id', 'desc')
             ->get(['id', 'modelo', 'motor', 'chasis']);
 
@@ -305,6 +325,19 @@ class VentaPiezaController extends Controller
 
             if ($stockDisponible < $cantidadSolicitada) {
                 throw new \Exception("No hay suficiente stock de la pieza {$piezaId} en la sucursal seleccionada.");
+            }
+        }
+
+        // Guard: parts can only be assigned to a service order that is still OPEN and NOT authorized.
+        // Re-check server-side so a stale/forged servicio_id cannot bypass the filtered dropdown.
+        if (($input['destino'] ?? null) === 'Taller' && !empty($input['servicio_id'])) {
+            $asignable = \App\Models\Servicio::where('id', $input['servicio_id'])
+                ->where('pagado', 0)
+                ->whereRaw($this->servicioNoAutorizadaRaw())
+                ->exists();
+
+            if (!$asignable) {
+                throw new \Exception("No se pueden asignar repuestos a la orden de servicio #{$input['servicio_id']}: está cerrada o autorizada.");
             }
         }
 

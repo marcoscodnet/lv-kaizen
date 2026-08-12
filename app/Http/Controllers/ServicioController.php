@@ -152,14 +152,7 @@ class ServicioController extends Controller
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END"),
             'sucursals.nombre',
             'users.name',
-            DB::raw("CASE
-                        WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.servicio_id = servicios.id)
-                         AND NOT EXISTS (
-                             SELECT 1 FROM pagos p2
-                             LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                             WHERE p2.servicio_id = servicios.id AND a2.id IS NULL
-                         )
-                        THEN 'Autorizada' ELSE 'No autorizada' END"),
+            DB::raw($this->autorizacionCase()),
 
         ];
 
@@ -188,14 +181,7 @@ class ServicioController extends Controller
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END as pagado"),
             'sucursals.nombre as sucursal_nombre',
             'users.name as usuario_nombre',
-            DB::raw("CASE
-                            WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.servicio_id = servicios.id)
-                             AND NOT EXISTS (
-                                 SELECT 1 FROM pagos p2
-                                 LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                                 WHERE p2.servicio_id = servicios.id AND a2.id IS NULL
-                             )
-                            THEN 'Autorizada' ELSE 'No autorizada' END as autorizacion")
+            DB::raw($this->autorizacionCase('autorizacion'))
 
 
         )
