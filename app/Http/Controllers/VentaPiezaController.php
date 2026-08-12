@@ -50,8 +50,11 @@ class VentaPiezaController extends Controller
             WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
              AND NOT EXISTS (
                  SELECT 1 FROM pagos p2
+                 JOIN entidads e2 ON e2.id = p2.entidad_id
                  LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                 WHERE p2.venta_pieza_id = venta_piezas.id AND a2.id IS NULL
+                 WHERE p2.venta_pieza_id = venta_piezas.id
+                   AND e2.autorizacion = 1
+                   AND a2.id IS NULL
              )
             THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
     }
@@ -133,7 +136,7 @@ class VentaPiezaController extends Controller
             'venta_piezas.pedido',
             'venta_piezas.destino',
             DB::raw("(
-            SELECT SUM(pvp.precio)
+            SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as precio_total"),
@@ -162,7 +165,7 @@ class VentaPiezaController extends Controller
             'venta_piezas.pedido',
             'venta_piezas.destino',
             DB::raw("(
-            SELECT SUM(pvp.precio)
+            SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as precio_total"),
@@ -740,7 +743,7 @@ class VentaPiezaController extends Controller
     public function exportarXLS(Request $request)
     {
         $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
-        SELECT SUM(pvp.precio)
+        SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
     ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
@@ -773,7 +776,7 @@ class VentaPiezaController extends Controller
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
         $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
-            SELECT SUM(pvp.precio)
+            SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
@@ -912,7 +915,7 @@ class VentaPiezaController extends Controller
         ini_set('max_execution_time', 0);
 
         $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
-        SELECT SUM(pvp.precio)
+        SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
     ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
@@ -946,7 +949,7 @@ class VentaPiezaController extends Controller
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
         $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
-            SELECT SUM(pvp.precio)
+            SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),

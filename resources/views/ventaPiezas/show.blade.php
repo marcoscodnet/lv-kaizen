@@ -134,6 +134,17 @@
                             </table>
                         </div>
 
+                        @php
+                            $totalPiezas = $ventaPieza->piezas->sum(function ($p) {
+                                return (float) $p->precio * (float) ($p->cantidad ?: 1);
+                            });
+                        @endphp
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <h5 class="fw-bold">Total: ${{ number_format($totalPiezas, 2, ',', '.') }}</h5>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-12 col-lg-9">
                                 <div class="form-group">

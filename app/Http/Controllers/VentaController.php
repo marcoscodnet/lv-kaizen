@@ -53,8 +53,11 @@ class VentaController extends Controller
             WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = ventas.id)
              AND NOT EXISTS (
                  SELECT 1 FROM pagos p2
+                 JOIN entidads e2 ON e2.id = p2.entidad_id
                  LEFT JOIN autorizacions a2 ON a2.pago_id = p2.id
-                 WHERE p2.venta_id = ventas.id AND a2.id IS NULL
+                 WHERE p2.venta_id = ventas.id
+                   AND e2.autorizacion = 1
+                   AND a2.id IS NULL
              )
             THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
     }
