@@ -201,6 +201,9 @@
                                         }
                                     }
                                     $totalRepuestos = $repuestosAsignados->sum(function($p){ return (float)$p->precio * (float)$p->cantidad; });
+                                    // Mirror edit(): keep stored cost when closed, live sum while open.
+                                    $costoRepuestos = $servicio->pagado ? (float)$servicio->costo_repuestos : (float)$totalRepuestos;
+                                    $totalServicio  = (float)($servicio->mano_de_obra ?? 0) + $costoRepuestos + (float)($servicio->insumos ?? 0);
                                 @endphp
                                 <div class="row">
                                     <div class="col-lg-9">
@@ -275,7 +278,7 @@
                                         <div class="form-group">
                                             <label for="costo_repuestos">Repuestos</label>
                                             <input type="text" class="form-control formato-numero" id="costo_repuestos" name="costo_repuestos"
-                                                   value="{{ old('costo_repuestos', $totalRepuestos) }}" disabled>
+                                                   value="{{ old('costo_repuestos', $costoRepuestos) }}" disabled>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">
@@ -289,7 +292,7 @@
                                         <div class="form-group">
                                             <label for="total">Total</label>
                                             <input type="text" class="form-control formato-numero" id="total" name="total"
-                                                   value="{{ old('total', $servicio->monto) }}" disabled>
+                                                   value="{{ old('total', $totalServicio) }}" disabled>
                                         </div>
                                     </div>
                                     <div class="col-lg-2">
