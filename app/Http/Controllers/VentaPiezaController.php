@@ -133,7 +133,7 @@ class VentaPiezaController extends Controller
         $columnas = [
             'venta_piezas.fecha',
             DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),
-            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END"),
+            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END"),
             'venta_piezas.destino',
             DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
@@ -167,7 +167,7 @@ class VentaPiezaController extends Controller
             'venta_piezas.id as id',
             'venta_piezas.fecha',
             DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),
-            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END as orden_servicio"),
+            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END as orden_servicio"),
             'venta_piezas.destino',
             DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
@@ -755,7 +755,7 @@ class VentaPiezaController extends Controller
 
     public function exportarXLS(Request $request)
     {
-        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END"),'venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END"),'venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -788,7 +788,7 @@ class VentaPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -930,7 +930,7 @@ class VentaPiezaController extends Controller
         ini_set('memory_limit', '-1'); // ilimitado
         ini_set('max_execution_time', 0);
 
-        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END"),'venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END"),'venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -964,7 +964,7 @@ class VentaPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
