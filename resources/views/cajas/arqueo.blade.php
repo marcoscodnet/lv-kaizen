@@ -94,7 +94,7 @@
                         <th>Fecha</th>
                         <th>Concepto</th>
                         <th>Entidad</th>
-                        <th>Venta</th>
+                        <th>Origen</th>
                         <th>Tipo</th>
                         <th>Monto</th>
                         <th>Acreditado</th>
@@ -106,7 +106,7 @@
                             <td>{{ $mov->fecha->format('d/m/Y H:i:s') }}</td>
                             <td>{{ optional($mov->concepto)->nombre ?? '-' }}</td>
                             <td>{{ optional($mov->entidad)->nombre ?? '-' }}</td>
-                            <td>{{ $mov->venta_id ?? '-' }}</td>
+                            <td>{{ $mov->origen }}</td>
                             <td>{{ ucfirst($mov->tipo) }}</td>
                             <td>${{ number_format($mov->monto, 2, ',', '.') }}</td>
                             <td>

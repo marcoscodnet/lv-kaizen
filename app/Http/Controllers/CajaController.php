@@ -204,7 +204,12 @@ class CajaController extends Controller
     // Ver caja abierta
     public function show($id)
     {
-        $caja = Caja::with(['movimientos.concepto','movimientos.entidad','movimientos.venta'])->findOrFail($id);
+        $caja = Caja::with([
+            'movimientos.concepto','movimientos.entidad',
+            'movimientos.venta.unidad',
+            'movimientos.ventaPieza.piezas.pieza',
+            'movimientos.servicio.cliente','movimientos.servicio.marca',
+        ])->findOrFail($id);
         $conceptos = Concepto::where('activo',true)->get();
         $entidads = Entidad::where('activa',true)->get();
         return view('cajas.show', compact('caja','conceptos','entidads'));
@@ -267,7 +272,12 @@ class CajaController extends Controller
     // Mostrar arqueo de la caja
     public function arqueo($id)
     {
-        $caja = Caja::with(['movimientos.concepto','movimientos.entidad','movimientos.venta'])->findOrFail($id);
+        $caja = Caja::with([
+            'movimientos.concepto','movimientos.entidad',
+            'movimientos.venta.unidad',
+            'movimientos.ventaPieza.piezas.pieza',
+            'movimientos.servicio.cliente','movimientos.servicio.marca',
+        ])->findOrFail($id);
 
         // Totales separados por tipo y acreditado
         $totales = [
