@@ -73,7 +73,7 @@
     <tr>
         <th>Fecha</th>
         <th>Cliente</th>
-        <th>Pedido</th>
+        <th>Orden de Servicio</th>
         <th>Destino</th>
         <th>Monto</th>
         <th>Sucursal</th>
@@ -88,7 +88,7 @@
         <tr>
             <td>{{ $p->fecha ? date('d/m/Y', strtotime($p->fecha)) : '—' }}</td>
             <td>{{ $p->cliente }}</td>
-            <td>{{ $p->pedido }}</td>
+            <td>{{ $p->orden_servicio }}</td>
             <td>{{ $p->destino }}</td>
 
             <td>${{ number_format($p->precio_total, 2, ',', '.') }}</td>

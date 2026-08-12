@@ -132,15 +132,20 @@ class VentaPiezaController extends Controller
     {
         $columnas = [
             'venta_piezas.fecha',
-            DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente)"),
-            'venta_piezas.pedido',
+            DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),
+            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END"),
             'venta_piezas.destino',
             DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as precio_total"),
-            'sucursals.nombre',
+            DB::raw("IFNULL((
+            SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ')
+            FROM pieza_venta_piezas pvp
+            INNER JOIN sucursals s ON s.id = pvp.sucursal_id
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ), IFNULL(suc_serv.nombre, sucursals.nombre))"),
             DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
             DB::raw("(
             SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
@@ -161,15 +166,20 @@ class VentaPiezaController extends Controller
         $query = VentaPieza::select(
             'venta_piezas.id as id',
             'venta_piezas.fecha',
-            DB::raw("IFNULL(clientes.nombre, venta_piezas.cliente) as cliente"),
-            'venta_piezas.pedido',
+            DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),
+            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END as orden_servicio"),
             'venta_piezas.destino',
             DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ) as precio_total"),
-            'sucursals.nombre as sucursal_nombre',
+            DB::raw("IFNULL((
+            SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ')
+            FROM pieza_venta_piezas pvp
+            INNER JOIN sucursals s ON s.id = pvp.sucursal_id
+            WHERE pvp.venta_pieza_id = venta_piezas.id
+        ), IFNULL(suc_serv.nombre, sucursals.nombre)) as sucursal_nombre"),
             DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
             DB::raw($this->autorizacionCase('autorizacion')),
             DB::raw("(
@@ -182,7 +192,10 @@ class VentaPiezaController extends Controller
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
-            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id');
+            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
+            ->leftJoin('servicios', 'venta_piezas.servicio_id', '=', 'servicios.id')
+            ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
+            ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id');
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('venta_piezas.user_id', $user_id);
@@ -742,11 +755,11 @@ class VentaPiezaController extends Controller
 
     public function exportarXLS(Request $request)
     {
-        $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END"),'venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
-    ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+    ) as precio_total"),DB::raw("IFNULL((SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ') FROM pieza_venta_piezas pvp INNER JOIN sucursals s ON s.id = pvp.sucursal_id WHERE pvp.venta_pieza_id = venta_piezas.id), IFNULL(suc_serv.nombre, sucursals.nombre))"), DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
             DB::raw("(
     SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
     FROM pieza_venta_piezas pvp
@@ -775,11 +788,11 @@ class VentaPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
-        ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
+        ) as precio_total"),DB::raw("IFNULL((SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ') FROM pieza_venta_piezas pvp INNER JOIN sucursals s ON s.id = pvp.sucursal_id WHERE pvp.venta_pieza_id = venta_piezas.id), IFNULL(suc_serv.nombre, sucursals.nombre)) as sucursal_nombre"),DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
             DB::raw("(
     SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
     FROM pieza_venta_piezas pvp
@@ -790,7 +803,10 @@ class VentaPiezaController extends Controller
 
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
-
+            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
+            ->leftJoin('servicios', 'venta_piezas.servicio_id', '=', 'servicios.id')
+            ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
+            ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
         ;
 
@@ -851,7 +867,7 @@ class VentaPiezaController extends Controller
         // ENCABEZADOS DE LA TABLA
         // ------------------------------
         $headers = [
-            "Fecha", "Cliente", "Pedido", "Destino",
+            "Fecha", "Cliente", "Orden de Servicio", "Destino",
             "Monto", "Sucursal", "Vendedor", "Piezas","Estado"
         ];
 
@@ -876,7 +892,7 @@ class VentaPiezaController extends Controller
             );
 
             $sheet->setCellValue("B{$row}", $p->cliente);
-            $sheet->setCellValue("C{$row}", $p->pedido);
+            $sheet->setCellValue("C{$row}", $p->orden_servicio);
             $sheet->setCellValue("D{$row}", $p->destino);
             $sheet->setCellValue("E{$row}", $p->precio_total);
             $sheet->setCellValue("F{$row}", $p->sucursal_nombre);
@@ -914,11 +930,11 @@ class VentaPiezaController extends Controller
         ini_set('memory_limit', '-1'); // ilimitado
         ini_set('max_execution_time', 0);
 
-        $columnas = [  'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END"),'venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
-    ) as precio_total"),'sucursals.nombre', DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+    ) as precio_total"),DB::raw("IFNULL((SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ') FROM pieza_venta_piezas pvp INNER JOIN sucursals s ON s.id = pvp.sucursal_id WHERE pvp.venta_pieza_id = venta_piezas.id), IFNULL(suc_serv.nombre, sucursals.nombre))"), DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
             DB::raw($this->autorizacionCase()),
             DB::raw("(
     SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
@@ -948,11 +964,11 @@ class VentaPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha','venta_piezas.cliente','venta_piezas.pedido','venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN CONCAT('OS #', servicios.id, IFNULL(CONCAT(' - ', servicios.modelo), '')) ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
-        ) as precio_total"),'sucursals.nombre as sucursal_nombre',DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
+        ) as precio_total"),DB::raw("IFNULL((SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ') FROM pieza_venta_piezas pvp INNER JOIN sucursals s ON s.id = pvp.sucursal_id WHERE pvp.venta_pieza_id = venta_piezas.id), IFNULL(suc_serv.nombre, sucursals.nombre)) as sucursal_nombre"),DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
             DB::raw("(
     SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
     FROM pieza_venta_piezas pvp
@@ -963,7 +979,10 @@ class VentaPiezaController extends Controller
 
         )
             ->leftJoin('sucursals', 'venta_piezas.sucursal_id', '=', 'sucursals.id')
-
+            ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
+            ->leftJoin('servicios', 'venta_piezas.servicio_id', '=', 'servicios.id')
+            ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
+            ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
         ;
 

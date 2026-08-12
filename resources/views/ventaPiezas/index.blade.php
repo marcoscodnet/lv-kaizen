@@ -86,7 +86,7 @@
 
                         <th scope="col">Fecha</th>
                         <th scope="col">Cliente</th>
-                        <th scope="col">Pedido</th>
+                        <th scope="col">Orden de Servicio</th>
                         <th scope="col">Destino</th>
                         <th scope="col">Monto</th>
                         <th scope="col">Sucursal</th>
@@ -177,7 +177,7 @@
                         }
                     },
                     { data: 'cliente', name: 'cliente' },
-                    { data: 'pedido', name: 'pedido' },
+                    { data: 'orden_servicio', name: 'orden_servicio' },
                     { data: 'destino', name: 'destino' },
                     { data: 'precio_total', name: 'precio_total', render: formatCurrency },
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
