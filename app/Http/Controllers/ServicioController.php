@@ -826,6 +826,9 @@ class ServicioController extends Controller
         $servicio = Servicio::with([
             'ventaPiezas.piezas.pieza',
             'ventaPiezas.piezas.sucursal',
+            'pagos',
+            'pagos.entidad',
+            'pagos.comprobantes',
         ])->find($id);
 
 

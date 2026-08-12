@@ -207,7 +207,51 @@
                                 </div>
                             </div>
 
+                            <div class="col-12 col-lg-3">
+                                <div class="form-group">
+                                    <label for="forma">Forma de pago</label>
+                                    <input type="text" class="form-control" id="forma" name="forma" value="{{ $ventaPieza->forma }}" disabled>
+                                </div>
+                            </div>
 
+                            <div class="col-12">
+                                <label class="mt-2">Pagos</label>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <th>Entidad</th>
+                                        <th>Importe</th>
+                                        <th>Fecha Pago</th>
+                                        <th>Comprobantes</th>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($ventaPieza->pagos as $pago)
+                                            <tr>
+                                                <td>{{ optional($pago->entidad)->nombre }}</td>
+                                                <td class="formato-numero-text">{{ $pago->monto }}</td>
+                                                <td>{{ $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') : '' }}</td>
+                                                <td>
+                                                    @if($pago->comprobantes && $pago->comprobantes->count())
+                                                        @foreach($pago->comprobantes as $comp)
+                                                            @php $ext = strtolower(pathinfo($comp->path, PATHINFO_EXTENSION)); @endphp
+                                                            <a href="{{ asset($comp->path) }}" target="_blank" class="me-1">
+                                                                @if(in_array($ext, ['jpg','jpeg','png']))
+                                                                    <img src="{{ asset($comp->path) }}" style="max-width:80px; max-height:60px;">
+                                                                @else
+                                                                    <span class="badge bg-secondary">📄 Ver PDF</span>
+                                                                @endif
+                                                            </a>
+                                                        @endforeach
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="4" class="text-muted">Sin pagos registrados.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
 
                         </div>
 

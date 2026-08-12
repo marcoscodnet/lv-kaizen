@@ -584,7 +584,7 @@ class VentaPiezaController extends Controller
 
     public function show($id)
     {
-        $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal'])->findOrFail($id);
+        $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal', 'pagos', 'pagos.entidad', 'pagos.comprobantes'])->findOrFail($id);
 
         // Cliente name via the relationship (the model also has a legacy free-text "cliente" column
         // that shadows the relation, so resolve it explicitly by cliente_id).
