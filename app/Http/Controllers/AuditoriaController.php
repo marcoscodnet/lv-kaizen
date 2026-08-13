@@ -230,18 +230,24 @@ class AuditoriaController extends Controller
             }
 
             $acreditado = $this->sanitizeInput($request->pagado);
+            $observaciones = $this->sanitizeInput($request->observaciones ?? null);
 
             // Create authorization record
             Autorizacion::create([
                 'user_id'       => auth()->id(),
                 'pago_id'       => $pago->id,
                 'fecha'         => now(),
-                'observaciones' => $this->sanitizeInput($request->observaciones ?? null),
+                'observaciones' => $observaciones,
             ]);
 
             // Set credited amount and accountant date on the payment
             $pago->pagado    = $acreditado;
             $pago->contadora = $request->filled('contadora') ? $request->contadora : null;
+            // Reflejar la observación del auditor en el pago para que se vea en
+            // ventas, venta de piezas y servicios.
+            if (!empty($observaciones)) {
+                $pago->observacion = $observaciones;
+            }
             $pago->save();
 
             // Adjust account movement if credited differs from original amount
