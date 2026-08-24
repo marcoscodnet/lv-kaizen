@@ -321,14 +321,14 @@
                                 <div class="row">
                                     <div class="col-lg-3">
                                         <div class="form-group">
-                                            <label for="forma">Forma de pago</label>
+                                            <label for="forma">Condición de venta</label>
                                             <input type="text" class="form-control" id="forma" name="forma" value="{{ $servicio->forma }}" disabled>
                                         </div>
                                     </div>
                                 </div>
                                 <table class="table table-sm mt-2">
                                     <thead>
-                                        <th>Entidad</th>
+                                        <th>Forma de pago</th>
                                         <th>Importe</th>
                                         <th>Acreditado</th>
                                         <th>Fecha Pago</th>

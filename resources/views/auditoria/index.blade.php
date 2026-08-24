@@ -33,7 +33,7 @@
                     <input type="date" id="fechaHasta" class="form-control">
                 </div>
                 <div class="col-md-3">
-                    <label for="filtroEntidad">Entidad:</label>
+                    <label for="filtroEntidad">Forma de pago:</label>
                     <select id="filtroEntidad" class="form-control js-example-basic-single">
                         @foreach($entidads as $id => $nombre)
                             <option value="{{ $id }}">{{ $nombre }}</option>
@@ -59,7 +59,7 @@
                     <th scope="col">Fecha</th>
                     <th scope="col">Origen</th>
                     <th scope="col">Cliente</th>
-                    <th scope="col">Entidad</th>
+                    <th scope="col">Forma de pago</th>
                     <th scope="col">Monto</th>
                     <th scope="col">Acreditado</th>
                     <th scope="col">Estado</th>
@@ -85,7 +85,7 @@
                     <input type="hidden" id="autPagoId">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label>Entidad</label>
+                            <label>Forma de pago</label>
                             <input type="text" id="autEntidad" class="form-control" readonly>
                         </div>
                         <div class="col-md-6">

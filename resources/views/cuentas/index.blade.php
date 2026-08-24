@@ -35,7 +35,7 @@
                 </div>
             @empty
                 <div class="col-12">
-                    <div class="alert alert-info">No hay entidades no-tangibles activas.</div>
+                    <div class="alert alert-info">No hay formas de pago con cuenta activas.</div>
                 </div>
             @endforelse
         </div>

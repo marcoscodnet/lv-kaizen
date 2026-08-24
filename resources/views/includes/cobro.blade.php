@@ -27,12 +27,12 @@
     window.pagosOld = @json($pagosOld);
 </script>
 
-{{-- Forma de pago (solo vendedor) --}}
+{{-- Condición de venta: Contado / Crédito (solo vendedor) --}}
 @if($esVendedor)
     <div class="row">
         <div class="col-lg-3">
             <div class="form-group">
-                <label for="forma">Forma de pago</label>
+                <label for="forma">Condición de venta</label>
                 <select name="forma" id="forma" class="form-control">
                     <option value="">Seleccionar...</option>
                     @foreach (config('formas') as $key => $label)
@@ -68,7 +68,7 @@
                 <input type="hidden" name="pago_uid[]" value="{{ $uid }}">
                 <div class="row">
                     <div class="col-md-4">
-                        <label>Entidad</label>
+                        <label>Forma de pago</label>
                         <select name="entidad_id[]" class="form-control js-pago-select"
                             {{ $esAuditor ? 'disabled' : 'required' }}>
                             @foreach($entidads as $entidad)

@@ -129,7 +129,7 @@ $(document).ready(function () {
                 <input type="hidden" name="pago_uid[]" value="${uid}">
                 <div class="row">
                     <div class="col-md-4">
-                        <label>Entidad</label>
+                        <label>Forma de pago</label>
                         <select name="entidad_id[]" class="form-control js-pago-select" ${esAuditor ? 'disabled' : 'required'}>
                             ${getEntidadOptions(forma)}
                         </select>

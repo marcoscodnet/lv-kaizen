@@ -141,7 +141,7 @@
                             <div class="col-lg-3">
                                 <div class="form-group d-flex align-items-end gap-2">
                                     <div class="flex-grow-1">
-                                        <label for="forma">Forma de pago</label>
+                                        <label for="forma">Condición de venta</label>
                                         <select name="forma" id="forma" class="form-control" required disabled>
                                         <option value="">
                                             Seleccionar...
@@ -176,7 +176,7 @@
                                         <div class="card p-3 mb-3 pago-item">
                                             <div class="row">
                                                 <div class="col-md-3">
-                                                    <label>Entidad</label>
+                                                    <label>Forma de pago</label>
                                                     <select name="entidad_id[]" class="form-control js-example-basic-single" required disabled>
                                                         <option value="">Seleccione...</option>
                                                         @foreach($entidads as $entidadId => $entidad)

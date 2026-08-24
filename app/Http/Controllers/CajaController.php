@@ -345,7 +345,7 @@ class CajaController extends Controller
         // Encabezados de la tabla
         $sheet->setCellValue('A'.$startRow, 'Fecha');
         $sheet->setCellValue('B'.$startRow, 'Concepto');
-        $sheet->setCellValue('C'.$startRow, 'Entidad');
+        $sheet->setCellValue('C'.$startRow, 'Forma de pago');
         $sheet->setCellValue('D'.$startRow, 'Origen');
         $sheet->setCellValue('E'.$startRow, 'Tipo');
         $sheet->setCellValue('F'.$startRow, 'Monto');

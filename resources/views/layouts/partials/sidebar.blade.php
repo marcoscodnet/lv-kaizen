@@ -71,7 +71,7 @@
                     @endcan
                     @can('entidad-listar')
                         <a class="nav-link {{ request()->routeIs('entidads.*') ? 'active' : '' }}" href="{{ route('entidads.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-university"></span></span><span class="nav-link-text ps-1">Entidades</span>
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-university"></span></span><span class="nav-link-text ps-1">Formas de pago</span>
                             </div>
                         </a>
                     @endcan

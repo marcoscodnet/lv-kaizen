@@ -93,7 +93,7 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Concepto</th>
-                        <th>Entidad</th>
+                        <th>Forma de pago</th>
                         <th>Origen</th>
                         <th>Tipo</th>
                         <th>Monto</th>

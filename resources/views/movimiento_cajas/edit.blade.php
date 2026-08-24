@@ -28,7 +28,7 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-4">
-                        <label for="entidad_id" class="form-label">Entidad</label>
+                        <label for="entidad_id" class="form-label">Forma de pago</label>
                         <select name="entidad_id" id="entidad_id" class="form-control select2" required>
                             <option value="">Seleccione</option>
                             @foreach($entidads as $entidad)
