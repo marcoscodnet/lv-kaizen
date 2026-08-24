@@ -19,6 +19,7 @@ use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
+use App\Traits\ValidaCajaAbierta;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta;
     /**
      * Display a listing of the resource.
      *
@@ -379,6 +380,14 @@ class VentaController extends Controller
             }
         });
 
+        // La caja se controla acá y no en medio del guardado: así el aviso sale
+        // junto al resto de los errores y no se pierde lo que cargó el usuario.
+        $validator->after(function ($validator) use ($request) {
+            if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
+                $validator->errors()->add('caja', $mensajeCaja);
+            }
+        });
+
         if ($validator->fails()) {
             $cliente = Cliente::find($request->input('cliente_id'));
             return redirect()->back()
@@ -427,21 +436,22 @@ class VentaController extends Controller
                 // Store proof files (one or many) uploaded for this payment
                 $this->guardarComprobantesPago($detalle, $request, $i);
 
-                // Regla de negocio: una sola caja por sucursal y por día.
-                // El pago impacta la caja del día de la sucursal, sin importar qué usuario lo registre.
-                $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
-
-                if (!$cajaAbierta) {
-                    DB::rollBack();
-                    return redirect()->back()
-                        ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago.")
-                        ->withInput();
-                }
-
                 $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
 
                 if ($entidad) {
                     if ($entidad->tangible) {
+                        // Regla de negocio: una sola caja por sucursal y por día.
+                        // El pago impacta la caja del día de la sucursal, sin importar qué usuario lo registre.
+                        // Red de seguridad: el control de verdad es faltaCajaAbierta(), en la validación.
+                        $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
+
+                        if (!$cajaAbierta) {
+                            DB::rollBack();
+                            return redirect()->back()
+                                ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago en efectivo.")
+                                ->withInput();
+                        }
+
                         // Cash payment: impacts physical cash register
                         MovimientoCaja::create([
                             'caja_id'     => $cajaAbierta->id,
@@ -543,6 +553,14 @@ class VentaController extends Controller
         $validator->after(function ($validator) use ($totalMonto, $precioSugerido) {
             if ($totalMonto < $precioSugerido) {
                 $validator->errors()->add('monto', "El importe total de los pagos ($totalMonto) debe ser igual o mayor al precio sugerido ($precioSugerido).");
+            }
+        });
+
+        // La caja se controla acá y no en medio del guardado: así el aviso sale
+        // junto al resto de los errores y no se pierde lo que cargó el usuario.
+        $validator->after(function ($validator) use ($request) {
+            if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
+                $validator->errors()->add('caja', $mensajeCaja);
             }
         });
 
@@ -655,21 +673,21 @@ class VentaController extends Controller
                 // Add any newly uploaded proof files (one or many)
                 $this->guardarComprobantesPago($detalle, $request, $i);
 
-                // Regla de negocio: una sola caja por sucursal y por día.
-                // El pago impacta la caja del día de la sucursal, sin importar qué usuario lo registre.
-                $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
-
-                if (!$cajaAbierta) {
-                    DB::rollBack();
-                    return redirect()->back()
-                        ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago.")
-                        ->withInput();
-                }
-
                 $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
 
                 if ($entidad) {
                     if ($entidad->tangible) {
+                        // Regla de negocio: una sola caja por sucursal y por día.
+                        // Red de seguridad: el control de verdad es faltaCajaAbierta(), en la validación.
+                        $cajaAbierta = Caja::abiertaDelDia($request->sucursal_id);
+
+                        if (!$cajaAbierta) {
+                            DB::rollBack();
+                            return redirect()->back()
+                                ->withErrors("No hay caja abierta para esta sucursal. No se puede registrar el pago en efectivo.")
+                                ->withInput();
+                        }
+
                         // Cash payment: impacts physical cash register
                         MovimientoCaja::create([
                             'caja_id' => $cajaAbierta->id,

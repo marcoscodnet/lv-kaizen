@@ -9,6 +9,11 @@ $(document).ready(function () {
     var pagoUidSeq = 0;
     var rowFilesByUid = {};
 
+    // Pagos que el usuario ya había cargado y vuelven por old() después de un
+    // error de validación. Se consumen una sola vez, al armar las filas, para
+    // que un cartel de error no le borre toda la operación.
+    var pagosOld = window.pagosOld || [];
+
     // Rebuild the file input's FileList from the accumulated files and refresh previews
     function syncInputFiles(uid) {
         var dt = new DataTransfer();
@@ -155,7 +160,7 @@ $(document).ready(function () {
             </div>`;
     }
 
-    function agregarFilaPago(forma) {
+    function agregarFilaPago(forma, datos) {
         var uid = ++pagoUidSeq;
         var $row = $(getPagoHtml(forma, uid)).appendTo('#cuerpoPago');
         $row.find('.js-pago-select').select2({ language: 'es' });
@@ -165,8 +170,62 @@ $(document).ready(function () {
             decimalPlaces: 2,
             unformatOnSubmit: true
         });
+        if (datos) aplicarDatosPago($row, datos);
         toggleComprobante($row.find('.js-pago-select'));
         actualizarTotalesPago();
+        return $row;
+    }
+
+    // Escribe un importe respetando AutoNumeric si la fila ya lo tiene inicializado
+    function setImporte($input, valor) {
+        if (!$input.length) return;
+        if (valor === null || typeof valor === 'undefined' || valor === '') return;
+        var an = AutoNumeric.getAutoNumericElement($input[0]);
+        if (an) an.set(parseFloat(String(valor).replace(',', '.')) || 0);
+        else $input.val(valor);
+    }
+
+    // Vuelca en una fila los datos que el usuario había cargado
+    function aplicarDatosPago($row, d) {
+        if (!d) return;
+
+        if (d.entidad_id) {
+            var $sel = $row.find('select[name="entidad_id[]"]');
+            $sel.val(String(d.entidad_id));
+            if ($sel.hasClass('select2-hidden-accessible')) $sel.trigger('change.select2');
+            toggleComprobante($sel);
+        }
+
+        setImporte($row.find('input[name="monto[]"]'), d.monto);
+        if (d.fecha_pago) $row.find('input[name="fecha_pago[]"]').val(d.fecha_pago);
+        if (d.detalle) $row.find('textarea[name="detalle[]"]').val(d.detalle);
+        if (d.observaciones) $row.find('textarea[name="observaciones[]"]').val(d.observaciones);
+
+        // Campos del auditor
+        setImporte($row.find('input[name="pagado[]"]'), d.pagado);
+        if (d.contadora) $row.find('input[name="contadora[]"]').val(d.contadora);
+    }
+
+    /**
+     * Reconstruye los pagos que venían en old(). Sobre las filas que ya existen
+     * (vistas de edición, que las arma el servidor) escribe encima, y agrega las
+     * que falten. Devuelve true si había algo para restaurar.
+     */
+    function restaurarPagosOld(forma) {
+        if (!pagosOld.length) return false;
+
+        var datos = pagosOld;
+        pagosOld = [];
+
+        var $filas = $('#cuerpoPago .pago-item');
+        datos.forEach(function (d, i) {
+            var $fila = $filas.eq(i);
+            if ($fila.length) aplicarDatosPago($fila, d);
+            else agregarFilaPago(forma, d);
+        });
+
+        actualizarTotalesPago();
+        return true;
     }
 
     function actualizarTotalesPago() {
@@ -209,6 +268,7 @@ $(document).ready(function () {
     $(document).on('forma:changed', function (e, forma) {
         if (esAuditor) {
             $('#cuerpoPago, #totalesPago').show();
+            restaurarPagosOld(forma);
             return;
         }
 
@@ -216,7 +276,9 @@ $(document).ready(function () {
             $('#addItemPago, #cuerpoPago, #totalesPago').hide();
         } else {
             $('#addItemPago, #cuerpoPago, #totalesPago').show();
-            if ($('#cuerpoPago .pago-item').length === 0) {
+            // Primero lo que el usuario ya había cargado; si no hay nada que
+            // restaurar y no quedó ninguna fila, se arranca con una vacía.
+            if (!restaurarPagosOld(forma) && $('#cuerpoPago .pago-item').length === 0) {
                 agregarFilaPago(forma);
             }
         }

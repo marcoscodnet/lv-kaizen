@@ -3,7 +3,29 @@
     $contexto = $contexto ?? 'vendedor';
     $esAuditor = $contexto === 'auditor';
     $esVendedor = $contexto === 'vendedor';
+
+    // Las filas de pago las arma cobro.js, así que un error de validación las
+    // borraba todas. Se pasan los valores de old() para que las reconstruya
+    // con lo que el usuario ya había cargado.
+    // Ojo: los comprobantes adjuntos no se pueden restaurar (el navegador no
+    // deja re-armar un input file), hay que volver a subirlos.
+    $pagosOld = [];
+    foreach ((array) old('entidad_id', []) as $iOld => $entidadIdOld) {
+        $pagosOld[] = [
+            'entidad_id'    => $entidadIdOld,
+            'monto'         => old('monto.' . $iOld),
+            'fecha_pago'    => old('fecha_pago.' . $iOld),
+            'detalle'       => old('detalle.' . $iOld),
+            'observaciones' => old('observaciones.' . $iOld),
+            'pagado'        => old('pagado.' . $iOld),
+            'contadora'     => old('contadora.' . $iOld),
+        ];
+    }
 @endphp
+
+<script>
+    window.pagosOld = @json($pagosOld);
+</script>
 
 {{-- Forma de pago (solo vendedor) --}}
 @if($esVendedor)

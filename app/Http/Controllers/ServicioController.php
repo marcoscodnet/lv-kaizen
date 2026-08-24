@@ -22,6 +22,7 @@ use App\Models\Concepto;
 use App\Models\Entidad;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
+use App\Traits\ValidaCajaAbierta;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ServicioController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta;
     /**
      * Display a listing of the resource.
      *
@@ -440,6 +441,13 @@ class ServicioController extends Controller
         // Crear el validador con las reglas y mensajes
         $validator = Validator::make($request->all(), $rules, $messages);
 
+        // La caja se controla acá y no en medio del guardado: así el aviso sale
+        // junto al resto de los errores y no se pierde lo que cargó el usuario.
+        $validator->after(function ($validator) use ($request) {
+            if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
+                $validator->errors()->add('caja', $mensajeCaja);
+            }
+        });
 
         // Validar y verificar si hay errores
         if ($validator->fails()) {
@@ -672,6 +680,13 @@ class ServicioController extends Controller
         // Crear el validador con las reglas y mensajes
         $validator = Validator::make($request->all(), $rules, $messages);
 
+        // La caja se controla acá y no en medio del guardado: así el aviso sale
+        // junto al resto de los errores y no se pierde lo que cargó el usuario.
+        $validator->after(function ($validator) use ($request) {
+            if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
+                $validator->errors()->add('caja', $mensajeCaja);
+            }
+        });
 
         // Validar y verificar si hay errores
         if ($validator->fails()) {

@@ -16,6 +16,7 @@ use App\Models\Pago;
 use App\Http\Controllers\Controller;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
+use App\Traits\ValidaCajaAbierta;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +29,39 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VentaPiezaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta;
+
+    /**
+     * Sucursal cuya caja del día recibe el efectivo de una venta de piezas.
+     * En Salón no hay sucursal a nivel venta, así que se resuelve por los ítems
+     * y, si tampoco, por la sucursal del vendedor.
+     */
+    private function sucursalDeCaja(Request $request)
+    {
+        return $request->sucursal_id
+            ?: ($request->input('sucursal_id_item.0')
+                ?: optional(User::find($request->user_id))->sucursal_id);
+    }
+
+    /**
+     * Suma el control de caja abierta a la validación, para que el aviso salga
+     * con el resto de los mensajes y no se pierda lo que cargó el usuario.
+     */
+    private function validarCajaAbierta($validator, Request $request): void
+    {
+        if ($request->input('destino') !== 'Salón') {
+            return; // Sucursal y Taller no cobran, no tocan caja
+        }
+
+        $mensaje = $this->faltaCajaAbierta(
+            $this->sucursalDeCaja($request),
+            (array) $request->input('entidad_id', [])
+        );
+
+        if ($mensaje) {
+            $validator->errors()->add('caja', $mensaje);
+        }
+    }
     /**
      * Display a listing of the resource.
      *
@@ -404,9 +437,7 @@ class VentaPiezaController extends Controller
 
             // On Salón sales there is no top-level sucursal_id (it stays null),
             // so resolve the branch from the sold items, falling back to the seller's branch.
-            $sucursalCaja = $request->sucursal_id
-                ?: ($request->input('sucursal_id_item.0')
-                    ?: optional(\App\Models\User::find($request->user_id))->sucursal_id);
+            $sucursalCaja = $this->sucursalDeCaja($request);
 
             foreach ($request->entidad_id as $i => $entidadId) {
                 $entidad = Entidad::find($entidadId);
@@ -530,6 +561,10 @@ class VentaPiezaController extends Controller
 
         $validator = Validator::make($request->all(), $rules, $messages);
 
+        $validator->after(function ($validator) use ($request) {
+            $this->validarCajaAbierta($validator, $request);
+        });
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
@@ -577,6 +612,10 @@ class VentaPiezaController extends Controller
         }
 
         $validator = Validator::make($request->all(), $rules, $messages);
+
+        $validator->after(function ($validator) use ($request) {
+            $this->validarCajaAbierta($validator, $request);
+        });
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -657,7 +696,7 @@ class VentaPiezaController extends Controller
 
         } catch (\Exception $ex) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Error al actualizar: ' . $ex->getMessage());
+            return redirect()->back()->with('error', 'Error al actualizar: ' . $ex->getMessage())->withInput();
         }
     }
 
