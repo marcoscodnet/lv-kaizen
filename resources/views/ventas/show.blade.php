@@ -54,9 +54,15 @@
                             </div>
                             <div class="col-lg-3">
                                 <div class="form-group">
+                                    @php
+                                        // Precio sugerido de ESTA venta: el que quedó guardado al vender.
+                                        // Si la venta es vieja y no lo tiene, cae al precio de lista actual.
+                                        $precioSugerido = $venta->total
+                                            ?: (isset($venta->unidad->producto) ? $venta->unidad->producto->precio : 0);
+                                    @endphp
                                     <label for="precio">Importe sugerido</label>
                                     <input type="text" class="form-control" id="precio" name="precio"
-                                           value="{{ isset($venta->unidad->producto) ? $venta->unidad->producto->precio : '' }}" readonly disabled>
+                                           value="{{ $precioSugerido }}" readonly disabled>
                                 </div>
                             </div>
                         </div>
@@ -162,6 +168,11 @@
 
 
                                     @foreach($venta->pagos as $i => $pago)
+                                        @php
+                                            // Pagos de entidades sin autorización (efectivo y similares) no pasan
+                                            // por auditoría: se acreditan solos y no llevan fecha de contadora.
+                                            $autoAcreditado = $pago->entidad && $pago->entidad->acreditaAutomatico();
+                                        @endphp
                                         <div class="card p-3 mb-3 pago-item">
                                             <div class="row">
                                                 <div class="col-md-3">
@@ -191,11 +202,17 @@
                                                     <input type="text" name="pagado[]" class="form-control formato-numero"
                                                            value="{{ old('pagado.'.$i, $pago->pagado) }}" disabled>
                                                 </div>
-                                                <div class="col-md-2">
-                                                    <label>Fecha Contadora</label>
-                                                    <input type="date" name="contadora[]" class="form-control"
-                                                           value="{{ old('contadora.'.$i, $pago->contadora ? date('Y-m-d', strtotime($pago->contadora)) : '') }}" disabled>
-                                                </div>
+                                                @if(!$autoAcreditado)
+                                                    <div class="col-md-2">
+                                                        <label>Fecha Contadora</label>
+                                                        <input type="date" name="contadora[]" class="form-control"
+                                                               value="{{ old('contadora.'.$i, $pago->contadora ? date('Y-m-d', strtotime($pago->contadora)) : '') }}" disabled>
+                                                    </div>
+                                                @else
+                                                    <div class="col-md-2 d-flex align-items-end">
+                                                        <span class="badge bg-success">Acreditado automático</span>
+                                                    </div>
+                                                @endif
                                             </div>
 
                                             <div class="row mt-2">
@@ -251,7 +268,19 @@
                                 <label>Importe Acreditado</label>
                                 <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control formato-numero" value="0" readonly disabled>
                             </div>
+                            <div class="col-md-3">
+                                <label>Importe sugerido</label>
+                                <input type="text" id="totalSugerido" name="totalSugerido" class="form-control"
+                                       value="{{ number_format((float) $precioSugerido, 2, ',', '.') }}" readonly disabled>
+                            </div>
                         </div>
+
+                        {{-- Control informativo: acreditado vs sugerido. No bloquea la operación. --}}
+                        @include('includes.aviso_acreditacion', [
+                            'pagos'    => $venta->pagos,
+                            'sugerido' => $precioSugerido,
+                            'totales'  => false,
+                        ])
 
                         {{-- Botones --}}
                         <div class="row mt-3">

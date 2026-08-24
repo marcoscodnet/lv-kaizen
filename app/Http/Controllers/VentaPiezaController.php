@@ -14,6 +14,7 @@ use App\Models\VentaPieza;
 use App\Models\PiezaVentaPieza;
 use App\Models\Pago;
 use App\Http\Controllers\Controller;
+use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VentaPiezaController extends Controller
 {
-    use SanitizesInput;
+    use SanitizesInput, RehaceMovimientos;
     /**
      * Display a listing of the resource.
      *
@@ -310,7 +311,18 @@ class VentaPiezaController extends Controller
         return view('ventaPiezas.create', compact('users', 'stockPiezasJson', 'sucursals', 'provincias', 'serviciosAbiertos', 'entidads'));
     }
 
-    private function guardarVenta(Request $request): VentaPieza
+    /**
+     * Crea la venta de piezas, o actualiza una existente si se pasa $ventaExistente.
+     *
+     * Ojo: al editar NO se crea una venta nueva. La venta conserva su id porque
+     * los movimientos de caja y de cuenta la referencian; si se borrara y se
+     * volviera a crear, esos movimientos quedarían huérfanos y duplicados.
+     *
+     * $preservado viene de update() e indexa, por posición del pago, lo que el
+     * vendedor no puede tocar: acreditado, fecha de contadora, comprobantes ya
+     * subidos y la autorización del auditor.
+     */
+    private function guardarVenta(Request $request, ?VentaPieza $ventaExistente = null, array $preservado = []): VentaPieza
     {
         $input = $this->sanitizeInput($request->all());
 
@@ -341,8 +353,8 @@ class VentaPiezaController extends Controller
             }
         }
 
-        // Save main sale
-        $venta = new VentaPieza();
+        // Save main sale (keeps its id when editing)
+        $venta = $ventaExistente ?: new VentaPieza();
         $venta->user_id    = $input['user_id'];
         $venta->fecha      = $input['fecha'];
         $venta->destino    = $input['destino'];
@@ -397,21 +409,50 @@ class VentaPiezaController extends Controller
                     ?: optional(\App\Models\User::find($request->user_id))->sucursal_id);
 
             foreach ($request->entidad_id as $i => $entidadId) {
+                $entidad = Entidad::find($entidadId);
+                $viejo   = $preservado[$i] ?? null;
+
                 $pago = new Pago();
                 $pago->venta_pieza_id = $venta->id;
                 $pago->entidad_id     = $entidadId;
                 $pago->monto          = $this->sanitizeInput($request->monto[$i]);
                 $pago->fecha          = $this->sanitizeInput($request->fecha_pago[$i]);
-                // pagado and contadora are filled by the auditor, not the seller
+                // Entidades sin autorización (efectivo y similares) no pasan por
+                // auditoría: se acreditan solas por el importe cobrado y sin fecha
+                // de contadora. El resto lo completa el auditor.
+                if ($entidad && $entidad->acreditaAutomatico()) {
+                    $pago->pagado    = $pago->monto;
+                    $pago->contadora = null;
+                } elseif ($viejo) {
+                    // Datos del auditor: el vendedor no los toca al editar
+                    $pago->pagado    = $viejo['pagado'];
+                    $pago->contadora = $viejo['contadora'];
+                }
                 $pago->detalle        = $this->sanitizeInput($request->detalle[$i] ?? null);
                 $pago->observacion    = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
                 $pago->save();
 
+                // Re-link proofs and authorization that already existed for this payment row
+                foreach (($viejo['comprobantes'] ?? []) as $pathViejo) {
+                    \App\Models\Comprobante::create([
+                        'pago_id' => $pago->id,
+                        'path'    => $pathViejo,
+                    ]);
+                }
+
+                if (!empty($viejo['autorizacion'])) {
+                    \App\Models\Autorizacion::create([
+                        'user_id'   => $viejo['autorizacion']['user_id'],
+                        'user_name' => $viejo['autorizacion']['user_name'],
+                        'pago_id'   => $pago->id,
+                        'fecha'     => $viejo['autorizacion']['fecha'],
+                    ]);
+                }
+
                 // Store proof files (one or many) uploaded for this payment
                 $this->guardarComprobantesPago($pago, $request, $i);
 
-                $entidad = Entidad::find($entidadId);
                 if ($entidad) {
                     if ($entidad->tangible) {
                         // Cash payment requires an open cash register
@@ -541,10 +582,38 @@ class VentaPiezaController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // Nunca se altera una caja ya cerrada: si el cobro impactó en una, la
+        // edición se rechaza y el ajuste se hace a mano desde caja.
+        if ($mensajeCaja = $this->movimientosBloqueadosPorCajaCerrada('venta_pieza_id', $id)) {
+            return redirect()->back()->withErrors($mensajeCaja)->withInput();
+        }
+
         DB::beginTransaction();
         try {
-            // destroy() has its own DB::transaction — call delete logic directly
-            $venta = VentaPieza::with('piezas.pieza', 'piezas.sucursal')->findOrFail($id);
+            // Se actualiza en el lugar: la venta conserva su id para no dejar
+            // huérfanos los movimientos de caja y de cuenta que la referencian.
+            $venta = VentaPieza::with([
+                'piezas.pieza',
+                'piezas.sucursal',
+                'pagos.comprobantes',
+                'pagos.autorizacion',
+            ])->findOrFail($id);
+
+            // Lo que el vendedor no puede tocar, indexado por posición del pago
+            $preservado = $venta->pagos->values()->map(function ($pago) {
+                $autorizacion = $pago->autorizacion;
+
+                return [
+                    'pagado'       => $pago->pagado,
+                    'contadora'    => $pago->contadora,
+                    'comprobantes' => $pago->comprobantes->pluck('path')->all(),
+                    'autorizacion' => $autorizacion ? [
+                        'user_id'   => $autorizacion->user_id,
+                        'user_name' => $autorizacion->user_name,
+                        'fecha'     => $autorizacion->fecha,
+                    ] : null,
+                ];
+            })->all();
 
             foreach ($venta->piezas as $pvp) {
                 if ($pvp->cantidad > 0) {
@@ -571,10 +640,17 @@ class VentaPiezaController extends Controller
             }
 
             PiezaVentaPieza::where('venta_pieza_id', $venta->id)->delete();
-            Pago::where('venta_pieza_id', $venta->id)->delete();
-            $venta->delete();
 
-            $this->guardarVenta($request);
+            // Las autorizaciones se borran antes que los pagos para no quedar
+            // huérfanas; guardarVenta() las vuelve a crear sobre los pagos nuevos.
+            \App\Models\Autorizacion::whereIn('pago_id', $venta->pagos->pluck('id'))->delete();
+            Pago::where('venta_pieza_id', $venta->id)->delete();
+
+            // Baja de los movimientos viejos: si no, al recrearlos la plata queda
+            // duplicada en la caja y en la cuenta de la entidad.
+            $this->bajaMovimientosOperacion('venta_pieza_id', $venta->id);
+
+            $this->guardarVenta($request, $venta, $preservado);
 
             DB::commit();
             return redirect()->route('ventaPiezas.index')->with('success', 'Registro actualizado correctamente');

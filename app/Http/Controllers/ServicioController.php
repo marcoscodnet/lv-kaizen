@@ -20,6 +20,7 @@ use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Models\Entidad;
+use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -33,7 +34,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ServicioController extends Controller
 {
-    use SanitizesInput;
+    use SanitizesInput, RehaceMovimientos;
     /**
      * Display a listing of the resource.
      *
@@ -488,12 +489,20 @@ class ServicioController extends Controller
                 $concepto = Concepto::firstOrCreate(['nombre' => 'Servicio']);
 
                 foreach ($request->entidad_id as $i => $entidadId) {
+                    $entidad = Entidad::find($entidadId);
+
                     $pago = new Pago();
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
                     $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
-                    // pagado and contadora are filled by the auditor, not the seller
+                    // Entidades sin autorización (efectivo y similares) no pasan por
+                    // auditoría: se acreditan solas por el importe cobrado y sin fecha
+                    // de contadora. El resto lo completa el auditor.
+                    if ($entidad && $entidad->acreditaAutomatico()) {
+                        $pago->pagado    = $pago->monto;
+                        $pago->contadora = null;
+                    }
                     $pago->detalle      = $this->sanitizeInput($request->detalle[$i] ?? null);
                     $pago->observacion  = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
@@ -502,7 +511,6 @@ class ServicioController extends Controller
                     // Store proof files (one or many) uploaded for this payment
                     $this->guardarComprobantesPago($pago, $request, $i);
 
-                    $entidad = Entidad::find($entidadId);
                     if ($entidad) {
                         if ($entidad->tangible) {
                             // Cash payment requires an open cash register
@@ -676,6 +684,17 @@ class ServicioController extends Controller
         }
 
 
+        // Nunca se altera una caja ya cerrada: si el cobro impactó en una, la
+        // edición se rechaza y el ajuste se hace a mano desde caja.
+        if ($mensajeCaja = $this->movimientosBloqueadosPorCajaCerrada('servicio_id', $servicio->id)) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            return redirect()->back()
+                ->withErrors($mensajeCaja)
+                ->withInput($request->all() + [
+                        'cliente_nombre' => optional($cliente)->full_name_phone,
+                    ]);
+        }
+
         $input = $this->sanitizeInput($request->all());
         // Normalize the "Cerrado" checkbox to a clean integer (sanitizer mangles it)
         $input['pagado'] = $request->input('pagado') == 1 ? 1 : 0;
@@ -696,12 +715,40 @@ class ServicioController extends Controller
             $servicio->update($input);
 
             // Preserve auditor data and proofs from existing payments before deleting
-            $pagosViejos = Pago::where('servicio_id', $servicio->id)->orderBy('id')->get()->values();
+            $pagosViejos = Pago::with('comprobantes', 'autorizacion')
+                ->where('servicio_id', $servicio->id)
+                ->orderBy('id')
+                ->get()
+                ->values();
+
+            // Los comprobantes se borran en cascada con el pago: hay que guardar
+            // las rutas para volver a colgarlas del pago nuevo.
+            $comprobantesViejos = $pagosViejos->map(function ($p) {
+                return $p->comprobantes->pluck('path')->all();
+            })->all();
+
+            // Igual con la autorización del auditor: se borra antes que los pagos
+            // para no quedar huérfana, y se vuelve a crear sobre el pago nuevo.
+            $autorizacionesViejas = $pagosViejos->map(function ($p) {
+                $a = $p->autorizacion;
+                return $a ? [
+                    'user_id'   => $a->user_id,
+                    'user_name' => $a->user_name,
+                    'fecha'     => $a->fecha,
+                ] : null;
+            })->all();
+
+            \App\Models\Autorizacion::whereIn('pago_id', $pagosViejos->pluck('id'))->delete();
             Pago::where('servicio_id', $servicio->id)->delete();
+
+            // Baja de los movimientos viejos: si no, al recrearlos la plata queda
+            // duplicada en la caja y en la cuenta de la entidad.
+            $this->bajaMovimientosOperacion('servicio_id', $servicio->id);
 
             if ($request->filled('entidad_id')) {
                 foreach ($request->entidad_id as $i => $entidadId) {
                     $pagoViejo = $pagosViejos[$i] ?? null;
+                    $entidad = Entidad::find($entidadId);
 
                     $pago = new Pago();
                     $pago->servicio_id  = $servicio->id;
@@ -711,18 +758,39 @@ class ServicioController extends Controller
                     $pago->detalle      = $this->sanitizeInput($request->detalle[$i] ?? null);
                     $pago->observacion  = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
-                    // Keep auditor fields from the old payment
-                    if ($pagoViejo) {
+                    if ($entidad && $entidad->acreditaAutomatico()) {
+                        // Entidad sin autorización: se acredita sola por el importe
+                        // cobrado, aunque el vendedor haya cambiado el monto.
+                        $pago->pagado    = $pago->monto;
+                        $pago->contadora = null;
+                    } elseif ($pagoViejo) {
+                        // Keep auditor fields from the old payment
                         $pago->pagado = $pagoViejo->pagado;
                         $pago->contadora = $pagoViejo->contadora;
                     }
 
                     $pago->save();
 
+                    // Re-link proofs and authorization that already existed for this payment row
+                    foreach (($comprobantesViejos[$i] ?? []) as $pathViejo) {
+                        \App\Models\Comprobante::create([
+                            'pago_id' => $pago->id,
+                            'path'    => $pathViejo,
+                        ]);
+                    }
+
+                    if (!empty($autorizacionesViejas[$i])) {
+                        \App\Models\Autorizacion::create([
+                            'user_id'   => $autorizacionesViejas[$i]['user_id'],
+                            'user_name' => $autorizacionesViejas[$i]['user_name'],
+                            'pago_id'   => $pago->id,
+                            'fecha'     => $autorizacionesViejas[$i]['fecha'],
+                        ]);
+                    }
+
                     // Store proof files (one or many) uploaded for this payment
                     $this->guardarComprobantesPago($pago, $request, $i);
 
-                    $entidad = Entidad::find($entidadId);
                     if ($entidad) {
                         if ($entidad->tangible) {
                             // Regla de negocio: una sola caja por sucursal y por día.

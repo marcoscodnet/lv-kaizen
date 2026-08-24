@@ -17,6 +17,7 @@ use App\Models\Documento;
 use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
+use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
@@ -31,7 +32,7 @@ use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
-    use SanitizesInput;
+    use SanitizesInput, RehaceMovimientos;
     /**
      * Display a listing of the resource.
      *
@@ -404,12 +405,20 @@ class VentaController extends Controller
             $venta->save();
 
             foreach ($request->entidad_id as $i => $entidadId) {
+                $entidad = Entidad::find($entidadId);
+
                 $detalle = new Pago();
                 $detalle->venta_id = $venta->id;
                 $detalle->entidad_id = $entidadId;
                 $detalle->monto = $this->sanitizeInput($request->monto[$i]);
                 $detalle->fecha = $this->sanitizeInput($request->fecha_pago[$i]);
-                // pagado and contadora are filled by the auditor, not the seller
+                // Entidades sin autorización (efectivo y similares) no pasan por
+                // auditoría: se acreditan solas por el importe cobrado y sin fecha
+                // de contadora. El resto lo completa el auditor.
+                if ($entidad && $entidad->acreditaAutomatico()) {
+                    $detalle->pagado = $detalle->monto;
+                    $detalle->contadora = null;
+                }
                 $detalle->detalle = $this->sanitizeInput($request->detalle[$i] ?? null);
                 $detalle->observacion = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
@@ -431,7 +440,6 @@ class VentaController extends Controller
 
                 $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
 
-                $entidad = Entidad::find($entidadId);
                 if ($entidad) {
                     if ($entidad->tangible) {
                         // Cash payment: impacts physical cash register
@@ -498,7 +506,7 @@ class VentaController extends Controller
 
     public function update(Request $request, $id)
     {
-        $venta = Venta::with('pagos')->findOrFail($id);
+        $venta = Venta::with('pagos.comprobantes', 'pagos.autorizacion')->findOrFail($id);
 
         $precioSugerido = $request->input('precio', 0);
         $totalMonto = $request->input('totalMonto', 0);
@@ -547,9 +555,24 @@ class VentaController extends Controller
                     ]);
         }
 
+        // Nunca se altera una caja ya cerrada: si el cobro impactó en una, la
+        // edición se rechaza y el ajuste se hace a mano desde caja.
+        if ($mensajeCaja = $this->movimientosBloqueadosPorCajaCerrada('venta_id', $venta->id)) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            return redirect()->back()
+                ->withErrors($mensajeCaja)
+                ->withInput($request->all() + [
+                        'cliente_nombre' => optional($cliente)->full_name_phone,
+                    ]);
+        }
+
         DB::beginTransaction();
         $ok = 1;
         try {
+            // Baja de los movimientos viejos: si no, al recrearlos la plata queda
+            // duplicada en la caja y en la cuenta de la entidad.
+            $this->bajaMovimientosOperacion('venta_id', $venta->id);
+
             $venta->unidad_id = $this->sanitizeInput($request->unidad_id);
             $venta->user_id = $this->sanitizeInput($request->user_id);
             $venta->cliente_id = $this->sanitizeInput($request->cliente_id);
@@ -572,10 +595,23 @@ class VentaController extends Controller
                 return $p->comprobantes->pluck('path')->all();
             })->all();
 
+            // Igual con la autorización del auditor: se borra antes que los pagos
+            // para no quedar huérfana, y se vuelve a crear sobre el pago nuevo.
+            $autorizacionesViejas = $pagosViejos->map(function ($p) {
+                $a = $p->autorizacion;
+                return $a ? [
+                    'user_id'   => $a->user_id,
+                    'user_name' => $a->user_name,
+                    'fecha'     => $a->fecha,
+                ] : null;
+            })->all();
+
+            Autorizacion::whereIn('pago_id', $pagosViejos->pluck('id'))->delete();
             $venta->pagos()->delete();
 
             foreach ($request->entidad_id as $i => $entidadId) {
                 $pagoViejo = $pagosViejos[$i] ?? null;
+                $entidad = Entidad::find($entidadId);
 
                 $detalle = new Pago();
                 $detalle->venta_id = $venta->id;
@@ -585,8 +621,13 @@ class VentaController extends Controller
                 $detalle->detalle = $this->sanitizeInput($request->detalle[$i] ?? null);
                 $detalle->observacion = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
-                // Keep auditor fields (pagado/contadora) from the old payment, seller does not touch them
-                if ($pagoViejo) {
+                if ($entidad && $entidad->acreditaAutomatico()) {
+                    // Entidad sin autorización: se acredita sola por el importe
+                    // cobrado, aunque el vendedor haya cambiado el monto.
+                    $detalle->pagado = $detalle->monto;
+                    $detalle->contadora = null;
+                } elseif ($pagoViejo) {
+                    // Keep auditor fields (pagado/contadora) from the old payment, seller does not touch them
                     $detalle->pagado = $pagoViejo->pagado;
                     $detalle->contadora = $pagoViejo->contadora;
                 }
@@ -598,6 +639,16 @@ class VentaController extends Controller
                     \App\Models\Comprobante::create([
                         'pago_id' => $detalle->id,
                         'path'    => $pathViejo,
+                    ]);
+                }
+
+                // Re-link the auditor's authorization for this payment row
+                if (!empty($autorizacionesViejas[$i])) {
+                    Autorizacion::create([
+                        'user_id'   => $autorizacionesViejas[$i]['user_id'],
+                        'user_name' => $autorizacionesViejas[$i]['user_name'],
+                        'pago_id'   => $detalle->id,
+                        'fecha'     => $autorizacionesViejas[$i]['fecha'],
                     ]);
                 }
 
@@ -617,7 +668,6 @@ class VentaController extends Controller
 
                 $conceptoVenta = Concepto::firstOrCreate(['nombre' => 'Venta de unidad']);
 
-                $entidad = Entidad::find($entidadId);
                 if ($entidad) {
                     if ($entidad->tangible) {
                         // Cash payment: impacts physical cash register
@@ -665,7 +715,7 @@ class VentaController extends Controller
     }
 
     public function show($id) {
-        $venta = Venta::with('pagos.comprobantes', 'unidad', 'cliente')->findOrFail($id);
+        $venta = Venta::with('pagos.comprobantes', 'pagos.entidad', 'unidad', 'cliente')->findOrFail($id);
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('', '');

@@ -231,6 +231,7 @@
                                     <thead>
                                         <th>Entidad</th>
                                         <th>Importe</th>
+                                        <th>Acreditado</th>
                                         <th>Fecha Pago</th>
                                         <th>Comprobantes</th>
                                     </thead>
@@ -239,6 +240,16 @@
                                             <tr>
                                                 <td>{{ optional($pago->entidad)->nombre }}</td>
                                                 <td class="formato-numero-text">{{ $pago->monto }}</td>
+                                                <td>
+                                                    @if($pago->pagado !== null)
+                                                        <span class="formato-numero-text">{{ $pago->pagado }}</span>
+                                                        @if(optional($pago->entidad)->acreditaAutomatico())
+                                                            <span class="badge bg-success">automático</span>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') : '' }}</td>
                                                 <td>
                                                     @if($pago->comprobantes && $pago->comprobantes->count())
@@ -258,10 +269,17 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="4" class="text-muted">Sin pagos registrados.</td></tr>
+                                            <tr><td colspan="5" class="text-muted">Sin pagos registrados.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
+
+                                {{-- Control informativo: acreditado vs total de piezas. No bloquea nada. --}}
+                                @include('includes.aviso_acreditacion', [
+                                    'pagos'    => $ventaPieza->pagos,
+                                    'sugerido' => $totalPiezas,
+                                    'etiqueta' => 'Piezas',
+                                ])
                             </div>
 
                         </div>
