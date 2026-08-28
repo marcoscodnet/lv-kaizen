@@ -15,6 +15,25 @@ $(document).ready(function () {
         return; // La pantalla no tiene la grilla (vista de solo lectura)
     }
 
+    /**
+     * Los selects van con select2, como el resto del sistema: la lista de
+     * artículos es larga y sin buscador no se encuentra nada.
+     *
+     * Se destruye antes de inicializar porque las opciones de sucursal se
+     * rearman cada vez que cambia el artículo.
+     */
+    function initSelect2($contexto) {
+        $contexto.find('.selectArticulo, .sucursalArticulo').each(function () {
+            var $select = $(this);
+
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
+            }
+
+            $select.select2({ language: 'es', width: '100%' });
+        });
+    }
+
     function opcionesArticuloHtml() {
         var html = '<option value="">Seleccionar...</option>';
         Object.keys(catalogo).forEach(function (piezaId) {
@@ -30,15 +49,19 @@ $(document).ready(function () {
         var piezaId = $fila.find('.selectArticulo').val();
         var $sucursal = $fila.find('.sucursalArticulo');
 
-        $sucursal.empty();
-
-        if (!piezaId || !catalogo[piezaId]) {
-            return;
+        if ($sucursal.hasClass('select2-hidden-accessible')) {
+            $sucursal.select2('destroy');
         }
 
-        catalogo[piezaId].forEach(function (opcion) {
-            $sucursal.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
-        });
+        $sucursal.empty();
+
+        if (piezaId && catalogo[piezaId]) {
+            catalogo[piezaId].forEach(function (opcion) {
+                $sucursal.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
+            });
+        }
+
+        $sucursal.select2({ language: 'es', width: '100%' });
     }
 
     function importeDeFila($fila) {
@@ -95,6 +118,8 @@ $(document).ready(function () {
             unformatOnSubmit: true
         });
 
+        initSelect2($fila);
+
         return $fila;
     }
 
@@ -116,5 +141,7 @@ $(document).ready(function () {
 
     $('body').on('input change', '.precioArticulo, .cantidadArticulo', actualizarTotalArticulos);
 
+    // Filas que vinieron armadas del servidor (edición, o vuelta de un error)
+    initSelect2($('#cuerpoArticulo'));
     actualizarTotalArticulos();
 });
