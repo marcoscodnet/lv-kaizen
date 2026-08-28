@@ -44,6 +44,55 @@ class VentaPiezaController extends Controller
     }
 
     /**
+     * Artículos que no llevan existencias (tipo "Varios": patentamiento, seguro
+     * y demás conceptos que se cobran pero no se stockean).
+     *
+     * El selector de artículos se arma desde el stock disponible, así que estos
+     * nunca aparecerían. Se los devuelve con la misma forma que una fila de
+     * stock, una por sucursal activa, para que el resto de la pantalla funcione
+     * igual sin cambios.
+     */
+    private function articulosSinStock(): \Illuminate\Support\Collection
+    {
+        $articulos = \App\Models\Pieza::with('tipoPieza')
+            ->whereHas('tipoPieza', function ($q) {
+                $q->where('maneja_stock', 0);
+            })
+            ->get();
+
+        if ($articulos->isEmpty()) {
+            return collect();
+        }
+
+        $user = auth()->user();
+        $sucursalesQuery = Sucursal::where('activa', 1);
+
+        // Los no administradores solo operan sobre su sucursal
+        if ($user && !$user->hasRole('Administrador')) {
+            $sucursalesQuery->where('id', $user->sucursal_id);
+        }
+
+        $sucursales = $sucursalesQuery->orderBy('nombre')->get(['id', 'nombre']);
+
+        $filas = collect();
+        foreach ($articulos as $articulo) {
+            foreach ($sucursales as $sucursal) {
+                $filas->push([
+                    'id'              => $articulo->id,
+                    'codigo'          => $articulo->codigo,
+                    'descripcion'     => $articulo->descripcion,
+                    'sucursal_id'     => $sucursal->id,
+                    'sucursal_nombre' => $sucursal->nombre,
+                    'costo'           => $articulo->costo,
+                    'precio_minimo'   => $articulo->precio_minimo,
+                ]);
+            }
+        }
+
+        return $filas;
+    }
+
+    /**
      * Suma el control de caja abierta a la validación, para que el aviso salga
      * con el resto de los mensajes y no se pierda lo que cargó el usuario.
      */
@@ -324,7 +373,9 @@ class VentaPiezaController extends Controller
             })
             ->values();
 
-        $stockPiezasJson = $stockPiezas->groupBy('id');
+        // Los artículos sin stock (patentamiento, seguro) no salen del stock:
+        // se suman aparte para que aparezcan en el selector.
+        $stockPiezasJson = $stockPiezas->concat($this->articulosSinStock())->groupBy('id');
 
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
@@ -359,8 +410,16 @@ class VentaPiezaController extends Controller
     {
         $input = $this->sanitizeInput($request->all());
 
+        // Artículos de tipos sin existencias (patentamiento, seguro): no se les
+        // pide stock, no se les descuenta y no se les repone.
+        $sinStock = \App\Models\Pieza::idsSinStock();
+
         // Validate stock before saving
         foreach ($request->pieza_id as $i => $piezaId) {
+            if (in_array($piezaId, $sinStock)) {
+                continue;
+            }
+
             $sucursalId = $request->sucursal_id_item[$i];
             $cantidadSolicitada = $request->cantidad[$i];
 
@@ -407,6 +466,10 @@ class VentaPiezaController extends Controller
             $detalle->cantidad       = $request->cantidad[$i];
             $detalle->precio         = $request->precio[$i];
             $detalle->save();
+
+            if (in_array($piezaId, $sinStock)) {
+                continue; // No lleva existencias: no hay nada que descontar
+            }
 
             $stockPiezas = StockPieza::where('pieza_id', $piezaId)
                 ->where('sucursal_id', $request->sucursal_id_item[$i])
@@ -632,7 +695,7 @@ class VentaPiezaController extends Controller
             // Se actualiza en el lugar: la venta conserva su id para no dejar
             // huérfanos los movimientos de caja y de cuenta que la referencian.
             $venta = VentaPieza::with([
-                'piezas.pieza',
+                'piezas.pieza.tipoPieza',
                 'piezas.sucursal',
                 'pagos.comprobantes',
                 'pagos.autorizacion',
@@ -655,7 +718,8 @@ class VentaPiezaController extends Controller
             })->all();
 
             foreach ($venta->piezas as $pvp) {
-                if ($pvp->cantidad > 0) {
+                // Los conceptos sin existencias no se reponen: nunca se descontaron
+                if ($pvp->cantidad > 0 && optional($pvp->pieza)->manejaStock()) {
                     $stock = StockPieza::where('pieza_id', $pvp->pieza_id)
                         ->where('sucursal_id', $pvp->sucursal_id)
                         ->first();
@@ -732,7 +796,9 @@ class VentaPiezaController extends Controller
             })
             ->values();
 
-        $stockPiezasJson = $stockPiezas->groupBy('id');
+        // Los artículos sin stock (patentamiento, seguro) no salen del stock:
+        // se suman aparte para que aparezcan en el selector.
+        $stockPiezasJson = $stockPiezas->concat($this->articulosSinStock())->groupBy('id');
 
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
@@ -781,7 +847,9 @@ class VentaPiezaController extends Controller
             })
             ->values();
 
-        $stockPiezasJson = $stockPiezas->groupBy('id');
+        // Los artículos sin stock (patentamiento, seguro) no salen del stock:
+        // se suman aparte para que aparezcan en el selector.
+        $stockPiezasJson = $stockPiezas->concat($this->articulosSinStock())->groupBy('id');
 
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
@@ -804,10 +872,11 @@ class VentaPiezaController extends Controller
 
 
         DB::transaction(function () use ($id) {
-            $venta = VentaPieza::with('piezas.pieza', 'piezas.sucursal')->findOrFail($id);
+            $venta = VentaPieza::with('piezas.pieza.tipoPieza', 'piezas.sucursal')->findOrFail($id);
 
             foreach ($venta->piezas as $pvp) {
-                if ($pvp->cantidad > 0) {
+                // Los conceptos sin existencias no se reponen: nunca se descontaron
+                if ($pvp->cantidad > 0 && optional($pvp->pieza)->manejaStock()) {
                     // Sumar stock existente o crear uno nuevo
                     $stock = StockPieza::where('pieza_id', $pvp->pieza_id)
                         ->where('sucursal_id', $pvp->sucursal_id)

@@ -36,7 +36,7 @@
 
                         <th scope="col">Nombre</th>
 
-
+                        <th scope="col">Stock</th>
 
                         <th scope="col">Acciones</th>
 
@@ -47,6 +47,14 @@
                         <tr>
 
                             <td>{{ $tipoPieza->nombre }}</td>
+
+                            <td>
+                                @if($tipoPieza->maneja_stock)
+                                    <span class="badge bg-secondary">Lleva existencias</span>
+                                @else
+                                    <span class="badge bg-info">Sin stock</span>
+                                @endif
+                            </td>
 
                             <td ><div>
                                     {{-- Botón Ver (lupa) --}}

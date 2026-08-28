@@ -60,6 +60,8 @@ class TipoPiezaController extends Controller
 
         $input = $this->sanitizeInput($request->all());
 
+        // La tilde llega como texto y el sanitizador la ensucia: se normaliza a entero.
+        $input['maneja_stock'] = $request->input('maneja_stock') == 1 ? 1 : 0;
 
         $tipoPieza = TipoPieza::create($input);
 
@@ -110,8 +112,8 @@ class TipoPiezaController extends Controller
 
         $input = $this->sanitizeInput($request->all());
 
-
-
+        // La tilde llega como texto y el sanitizador la ensucia: se normaliza a entero.
+        $input['maneja_stock'] = $request->input('maneja_stock') == 1 ? 1 : 0;
 
         $tipoPieza = TipoPieza::find($id);
         $tipoPieza->update($input);

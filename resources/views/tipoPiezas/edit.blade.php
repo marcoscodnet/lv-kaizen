@@ -33,6 +33,24 @@
                                 </div>
                             </div>
 
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group">
+                                    <label class="d-block">Stock</label>
+                                    <div class="form-check">
+                                        <input type="hidden" name="maneja_stock" value="0">
+                                        <input class="form-check-input" type="checkbox" id="maneja_stock" name="maneja_stock"
+                                               value="1" {{ old('maneja_stock', $tipoPieza->maneja_stock) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="maneja_stock">
+                                            Lleva existencias
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">
+                                        Destildalo para conceptos que se cobran pero no se tienen en depósito,
+                                        como patentamiento o seguro: no piden ni descuentan stock.
+                                    </small>
+                                </div>
+                            </div>
+
                         </div>
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">

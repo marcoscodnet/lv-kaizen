@@ -33,6 +33,17 @@
                                 </div>
                             </div>
 
+                            <div class="col-12 col-lg-6">
+                                <div class="form-group">
+                                    <label class="d-block">Stock</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               {{ $tipoPieza->maneja_stock ? 'checked' : '' }} disabled>
+                                        <label class="form-check-label">Lleva existencias</label>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                         <div class="row" style="margin-top: 10px;">
                             <div class="form-group">
