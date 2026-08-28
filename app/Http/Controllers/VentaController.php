@@ -12,12 +12,16 @@ use App\Models\Sucursal;
 use App\Models\Unidad;
 use App\Models\User;
 use App\Models\Venta;
+use App\Models\VentaPieza;
+use App\Models\PiezaVentaPieza;
 use App\Models\Entidad;
 use App\Models\Documento;
 use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
+use App\Traits\CatalogoArticulos;
 use App\Traits\RehaceMovimientos;
+use App\Traits\StockArticulos;
 use App\Traits\SanitizesInput;
 use App\Traits\ValidaCajaAbierta;
 use Illuminate\Http\Request;
@@ -33,7 +37,7 @@ use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos;
     /**
      * Display a listing of the resource.
      *
@@ -115,6 +119,138 @@ class VentaController extends Controller
                 'path'    => $this->guardarComprobante($file),
             ]);
         }
+    }
+
+    /**
+     * Guarda los conceptos que se cargaron junto con la moto —patentamiento,
+     * seguro, casco— como una venta de artículos colgada de esta venta.
+     *
+     * Esa venta de artículos NO lleva pagos propios: la plata vive toda en la
+     * venta de la moto. Por eso hay un solo importe a cobrar y una sola
+     * autorización, y no aparece suelta en el listado de artículos.
+     *
+     * Al editar se repone el stock de lo anterior y se descuenta lo nuevo, así
+     * que sirve igual para alta y para modificación.
+     *
+     * @throws \Exception si falta stock de algún artículo que lleva existencias
+     */
+    private function sincronizarArticulos(Request $request, Venta $venta): void
+    {
+        $piezaIds   = (array) $request->input('pieza_id', []);
+        $sucursales = (array) $request->input('sucursal_id_item', []);
+        $cantidades = (array) $request->input('cantidad', []);
+        $precios    = (array) $request->input('precio_articulo', []);
+
+        // Las filas sin artículo elegido se descartan
+        $filas = [];
+        foreach ($piezaIds as $i => $piezaId) {
+            if (empty($piezaId)) {
+                continue;
+            }
+
+            $cantidad = (float) ($cantidades[$i] ?? 1);
+
+            $filas[] = [
+                'pieza_id'    => $piezaId,
+                'sucursal_id' => $sucursales[$i] ?? $venta->sucursal_id,
+                'cantidad'    => $cantidad > 0 ? $cantidad : 1,
+                'precio'      => (float) $this->sanitizeInput($precios[$i] ?? 0),
+            ];
+        }
+
+        $ventaArticulos = VentaPieza::with('piezas.pieza.tipoPieza')
+            ->where('venta_id', $venta->id)
+            ->first();
+
+        // Lo que había vuelve al stock antes de rehacer el detalle
+        if ($ventaArticulos) {
+            $this->reponerStockArticulos($ventaArticulos->piezas);
+            PiezaVentaPieza::where('venta_pieza_id', $ventaArticulos->id)->delete();
+        }
+
+        // Sin conceptos no hay nada que colgar de la venta
+        if (empty($filas)) {
+            if ($ventaArticulos) {
+                $ventaArticulos->delete();
+            }
+            return;
+        }
+
+        $this->validarStockArticulos($filas);
+
+        if (!$ventaArticulos) {
+            $ventaArticulos = new VentaPieza();
+            $ventaArticulos->venta_id = $venta->id;
+        }
+
+        $ventaArticulos->user_id     = $venta->user_id;
+        $ventaArticulos->fecha       = $venta->fecha;
+        $ventaArticulos->destino     = 'Salón';
+        $ventaArticulos->cliente_id  = $venta->cliente_id;
+        $ventaArticulos->sucursal_id = $venta->sucursal_id;
+        $ventaArticulos->forma       = $venta->forma;
+        $ventaArticulos->descripcion = 'Conceptos de la venta #' . $venta->id;
+        $ventaArticulos->save();
+
+        foreach ($filas as $fila) {
+            $detalle = new PiezaVentaPieza();
+            $detalle->venta_pieza_id = $ventaArticulos->id;
+            $detalle->pieza_id       = $fila['pieza_id'];
+            $detalle->sucursal_id    = $fila['sucursal_id'];
+            $detalle->cantidad       = $fila['cantidad'];
+            $detalle->precio         = $fila['precio'];
+            $detalle->save();
+
+            $this->descontarStockArticulo($fila);
+        }
+    }
+
+    /**
+     * Controla el stock de los conceptos ANTES de tocar la base, como un error
+     * de validación más. Así el aviso sale junto al resto de los mensajes y no
+     * se pierde lo que el vendedor cargó.
+     */
+    private function validarStockDeConceptos($validator, Request $request): void
+    {
+        $piezaIds   = (array) $request->input('pieza_id', []);
+        $sucursales = (array) $request->input('sucursal_id_item', []);
+        $cantidades = (array) $request->input('cantidad', []);
+
+        $filas = [];
+        foreach ($piezaIds as $i => $piezaId) {
+            if (empty($piezaId)) {
+                continue;
+            }
+
+            $cantidad = (float) ($cantidades[$i] ?? 1);
+
+            $filas[] = [
+                'pieza_id'    => $piezaId,
+                'sucursal_id' => $sucursales[$i] ?? $request->sucursal_id,
+                'cantidad'    => $cantidad > 0 ? $cantidad : 1,
+            ];
+        }
+
+        if (empty($filas)) {
+            return;
+        }
+
+        try {
+            $this->validarStockArticulos($filas);
+        } catch (\Exception $ex) {
+            $validator->errors()->add('articulos', $ex->getMessage());
+        }
+    }
+
+    /**
+     * Deja en `ventas.total` el importe a cobrar de toda la operación: la moto
+     * más los conceptos. Es el número contra el que se compara lo acreditado.
+     */
+    private function actualizarTotalVenta(Venta $venta): void
+    {
+        $venta->load('ventaArticulos.piezas');
+        $venta->total = (float) $venta->monto + $venta->total_articulos;
+        $venta->save();
     }
 
     /**
@@ -338,7 +474,10 @@ class VentaController extends Controller
         $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
-        return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads'));
+        // Catálogo para la grilla de conceptos (patentamiento, seguro, casco)
+        $articulosJson = $this->catalogoArticulos(true);
+
+        return view('ventas.vender', compact('users','sucursals', 'unidad','provincias','entidads','articulosJson'));
     }
 
     public function store(Request $request)
@@ -388,6 +527,12 @@ class VentaController extends Controller
             }
         });
 
+        // Los conceptos con existencias tampoco se controlan en medio del
+        // guardado: si falta stock, sale como un mensaje más.
+        $validator->after(function ($validator) use ($request) {
+            $this->validarStockDeConceptos($validator, $request);
+        });
+
         if ($validator->fails()) {
             $cliente = Cliente::find($request->input('cliente_id'));
             return redirect()->back()
@@ -412,6 +557,11 @@ class VentaController extends Controller
             $venta->total = $this->sanitizeInput($request->precio);
             $venta->forma = $this->sanitizeInput($request->forma);
             $venta->save();
+
+            // Conceptos cargados junto con la moto (patentamiento, seguro, casco).
+            // Van como venta de artículos colgada de esta venta, sin pagos propios.
+            $this->sincronizarArticulos($request, $venta);
+            $this->actualizarTotalVenta($venta);
 
             foreach ($request->entidad_id as $i => $entidadId) {
                 $entidad = Entidad::find($entidadId);
@@ -482,7 +632,9 @@ class VentaController extends Controller
                 }
             }
 
-        } catch (QueryException $ex) {
+        } catch (\Exception $ex) {
+            // Incluye QueryException y el faltante de stock de los conceptos:
+            // cualquiera de los dos tiene que hacer rollback, nunca un 500.
             $error = $ex->getMessage();
             $ok = 0;
         }
@@ -501,7 +653,7 @@ class VentaController extends Controller
     }
 
     public function edit($id) {
-        $venta = Venta::with('pagos', 'unidad', 'cliente')->findOrFail($id);
+        $venta = Venta::with('pagos', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza')->findOrFail($id);
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -511,7 +663,10 @@ class VentaController extends Controller
         $provincias = Provincia::orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
         $entidads = \App\Models\Entidad::orderBy('nombre')->where('activa', 1)->get(['id', 'nombre', 'forma', 'autorizacion']);
 
-        return view('ventas.edit', compact('venta', 'users', 'sucursals', 'entidads','provincias'));
+        // Catálogo completo: al editar, un artículo agotado tiene que seguir apareciendo
+        $articulosJson = $this->catalogoArticulos(false);
+
+        return view('ventas.edit', compact('venta', 'users', 'sucursals', 'entidads','provincias','articulosJson'));
     }
 
     public function update(Request $request, $id)
@@ -564,6 +719,12 @@ class VentaController extends Controller
             }
         });
 
+        // Los conceptos con existencias tampoco se controlan en medio del
+        // guardado: si falta stock, sale como un mensaje más.
+        $validator->after(function ($validator) use ($request) {
+            $this->validarStockDeConceptos($validator, $request);
+        });
+
         if ($validator->fails()) {
             $cliente = Cliente::find($request->input('cliente_id'));
             return redirect()->back()
@@ -602,6 +763,11 @@ class VentaController extends Controller
             $venta->total = $this->sanitizeInput($request->precio);
             $venta->forma = $this->sanitizeInput($request->forma);
             $venta->save();
+
+            // Conceptos cargados junto con la moto (patentamiento, seguro, casco).
+            // Van como venta de artículos colgada de esta venta, sin pagos propios.
+            $this->sincronizarArticulos($request, $venta);
+            $this->actualizarTotalVenta($venta);
 
             // Preserve auditor data and existing proofs before deleting payments
             // Map old payments by their index order so we can re-link proofs/audit data
@@ -718,7 +884,9 @@ class VentaController extends Controller
                 }
             }
 
-        } catch (QueryException $ex) {
+        } catch (\Exception $ex) {
+            // Incluye QueryException y el faltante de stock de los conceptos:
+            // cualquiera de los dos tiene que hacer rollback, nunca un 500.
             $error = $ex->getMessage();
             $ok = 0;
         }
@@ -733,7 +901,7 @@ class VentaController extends Controller
     }
 
     public function show($id) {
-        $venta = Venta::with('pagos.comprobantes', 'pagos.entidad', 'unidad', 'cliente')->findOrFail($id);
+        $venta = Venta::with('pagos.comprobantes', 'pagos.entidad', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza')->findOrFail($id);
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('', '');
@@ -753,7 +921,13 @@ class VentaController extends Controller
      */
     public function destroy($id)
     {
-        $venta = Venta::findOrFail($id);
+        $venta = Venta::with('ventaArticulos.piezas.pieza.tipoPieza')->findOrFail($id);
+
+        // Los conceptos vuelven al stock antes de irse con la venta.
+        // La fila de venta_piezas se borra sola por la FK en cascada.
+        if ($venta->ventaArticulos) {
+            $this->reponerStockArticulos($venta->ventaArticulos->piezas);
+        }
 
         $venta->autorizaciones()->delete();
         // Elimina las relaciones

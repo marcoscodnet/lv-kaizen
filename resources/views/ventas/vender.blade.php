@@ -120,6 +120,12 @@
 
                         </div>
 
+                        {{-- Conceptos que se cobran junto con la moto --}}
+                        @include('includes.articulos_venta', [
+                                'articulosJson' => $articulosJson,
+                                'precioUnidad'  => isset($unidad->producto) ? $unidad->producto->precio : 0,
+                            ])
+
                         @include('includes.cobro', [
                                 'entidads'    => $entidads,
                                 'formaActual' => $venta->forma ?? '',
@@ -318,6 +324,7 @@
                    })) !!};
     </script>
     <script src="{{ asset('assets/js/cobro.js') }}"></script>
+    <script src="{{ asset('assets/js/articulos_venta.js') }}"></script>
 
 
     <script>

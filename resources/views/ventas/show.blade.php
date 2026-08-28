@@ -55,14 +55,18 @@
                             <div class="col-lg-3">
                                 <div class="form-group">
                                     @php
-                                        // Precio sugerido de ESTA venta: el que quedó guardado al vender.
+                                        // Importe de la moto en ESTA venta: el que quedó guardado al vender.
                                         // Si la venta es vieja y no lo tiene, cae al precio de lista actual.
-                                        $precioSugerido = $venta->total
+                                        $precioUnidad = $venta->monto
                                             ?: (isset($venta->unidad->producto) ? $venta->unidad->producto->precio : 0);
+
+                                        // Lo que hay que cobrar por toda la operación: la moto más los conceptos.
+                                        // Es el número contra el que se controla lo acreditado.
+                                        $totalACobrar = (float) $precioUnidad + $venta->total_articulos;
                                     @endphp
                                     <label for="precio">Importe sugerido</label>
                                     <input type="text" class="form-control" id="precio" name="precio"
-                                           value="{{ $precioSugerido }}" readonly disabled>
+                                           value="{{ $precioUnidad }}" readonly disabled>
                                 </div>
                             </div>
                         </div>
@@ -259,7 +263,14 @@
 
 
                         </div>
-                        <div class="row mb-3">
+                        {{-- Conceptos que se cobraron junto con la moto --}}
+                        @include('includes.articulos_venta', [
+                                'items'        => optional($venta->ventaArticulos)->piezas,
+                                'precioUnidad' => (float) $precioUnidad,
+                                'soloLectura'  => true,
+                            ])
+
+                        <div class="row mb-3 mt-3">
                             <div class="col-md-3">
                                 <label>Importe total</label>
                                 <input type="text" id="totalMonto" name="totalMonto" class="form-control formato-numero" value="0" readonly disabled>
@@ -269,16 +280,17 @@
                                 <input type="text" id="totalAcreditado" name="totalAcreditado" class="form-control formato-numero" value="0" readonly disabled>
                             </div>
                             <div class="col-md-3">
-                                <label>Importe sugerido</label>
-                                <input type="text" id="totalSugerido" name="totalSugerido" class="form-control"
-                                       value="{{ number_format((float) $precioSugerido, 2, ',', '.') }}" readonly disabled>
+                                <label class="fw-bold">Importe a cobrar</label>
+                                <input type="text" id="totalACobrar" name="totalACobrar" class="form-control fw-bold"
+                                       value="{{ number_format($totalACobrar, 2, ',', '.') }}" readonly disabled>
                             </div>
                         </div>
 
-                        {{-- Control informativo: acreditado vs sugerido. No bloquea la operación. --}}
+                        {{-- Control informativo: acreditado vs importe a cobrar. No bloquea la operación. --}}
                         @include('includes.aviso_acreditacion', [
                             'pagos'    => $venta->pagos,
-                            'sugerido' => $precioSugerido,
+                            'sugerido' => $totalACobrar,
+                            'etiqueta' => 'A cobrar',
                             'totales'  => false,
                         ])
 

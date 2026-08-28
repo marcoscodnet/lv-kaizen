@@ -9,10 +9,23 @@ class VentaPieza extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['precio','precio_minimo','cliente','documento','telefono','moto','sucursal_id','pedido','user_id','user_name','fecha','descripcion','destino','cliente_id','servicio_id','forma'];
+    protected $fillable = ['precio','precio_minimo','cliente','documento','telefono','moto','sucursal_id','pedido','user_id','user_name','fecha','descripcion','destino','cliente_id','servicio_id','venta_id','forma'];
 
+    /**
+     * Venta de moto de la que cuelga, cuando los artículos se cargaron desde la
+     * pantalla de la venta (patentamiento, seguro, casco). Queda en null en las
+     * ventas de mostrador, que son operaciones por su cuenta.
+     */
+    public function venta()
+    {
+        return $this->belongsTo(Venta::class, 'venta_id');
+    }
 
-
+    /** Solo las de mostrador: las que no cuelgan de una venta de moto. */
+    public function scopeDeMostrador($query)
+    {
+        return $query->whereNull('venta_id');
+    }
 
     public function user() {
         return $this->belongsTo('App\Models\User', 'user_id');

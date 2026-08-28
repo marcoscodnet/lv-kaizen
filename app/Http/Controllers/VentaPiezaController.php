@@ -14,6 +14,7 @@ use App\Models\VentaPieza;
 use App\Models\PiezaVentaPieza;
 use App\Models\Pago;
 use App\Http\Controllers\Controller;
+use App\Traits\CatalogoArticulos;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
 use App\Traits\ValidaCajaAbierta;
@@ -29,7 +30,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VentaPiezaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos;
 
     /**
      * Sucursal cuya caja del día recibe el efectivo de una venta de piezas.
@@ -41,55 +42,6 @@ class VentaPiezaController extends Controller
         return $request->sucursal_id
             ?: ($request->input('sucursal_id_item.0')
                 ?: optional(User::find($request->user_id))->sucursal_id);
-    }
-
-    /**
-     * Artículos que no llevan existencias (tipo "Varios": patentamiento, seguro
-     * y demás conceptos que se cobran pero no se stockean).
-     *
-     * El selector de artículos se arma desde el stock disponible, así que estos
-     * nunca aparecerían. Se los devuelve con la misma forma que una fila de
-     * stock, una por sucursal activa, para que el resto de la pantalla funcione
-     * igual sin cambios.
-     */
-    private function articulosSinStock(): \Illuminate\Support\Collection
-    {
-        $articulos = \App\Models\Pieza::with('tipoPieza')
-            ->whereHas('tipoPieza', function ($q) {
-                $q->where('maneja_stock', 0);
-            })
-            ->get();
-
-        if ($articulos->isEmpty()) {
-            return collect();
-        }
-
-        $user = auth()->user();
-        $sucursalesQuery = Sucursal::where('activa', 1);
-
-        // Los no administradores solo operan sobre su sucursal
-        if ($user && !$user->hasRole('Administrador')) {
-            $sucursalesQuery->where('id', $user->sucursal_id);
-        }
-
-        $sucursales = $sucursalesQuery->orderBy('nombre')->get(['id', 'nombre']);
-
-        $filas = collect();
-        foreach ($articulos as $articulo) {
-            foreach ($sucursales as $sucursal) {
-                $filas->push([
-                    'id'              => $articulo->id,
-                    'codigo'          => $articulo->codigo,
-                    'descripcion'     => $articulo->descripcion,
-                    'sucursal_id'     => $sucursal->id,
-                    'sucursal_nombre' => $sucursal->nombre,
-                    'costo'           => $articulo->costo,
-                    'precio_minimo'   => $articulo->precio_minimo,
-                ]);
-            }
-        }
-
-        return $filas;
     }
 
     /**
@@ -296,7 +248,10 @@ class VentaPiezaController extends Controller
             ->leftJoin('clientes', 'venta_piezas.cliente_id', '=', 'clientes.id')
             ->leftJoin('servicios', 'venta_piezas.servicio_id', '=', 'servicios.id')
             ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
-            ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id');
+            ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
+            // Los conceptos cargados dentro de una venta de moto no son
+            // operaciones sueltas: se ven adentro de esa venta.
+            ->whereNull('venta_piezas.venta_id');
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('venta_piezas.user_id', $user_id);
@@ -1025,6 +980,8 @@ class VentaPiezaController extends Controller
             ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
             ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
+            // Los conceptos de una venta de moto se ven adentro de esa venta
+            ->whereNull('venta_piezas.venta_id')
         ;
 
         if (!empty($user_id) && $user_id != '-1') {
@@ -1201,6 +1158,8 @@ class VentaPiezaController extends Controller
             ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
             ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
+            // Los conceptos de una venta de moto se ven adentro de esa venta
+            ->whereNull('venta_piezas.venta_id')
         ;
 
         if (!empty($user_id) && $user_id != '-1') {
