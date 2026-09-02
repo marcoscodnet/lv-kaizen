@@ -133,6 +133,8 @@
                                 'articulosJson' => $articulosJson,
                                 'precioUnidad'  => old('monto_unidad', isset($unidad->producto) ? $unidad->producto->precio : 0),
                                 'precioSugerido'=> isset($unidad->producto) ? $unidad->producto->precio : 0,
+                                'sucursalId'    => old('sucursal_id', auth()->user()->sucursal_id),
+                                'sucursalNombre'=> $sucursals[old('sucursal_id', auth()->user()->sucursal_id)] ?? '',
                             ])
 
                         @include('includes.cobro', [

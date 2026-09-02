@@ -44,6 +44,13 @@
     // Precio de lista, solo para avisar si se cobró por debajo. Nunca bloquea.
     $artSugerido = (float) ($precioSugerido ?? 0);
 
+    // Sucursal de la operación: es la que llevan los ítems por defecto.
+    // El vendedor no la puede cambiar; el administrador sí.
+    $artSucursalId     = $sucursalId ?? null;
+    $artSucursalNombre = $sucursalNombre ?? '';
+    $artEsAdmin        = auth()->check() && auth()->user()->hasRole('Administrador');
+    $artSucursalFija   = $artSoloLectura || !$artEsAdmin;
+
     $artTotal = collect($artFilas)->sum(function ($f) {
         return (float) ($f['precio'] ?? 0) * (float) ($f['cantidad'] ?: 1);
     });
@@ -70,6 +77,9 @@
         <p class="text-muted small">
             Patentamiento, seguro, accesorios y todo lo que se cobre junto con la moto.
             Se suma al importe a cobrar de esta venta.
+            @if($artSucursalFija && !$artSoloLectura)
+                Los artículos salen de la sucursal de la venta.
+            @endif
         </p>
 
         <div class="table-responsive">
@@ -100,14 +110,30 @@
                                     @endforeach
                                 </select>
                             </td>
+                            @php
+                                // La sucursal no se elige: es la de la venta. No se puede
+                                // vender un artículo del depósito de otra sucursal.
+                                $filaSucursalId = $fila['sucursal_id'] ?: $artSucursalId;
+                                $filaSucursalNombre = optional($opcionesSucursal->firstWhere('sucursal_id', $filaSucursalId))['sucursal_nombre']
+                                    ?? $artSucursalNombre;
+                            @endphp
                             <td>
-                                <select name="sucursal_id_item[]" class="form-control sucursalArticulo" {{ $artSoloLectura ? 'disabled' : '' }}>
-                                    @foreach($opcionesSucursal as $opcion)
-                                        <option value="{{ $opcion['sucursal_id'] }}" {{ $fila['sucursal_id'] == $opcion['sucursal_id'] ? 'selected' : '' }}>
-                                            {{ $opcion['sucursal_nombre'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                @if($artSucursalFija)
+                                    @unless($artSoloLectura)
+                                        <input type="hidden" name="sucursal_id_item[]" class="sucursalArticuloId" value="{{ $filaSucursalId }}">
+                                    @endunless
+                                    <input type="text" class="form-control sucursalArticuloNombre"
+                                           value="{{ $filaSucursalNombre }}" readonly disabled>
+                                @else
+                                    {{-- El administrador sí puede tomar de otra sucursal --}}
+                                    <select name="sucursal_id_item[]" class="form-control sucursalArticulo">
+                                        @foreach($opcionesSucursal as $opcion)
+                                            <option value="{{ $opcion['sucursal_id'] }}" {{ $filaSucursalId == $opcion['sucursal_id'] ? 'selected' : '' }}>
+                                                {{ $opcion['sucursal_nombre'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                             </td>
                             <td>
                                 <input type="number" name="cantidad[]" class="form-control cantidadArticulo" min="1"
@@ -184,5 +210,8 @@
         // sucursales donde se puede tomar. Los que no llevan stock vienen con
         // todas las sucursales activas.
         window.articulosCatalogo = @json($artCatalogo);
+
+        // El vendedor toma de su sucursal y no la puede cambiar; el administrador sí.
+        window.articulosSucursalFija = {{ $artSucursalFija ? 'true' : 'false' }};
     </script>
 @endunless

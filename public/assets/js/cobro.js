@@ -172,6 +172,7 @@ $(document).ready(function () {
         });
         if (datos) aplicarDatosPago($row, datos);
         toggleComprobante($row.find('.js-pago-select'));
+        toggleFechaPago($row.find('.js-pago-select'));
         actualizarTotalesPago();
         return $row;
     }
@@ -221,6 +222,7 @@ $(document).ready(function () {
             $sel.val(String(d.entidad_id));
             if ($sel.hasClass('select2-hidden-accessible')) $sel.trigger('change.select2');
             toggleComprobante($sel);
+            toggleFechaPago($sel);
         }
 
         setImporte($row.find('input[name="monto[]"]'), d.monto);
@@ -275,6 +277,38 @@ $(document).ready(function () {
         if (elAcreditado) elAcreditado.set(totalAcreditado);
     }
 
+    function hoyISO() {
+        var d = new Date();
+        var mes = String(d.getMonth() + 1).padStart(2, '0');
+        var dia = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '-' + mes + '-' + dia;
+    }
+
+    /**
+     * Lo que entra a la caja lleva la fecha del momento y no se puede cambiar:
+     * una fecha para atrás o para adelante descuadra el arqueo, porque el
+     * movimiento entra igual a la caja del día.
+     *
+     * El resto (cheque, transferencia, crédito) sí lleva fecha propia: un cheque
+     * a treinta días tiene que poder cargarse con su fecha.
+     */
+    function toggleFechaPago($select) {
+        if (esAuditor) return;
+
+        var $fecha = $select.closest('.pago-item').find('input[name="fecha_pago[]"]');
+        if ($fecha.length === 0) return;
+
+        var esEfectivo = parseInt($select.find('option:selected').data('tangible'), 10) === 1;
+
+        if (esEfectivo) {
+            $fecha.val(hoyISO())
+                .prop('readonly', true)
+                .attr({ min: hoyISO(), max: hoyISO(), title: 'Los cobros que entran a la caja llevan la fecha del día' });
+        } else {
+            $fecha.prop('readonly', false).removeAttr('min').removeAttr('max').removeAttr('title');
+        }
+    }
+
     // Show/hide the proof block based on whether the selected entity requires authorization
     function toggleComprobante($select) {
         var $row = $select.closest('.pago-item');
@@ -325,11 +359,13 @@ $(document).ready(function () {
     // Toggle proof block on entity change
     $('body').on('change', '.js-pago-select', function () {
         toggleComprobante($(this));
+        toggleFechaPago($(this));
     });
 
     // Initialize state on load for pre-existing payments (edit view)
     $('.pago-item .js-pago-select').each(function () {
         toggleComprobante($(this));
+        toggleFechaPago($(this));
     });
 
     // Recalculate totals on load for pre-existing payments (edit view)

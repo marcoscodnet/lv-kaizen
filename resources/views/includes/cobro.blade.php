@@ -93,8 +93,14 @@
                     </div>
                     <div class="col-md-3">
                         <label class="labelFechaPago">Fecha Pago</label>
+                        {{-- Lo que entra a la caja lleva la fecha del momento: no se elige.
+                             Una fecha para atrás o para adelante descuadra el arqueo. --}}
                         <input type="date" name="fecha_pago[]" class="form-control"
                                value="{{ old('fecha_pago.'.$i, $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('Y-m-d') : '') }}"
+                               @if($esEfectivo && !$esAuditor)
+                                   readonly min="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}"
+                                   title="Los cobros que entran a la caja llevan la fecha del día"
+                               @endif
                             {{ $esAuditor ? 'readonly' : 'required' }}>
                     </div>
 

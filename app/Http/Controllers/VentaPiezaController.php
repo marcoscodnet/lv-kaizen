@@ -15,6 +15,7 @@ use App\Models\PiezaVentaPieza;
 use App\Models\Pago;
 use App\Http\Controllers\Controller;
 use App\Traits\CatalogoArticulos;
+use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
 use App\Traits\ValidaCajaAbierta;
@@ -30,7 +31,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VentaPiezaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, FechaDeCobro;
 
     /**
      * Sucursal cuya caja del día recibe el efectivo de una venta de piezas.
@@ -465,7 +466,8 @@ class VentaPiezaController extends Controller
                 $pago->venta_pieza_id = $venta->id;
                 $pago->entidad_id     = $entidadId;
                 $pago->monto          = $this->sanitizeInput($request->monto[$i]);
-                $pago->fecha          = $this->sanitizeInput($request->fecha_pago[$i]);
+                // Lo que entra a la caja lleva la fecha del momento, no la cargada
+                $pago->fecha          = $this->fechaDeCobro($entidad, $this->sanitizeInput($request->fecha_pago[$i]));
                 // Entidades sin autorización (efectivo y similares) no pasan por
                 // auditoría: se acreditan solas por el importe cobrado y sin fecha
                 // de contadora. El resto lo completa el auditor.

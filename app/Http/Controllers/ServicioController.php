@@ -20,6 +20,7 @@ use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Models\Entidad;
+use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
 use App\Traits\ValidaCajaAbierta;
@@ -35,7 +36,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ServicioController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, FechaDeCobro;
     /**
      * Display a listing of the resource.
      *
@@ -503,7 +504,8 @@ class ServicioController extends Controller
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
-                    $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
+                    // Lo que entra a la caja lleva la fecha del momento, no la cargada
+                    $pago->fecha        = $this->fechaDeCobro($entidad, $this->sanitizeInput($request->fecha_pago[$i]));
                     // Entidades sin autorización (efectivo y similares) no pasan por
                     // auditoría: se acreditan solas por el importe cobrado y sin fecha
                     // de contadora. El resto lo completa el auditor.
@@ -769,7 +771,8 @@ class ServicioController extends Controller
                     $pago->servicio_id  = $servicio->id;
                     $pago->entidad_id   = $entidadId;
                     $pago->monto        = $this->sanitizeInput($request->monto[$i]);
-                    $pago->fecha        = $this->sanitizeInput($request->fecha_pago[$i]);
+                    // Lo que entra a la caja lleva la fecha del momento, no la cargada
+                    $pago->fecha        = $this->fechaDeCobro($entidad, $this->sanitizeInput($request->fecha_pago[$i]));
                     $pago->detalle      = $this->sanitizeInput($request->detalle[$i] ?? null);
                     $pago->observacion  = $this->sanitizeInput($request->observaciones[$i] ?? null);
 

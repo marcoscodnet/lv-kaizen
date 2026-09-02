@@ -148,6 +148,8 @@
                                 'items'         => optional($venta->ventaArticulos)->piezas,
                                 'precioUnidad'  => (float) old('monto_unidad', $venta->monto),
                                 'precioSugerido'=> isset($venta->unidad->producto) ? (float) $venta->unidad->producto->precio : 0,
+                                'sucursalId'    => old('sucursal_id', $venta->sucursal_id),
+                                'sucursalNombre'=> $sucursals[old('sucursal_id', $venta->sucursal_id)] ?? '',
                             ])
 
                         @include('includes.cobro', [

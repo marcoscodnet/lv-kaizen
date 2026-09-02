@@ -279,6 +279,8 @@
                                 'items'          => optional($venta->ventaArticulos)->piezas,
                                 'precioUnidad'   => (float) $precioUnidad,
                                 'precioSugerido' => $precioSugerido,
+                                'sucursalId'     => $venta->sucursal_id,
+                                'sucursalNombre' => $sucursals[$venta->sucursal_id] ?? '',
                                 'soloLectura'    => true,
                             ])
 

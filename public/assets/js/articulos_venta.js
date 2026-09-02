@@ -11,6 +11,10 @@ $(document).ready(function () {
 
     var catalogo = window.articulosCatalogo || {};
 
+    // El vendedor toma de la sucursal de la venta y no la puede cambiar.
+    // El administrador sí: para él la sucursal es un select por fila.
+    var sucursalFija = window.articulosSucursalFija !== false;
+
     if ($('#cuerpoArticulo').length === 0) {
         return; // La pantalla no tiene la grilla (vista de solo lectura)
     }
@@ -19,8 +23,7 @@ $(document).ready(function () {
      * Los selects van con select2, como el resto del sistema: la lista de
      * artículos es larga y sin buscador no se encuentra nada.
      *
-     * Se destruye antes de inicializar porque las opciones de sucursal se
-     * rearman cada vez que cambia el artículo.
+     * Se destruye antes de inicializar por si la fila ya venía inicializada.
      */
     function initSelect2($contexto) {
         $contexto.find('.selectArticulo, .sucursalArticulo').each(function () {
@@ -34,20 +37,71 @@ $(document).ready(function () {
         });
     }
 
+    /**
+     * Sucursal de la operación. Los ítems siempre salen de ella: no se puede
+     * vender un artículo del depósito de otra sucursal.
+     */
+    function sucursalDeLaVenta() {
+        var $select = $('#sucursal_id');
+        if ($select.length) {
+            return { id: $select.val() || '', nombre: $.trim($select.find('option:selected').text()) };
+        }
+
+        var $primera = $('#cuerpoArticulo .sucursalArticuloId').first();
+        return {
+            id: $primera.val() || '',
+            nombre: $.trim($('#cuerpoArticulo .sucursalArticuloNombre').first().val() || '')
+        };
+    }
+
+    /** ¿El artículo está disponible en la sucursal de la venta? */
+    function disponibleEnSucursal(piezaId, sucursalId) {
+        if (!catalogo[piezaId]) return false;
+        if (!sucursalId) return true; // Todavía no eligieron sucursal
+
+        return catalogo[piezaId].some(function (opcion) {
+            return String(opcion.sucursal_id) === String(sucursalId);
+        });
+    }
+
     function opcionesArticuloHtml() {
+        var sucursal = sucursalDeLaVenta();
         var html = '<option value="">Seleccionar...</option>';
+
         Object.keys(catalogo).forEach(function (piezaId) {
+            // Al vendedor solo se le ofrece lo que hay en su sucursal
+            if (sucursalFija && !disponibleEnSucursal(piezaId, sucursal.id)) {
+                return;
+            }
+
             var primera = catalogo[piezaId][0];
             var etiqueta = ((primera.codigo || '') + ' - ' + (primera.descripcion || '')).trim();
             html += '<option value="' + piezaId + '">' + etiqueta + '</option>';
         });
+
         return html;
     }
 
-    // Llena el selector de sucursal con las opciones del artículo elegido
+    /** Deja todas las filas con la sucursal de la venta (solo vendedor). */
+    function sincronizarSucursales() {
+        if (!sucursalFija) return;
+
+        var sucursal = sucursalDeLaVenta();
+
+        $('#cuerpoArticulo .sucursalArticuloId').val(sucursal.id);
+        $('#cuerpoArticulo .sucursalArticuloNombre').val(sucursal.nombre);
+    }
+
+    /**
+     * Solo para administrador: llena el select de sucursal con los depósitos
+     * donde está el artículo elegido, dejando marcada la de la venta si está.
+     */
     function cargarSucursales($fila) {
+        if (sucursalFija) return;
+
         var piezaId = $fila.find('.selectArticulo').val();
         var $sucursal = $fila.find('.sucursalArticulo');
+        var deLaVenta = sucursalDeLaVenta().id;
 
         if ($sucursal.hasClass('select2-hidden-accessible')) {
             $sucursal.select2('destroy');
@@ -57,7 +111,8 @@ $(document).ready(function () {
 
         if (piezaId && catalogo[piezaId]) {
             catalogo[piezaId].forEach(function (opcion) {
-                $sucursal.append('<option value="' + opcion.sucursal_id + '">' + opcion.sucursal_nombre + '</option>');
+                var sel = String(opcion.sucursal_id) === String(deLaVenta) ? ' selected' : '';
+                $sucursal.append('<option value="' + opcion.sucursal_id + '"' + sel + '>' + opcion.sucursal_nombre + '</option>');
             });
         }
 
@@ -210,10 +265,24 @@ $(document).ready(function () {
         );
     }
 
+    /** Celda de sucursal: texto fijo para el vendedor, select para el admin. */
+    function celdaSucursalHtml(sucursal) {
+        if (!sucursalFija) {
+            return '<td><select name="sucursal_id_item[]" class="form-control sucursalArticulo"></select></td>';
+        }
+
+        return '<td>' +
+            '<input type="hidden" name="sucursal_id_item[]" class="sucursalArticuloId" value="' + sucursal.id + '">' +
+            '<input type="text" class="form-control sucursalArticuloNombre" value="' + sucursal.nombre + '" readonly disabled>' +
+        '</td>';
+    }
+
     function agregarFilaArticulo() {
+        var sucursal = sucursalDeLaVenta();
+
         var fila = '<tr>' +
             '<td><select name="pieza_id[]" class="form-control selectArticulo">' + opcionesArticuloHtml() + '</select></td>' +
-            '<td><select name="sucursal_id_item[]" class="form-control sucursalArticulo"></select></td>' +
+            celdaSucursalHtml(sucursal) +
             '<td><input type="number" name="cantidad[]" class="form-control cantidadArticulo" min="1" value="1"></td>' +
             '<td><input type="text" name="precio_articulo[]" class="form-control formato-numero precioArticulo"></td>' +
             '<td><a href="#" class="btn btn-danger btn-sm removeRowArticulo"><i class="fa fa-times text-white"></i></a></td>' +
@@ -249,6 +318,11 @@ $(document).ready(function () {
         actualizarTotalArticulos();
     });
 
+    // Si cambia la sucursal de la venta, la arrastran todos los ítems
+    $('body').on('change', '#sucursal_id', function () {
+        sincronizarSucursales();
+    });
+
     $('body').on('input change', '.precioArticulo, .cantidadArticulo', actualizarTotalArticulos);
 
     // El importe de la moto lo tipea el vendedor: recalcula el total a cobrar
@@ -280,5 +354,6 @@ $(document).ready(function () {
 
     // Filas que vinieron armadas del servidor (edición, o vuelta de un error)
     initSelect2($('#cuerpoArticulo'));
+    sincronizarSucursales();
     actualizarTotalArticulos();
 });

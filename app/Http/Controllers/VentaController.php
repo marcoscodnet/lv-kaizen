@@ -20,6 +20,7 @@ use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Traits\CatalogoArticulos;
+use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
 use App\Traits\StockArticulos;
 use App\Traits\SanitizesInput;
@@ -37,7 +38,7 @@ use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos, FechaDeCobro;
     /**
      * Display a listing of the resource.
      *
@@ -140,6 +141,7 @@ class VentaController extends Controller
         $sucursales = (array) $request->input('sucursal_id_item', []);
         $cantidades = (array) $request->input('cantidad', []);
         $precios    = (array) $request->input('precio_articulo', []);
+        $esAdmin    = optional(auth()->user())->hasRole('Administrador');
 
         // Las filas sin artículo elegido se descartan
         $filas = [];
@@ -152,7 +154,11 @@ class VentaController extends Controller
 
             $filas[] = [
                 'pieza_id'    => $piezaId,
-                'sucursal_id' => $sucursales[$i] ?? $venta->sucursal_id,
+                // El vendedor toma de la sucursal de la venta y no la puede
+                // cambiar; el administrador sí puede tomar de otro depósito.
+                'sucursal_id' => ($esAdmin && !empty($sucursales[$i]))
+                    ? $sucursales[$i]
+                    : $venta->sucursal_id,
                 'cantidad'    => $cantidad > 0 ? $cantidad : 1,
                 'precio'      => (float) $this->sanitizeInput($precios[$i] ?? 0),
             ];
@@ -292,7 +298,9 @@ class VentaController extends Controller
 
             $filas[] = [
                 'pieza_id'    => $piezaId,
-                'sucursal_id' => $sucursales[$i] ?? $request->sucursal_id,
+                'sucursal_id' => (optional(auth()->user())->hasRole('Administrador') && !empty($sucursales[$i]))
+                    ? $sucursales[$i]
+                    : $request->sucursal_id,
                 'cantidad'    => $cantidad > 0 ? $cantidad : 1,
             ];
         }
@@ -641,7 +649,8 @@ class VentaController extends Controller
                 $detalle->venta_id = $venta->id;
                 $detalle->entidad_id = $entidadId;
                 $detalle->monto = $this->sanitizeInput($request->monto[$i]);
-                $detalle->fecha = $this->sanitizeInput($request->fecha_pago[$i]);
+                // Lo que entra a la caja lleva la fecha del momento, no la cargada
+                $detalle->fecha = $this->fechaDeCobro($entidad, $this->sanitizeInput($request->fecha_pago[$i]));
                 // Entidades sin autorización (efectivo y similares) no pasan por
                 // auditoría: se acreditan solas por el importe cobrado y sin fecha
                 // de contadora. El resto lo completa el auditor.
@@ -877,7 +886,8 @@ class VentaController extends Controller
                 $detalle->venta_id = $venta->id;
                 $detalle->entidad_id = $entidadId;
                 $detalle->monto = $this->sanitizeInput($request->monto[$i]);
-                $detalle->fecha = $this->sanitizeInput($request->fecha_pago[$i]);
+                // Lo que entra a la caja lleva la fecha del momento, no la cargada
+                $detalle->fecha = $this->fechaDeCobro($entidad, $this->sanitizeInput($request->fecha_pago[$i]));
                 $detalle->detalle = $this->sanitizeInput($request->detalle[$i] ?? null);
                 $detalle->observacion = $this->sanitizeInput($request->observaciones[$i] ?? null);
 
