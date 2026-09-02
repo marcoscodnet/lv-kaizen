@@ -206,6 +206,72 @@ class VentaController extends Controller
     }
 
     /**
+     * Importe a cobrar de la operación según lo que viene en el formulario:
+     * la moto más los conceptos.
+     */
+    private function importeACobrarDelRequest(Request $request): float
+    {
+        $moto = (float) $this->sanitizeInput(
+            $request->filled('monto_unidad') ? $request->monto_unidad : $request->input('precio', 0)
+        );
+
+        $cantidades = (array) $request->input('cantidad', []);
+        $precios    = (array) $request->input('precio_articulo', []);
+        $conceptos  = 0.0;
+
+        foreach ((array) $request->input('pieza_id', []) as $i => $piezaId) {
+            if (empty($piezaId)) {
+                continue;
+            }
+
+            $cantidad = (float) ($cantidades[$i] ?? 1);
+            $conceptos += (float) $this->sanitizeInput($precios[$i] ?? 0) * ($cantidad > 0 ? $cantidad : 1);
+        }
+
+        return $moto + $conceptos;
+    }
+
+    /**
+     * Neteo de la operación: los pagos cargados tienen que cubrir el importe a
+     * cobrar. Si falta, no se confirma.
+     *
+     * Ojo, esto NO es lo mismo que el control de acreditación: acreditar es una
+     * cuestión de tiempo (un cheque a dos días, un crédito a veinte) y ese sí es
+     * informativo. Acá se controla que el vendedor haya cargado todo lo que
+     * cobra, y eso no puede quedar corto.
+     *
+     * Cobrar de más no traba: se avisa en pantalla y se deja seguir.
+     */
+    private function validarCobroCompleto($validator, Request $request): void
+    {
+        $aCobrar = $this->importeACobrarDelRequest($request);
+
+        if ($aCobrar <= 0) {
+            return;
+        }
+
+        $cobrado = 0.0;
+        foreach ((array) $request->input('monto', []) as $monto) {
+            $cobrado += (float) $this->sanitizeInput($monto);
+        }
+
+        if ($cobrado >= $aCobrar - 0.01) {
+            return;
+        }
+
+        $formato = function ($n) {
+            return number_format((float) $n, 2, ',', '.');
+        };
+
+        $validator->errors()->add('cobro', sprintf(
+            'Faltan $%s: el importe a cobrar es $%s y los pagos cargados suman $%s.',
+            $formato($aCobrar - $cobrado),
+            $formato($aCobrar),
+            $formato($cobrado)
+        ));
+    }
+
+    /**
      * Controla el stock de los conceptos ANTES de tocar la base, como un error
      * de validación más. Así el aviso sale junto al resto de los mensajes y no
      * se pierde lo que el vendedor cargó.
@@ -491,6 +557,7 @@ class VentaController extends Controller
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
             'forma' => 'required',
+            'monto_unidad' => 'required|numeric|min:0',
             'fecha' => 'required|date_format:d/m/Y H:i:s',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
@@ -513,12 +580,6 @@ class VentaController extends Controller
 
         $validator = Validator::make($request->all(), $rules, $messages);
 
-        $validator->after(function ($validator) use ($totalMonto, $precioSugerido) {
-            if ($totalMonto < $precioSugerido) {
-                $validator->errors()->add('monto', "El importe total de los pagos ($totalMonto) debe ser igual o mayor al precio sugerido ($precioSugerido).");
-            }
-        });
-
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.
         $validator->after(function ($validator) use ($request) {
@@ -531,6 +592,12 @@ class VentaController extends Controller
         // guardado: si falta stock, sale como un mensaje más.
         $validator->after(function ($validator) use ($request) {
             $this->validarStockDeConceptos($validator, $request);
+        });
+
+        // El neteo de la operación: los pagos tienen que cubrir el importe a
+        // cobrar. Cobrar de menos no se confirma; cobrar de más solo avisa.
+        $validator->after(function ($validator) use ($request) {
+            $this->validarCobroCompleto($validator, $request);
         });
 
         if ($validator->fails()) {
@@ -553,8 +620,12 @@ class VentaController extends Controller
             $venta->fecha = $request->filled('fecha')
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d H:i:s')
                 : null;
-            $venta->monto = $this->sanitizeInput($request->precio);
-            $venta->total = $this->sanitizeInput($request->precio);
+            // El vendedor tipea lo que cobra por la moto, independiente del
+            // precio de lista. `total` se recalcula abajo con los conceptos.
+            $venta->monto = $this->sanitizeInput($request->filled('monto_unidad')
+                ? $request->monto_unidad
+                : $request->precio);
+            $venta->total = $venta->monto;
             $venta->forma = $this->sanitizeInput($request->forma);
             $venta->save();
 
@@ -682,6 +753,7 @@ class VentaController extends Controller
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
             'forma' => 'required',
+            'monto_unidad' => 'required|numeric|min:0',
             'fecha' => 'required|date_format:d/m/Y H:i:s',
             'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
@@ -705,12 +777,6 @@ class VentaController extends Controller
 
         $validator = Validator::make($request->all(), $rules, $messages);
 
-        $validator->after(function ($validator) use ($totalMonto, $precioSugerido) {
-            if ($totalMonto < $precioSugerido) {
-                $validator->errors()->add('monto', "El importe total de los pagos ($totalMonto) debe ser igual o mayor al precio sugerido ($precioSugerido).");
-            }
-        });
-
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.
         $validator->after(function ($validator) use ($request) {
@@ -723,6 +789,12 @@ class VentaController extends Controller
         // guardado: si falta stock, sale como un mensaje más.
         $validator->after(function ($validator) use ($request) {
             $this->validarStockDeConceptos($validator, $request);
+        });
+
+        // El neteo de la operación: los pagos tienen que cubrir el importe a
+        // cobrar. Cobrar de menos no se confirma; cobrar de más solo avisa.
+        $validator->after(function ($validator) use ($request) {
+            $this->validarCobroCompleto($validator, $request);
         });
 
         if ($validator->fails()) {
@@ -759,8 +831,12 @@ class VentaController extends Controller
             $venta->fecha = $request->filled('fecha')
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $request->fecha)->format('Y-m-d H:i:s')
                 : null;
-            $venta->monto = $this->sanitizeInput($request->precio);
-            $venta->total = $this->sanitizeInput($request->precio);
+            // El vendedor tipea lo que cobra por la moto, independiente del
+            // precio de lista. `total` se recalcula abajo con los conceptos.
+            $venta->monto = $this->sanitizeInput($request->filled('monto_unidad')
+                ? $request->monto_unidad
+                : $request->precio);
+            $venta->total = $venta->monto;
             $venta->forma = $this->sanitizeInput($request->forma);
             $venta->save();
 

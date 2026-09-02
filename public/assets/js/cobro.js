@@ -185,12 +185,39 @@ $(document).ready(function () {
         else $input.val(valor);
     }
 
+    /**
+     * Las opciones de forma de pago se filtran por la condición de venta. Si el
+     * usuario cargó un pago con una condición y después la cambió, al rearmar la
+     * fila esa opción ya no está y el pago se perdía en silencio.
+     *
+     * Se agrega la opción que falta para que lo cargado nunca desaparezca.
+     */
+    function asegurarOpcionEntidad($select, entidadId) {
+        if ($select.find('option[value="' + entidadId + '"]').length) {
+            return;
+        }
+
+        var entidad = (entidadsData || []).filter(function (e) {
+            return String(e.id) === String(entidadId);
+        })[0];
+
+        if (!entidad) return;
+
+        $select.append(
+            '<option value="' + entidad.id + '"' +
+            ' data-autorizacion="' + (entidad.autorizacion ? 1 : 0) + '"' +
+            ' data-tangible="' + (entidad.tangible ? 1 : 0) + '">' +
+            entidad.nombre + '</option>'
+        );
+    }
+
     // Vuelca en una fila los datos que el usuario había cargado
     function aplicarDatosPago($row, d) {
         if (!d) return;
 
         if (d.entidad_id) {
             var $sel = $row.find('select[name="entidad_id[]"]');
+            asegurarOpcionEntidad($sel, d.entidad_id);
             $sel.val(String(d.entidad_id));
             if ($sel.hasClass('select2-hidden-accessible')) $sel.trigger('change.select2');
             toggleComprobante($sel);

@@ -41,6 +41,9 @@
     // Importe de la moto, para mostrar el total a cobrar de la operación
     $artPrecioUnidad = (float) ($precioUnidad ?? 0);
 
+    // Precio de lista, solo para avisar si se cobró por debajo. Nunca bloquea.
+    $artSugerido = (float) ($precioSugerido ?? 0);
+
     $artTotal = collect($artFilas)->sum(function ($f) {
         return (float) ($f['precio'] ?? 0) * (float) ($f['cantidad'] ?: 1);
     });
@@ -139,10 +142,39 @@
                 <label class="fw-bold">Importe a cobrar</label>
                 <input type="text" id="totalACobrar" class="form-control fw-bold"
                        data-precio-unidad="{{ (float) $artPrecioUnidad }}"
+                       data-sugerido="{{ (float) $artSugerido }}"
                        value="{{ number_format($artPrecioUnidad + (float) $artTotal, 2, ',', '.') }}" readonly disabled>
                 <small class="text-muted">Moto + conceptos. Es contra este número que se controla lo acreditado.</small>
             </div>
         </div>
+
+        {{-- Aviso si la moto se cobra por debajo del precio de lista. No bloquea. --}}
+        <div class="row mt-2">
+            <div class="col-12">
+                @if($artSoloLectura)
+                    {{-- En la lupa no corre el JS de la grilla: se resuelve acá --}}
+                    @if($artSugerido > 0 && $artPrecioUnidad > 0 && $artPrecioUnidad < $artSugerido - 0.01)
+                        <div class="alert alert-warning mb-0">
+                            La moto se cobró por debajo del sugerido — Sugerido: ${{ $artImporte($artSugerido) }}
+                            · Se cobró: ${{ $artImporte($artPrecioUnidad) }}
+                            · Diferencia: ${{ $artImporte($artSugerido - $artPrecioUnidad) }}
+                        </div>
+                    @endif
+                @else
+                    <div id="avisoImporteMoto" class="alert alert-warning mb-0" style="display:none"></div>
+                @endif
+            </div>
+        </div>
+
+        @unless($artSoloLectura)
+            {{-- Neteo de la operación: lo cargado en pagos contra el importe a
+                 cobrar. Si falta, NO deja confirmar. Si sobra, avisa y deja. --}}
+            <div class="row mt-2">
+                <div class="col-12">
+                    <div id="avisoCobroVenta" class="alert mb-0" style="display:none"></div>
+                </div>
+            </div>
+        @endunless
     </div>
 </div>
 

@@ -20,7 +20,6 @@
     $avisoPagos      = collect($pagos ?? []);
     $avisoCobrado    = (float) $avisoPagos->sum(function ($p) { return (float) $p->monto; });
     $avisoAcreditado = (float) $avisoPagos->sum(function ($p) { return (float) $p->pagado; });
-    $avisoDiff       = $avisoAcreditado - $avisoSugerido;
     $avisoEtiqueta   = $etiqueta ?? 'Sugerido';
     $avisoTotales    = $totales ?? true;
     $avisoFmt        = function ($n) { return number_format((float) $n, 2, ',', '.'); };
@@ -45,22 +44,39 @@
 
 @if($avisoSugerido > 0)
     @php
+        // El neteo de la operación va contra lo COBRADO, no contra lo acreditado.
+        // Que un cheque o un crédito todavía no se hayan acreditado es una
+        // cuestión de tiempo, no una diferencia de la venta.
+        $avisoDiffCobro = $avisoCobrado - $avisoSugerido;
         $avisoBase = $avisoEtiqueta . ': $' . $avisoFmt($avisoSugerido)
-            . ' · Acreditado: $' . $avisoFmt($avisoAcreditado);
+            . ' · Cobrado: $' . $avisoFmt($avisoCobrado);
+
+        // Lo acreditado se informa aparte, como estado de la cobranza
+        $avisoFaltaAcreditar = $avisoCobrado - $avisoAcreditado;
     @endphp
     <div class="row mb-3">
         <div class="col-12">
-            @if(abs($avisoDiff) < 0.01)
-                <div class="alert alert-success mb-0">Acreditación completa ✓ — {{ $avisoBase }}</div>
-            @elseif($avisoDiff < 0)
-                <div class="alert alert-warning mb-0">
-                    Acreditación parcial — {{ $avisoBase }} · Falta: ${{ $avisoFmt(abs($avisoDiff)) }}
+            @if(abs($avisoDiffCobro) < 0.01)
+                <div class="alert alert-success mb-0">Cobro completo ✓ — {{ $avisoBase }}</div>
+            @elseif($avisoDiffCobro < 0)
+                <div class="alert alert-danger mb-0">
+                    <strong>Faltan ${{ $avisoFmt(abs($avisoDiffCobro)) }}</strong> — {{ $avisoBase }}
                 </div>
             @else
-                <div class="alert alert-danger mb-0">
-                    Acreditado de más — {{ $avisoBase }} · Excedente: ${{ $avisoFmt($avisoDiff) }}
+                <div class="alert alert-warning mb-0">
+                    Cobrado de más — {{ $avisoBase }} · Excedente: ${{ $avisoFmt($avisoDiffCobro) }}
                 </div>
             @endif
+
+            {{-- Estado de la acreditación: informativo, es cuestión de tiempo --}}
+            <div class="mt-2 small text-muted">
+                Acreditado: ${{ $avisoFmt($avisoAcreditado) }} de ${{ $avisoFmt($avisoCobrado) }} cobrados.
+                @if($avisoFaltaAcreditar > 0.01)
+                    Pendiente de acreditar: ${{ $avisoFmt($avisoFaltaAcreditar) }}.
+                @elseif($avisoCobrado > 0)
+                    Todo acreditado.
+                @endif
+            </div>
         </div>
     </div>
 @endif

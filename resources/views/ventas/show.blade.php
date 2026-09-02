@@ -55,10 +55,14 @@
                             <div class="col-lg-3">
                                 <div class="form-group">
                                     @php
-                                        // Importe de la moto en ESTA venta: el que quedó guardado al vender.
-                                        // Si la venta es vieja y no lo tiene, cae al precio de lista actual.
-                                        $precioUnidad = $venta->monto
-                                            ?: (isset($venta->unidad->producto) ? $venta->unidad->producto->precio : 0);
+                                        // Precio de lista del producto, solo como referencia
+                                        $precioSugerido = isset($venta->unidad->producto)
+                                            ? (float) $venta->unidad->producto->precio
+                                            : 0;
+
+                                        // Lo que se cobró efectivamente por la moto. Si la venta es
+                                        // vieja y no lo tiene, cae al precio de lista.
+                                        $precioUnidad = $venta->monto ?: $precioSugerido;
 
                                         // Lo que hay que cobrar por toda la operación: la moto más los conceptos.
                                         // Es el número contra el que se controla lo acreditado.
@@ -66,7 +70,14 @@
                                     @endphp
                                     <label for="precio">Importe sugerido</label>
                                     <input type="text" class="form-control" id="precio" name="precio"
-                                           value="{{ $precioUnidad }}" readonly disabled>
+                                           value="{{ $precioSugerido }}" readonly disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="form-group">
+                                    <label for="monto_unidad" class="fw-bold">Importe moto</label>
+                                    <input type="text" class="form-control fw-bold" id="monto_unidad" name="monto_unidad"
+                                           value="{{ number_format((float) $precioUnidad, 2, ',', '.') }}" readonly disabled>
                                 </div>
                             </div>
                         </div>
@@ -265,9 +276,10 @@
                         </div>
                         {{-- Conceptos que se cobraron junto con la moto --}}
                         @include('includes.articulos_venta', [
-                                'items'        => optional($venta->ventaArticulos)->piezas,
-                                'precioUnidad' => (float) $precioUnidad,
-                                'soloLectura'  => true,
+                                'items'          => optional($venta->ventaArticulos)->piezas,
+                                'precioUnidad'   => (float) $precioUnidad,
+                                'precioSugerido' => $precioSugerido,
+                                'soloLectura'    => true,
                             ])
 
                         <div class="row mb-3 mt-3">

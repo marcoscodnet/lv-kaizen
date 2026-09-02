@@ -59,6 +59,14 @@
                                            value="{{ isset($unidad->producto) ? $unidad->producto->precio : '' }}" readonly>
                                 </div>
                             </div>
+                            <div class="col-lg-3">
+                                <div class="form-group">
+                                    {{-- El vendedor cobra lo que negoció, independiente del sugerido --}}
+                                    <label for="monto_unidad" class="fw-bold">Importe moto</label>
+                                    <input type="text" class="form-control formato-numero" id="monto_unidad" name="monto_unidad"
+                                           value="{{ number_format((float) old('monto_unidad', isset($unidad->producto) ? $unidad->producto->precio : 0), 2, ',', '.') }}" required>
+                                </div>
+                            </div>
                         </div>
 
                         {{-- Fecha, vendedor y sucursal --}}
@@ -123,7 +131,8 @@
                         {{-- Conceptos que se cobran junto con la moto --}}
                         @include('includes.articulos_venta', [
                                 'articulosJson' => $articulosJson,
-                                'precioUnidad'  => isset($unidad->producto) ? $unidad->producto->precio : 0,
+                                'precioUnidad'  => old('monto_unidad', isset($unidad->producto) ? $unidad->producto->precio : 0),
+                                'precioSugerido'=> isset($unidad->producto) ? $unidad->producto->precio : 0,
                             ])
 
                         @include('includes.cobro', [
