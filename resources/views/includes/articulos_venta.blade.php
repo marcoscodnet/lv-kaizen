@@ -28,13 +28,17 @@
         ];
     }
 
-    // old() manda; si no hay, se muestra lo que está guardado
+    // old() manda; si no hay, se muestra lo que está guardado.
+    // Los guardados traen además su propia etiqueta y sucursal, para que la lupa
+    // no dependa del catálogo: ahí no se puede elegir nada, solo mostrar.
     $artFilas = $artOld ?: $artItems->map(function ($p) {
         return [
-            'pieza_id'    => $p->pieza_id,
-            'sucursal_id' => $p->sucursal_id,
-            'cantidad'    => $p->cantidad,
-            'precio'      => $p->precio,
+            'pieza_id'        => $p->pieza_id,
+            'sucursal_id'     => $p->sucursal_id,
+            'cantidad'        => $p->cantidad,
+            'precio'          => $p->precio,
+            'etiqueta'        => trim(optional($p->pieza)->codigo . ' - ' . optional($p->pieza)->descripcion, ' -'),
+            'sucursal_nombre' => optional($p->sucursal)->nombre,
         ];
     })->all();
 
@@ -100,21 +104,27 @@
                         @endphp
                         <tr>
                             <td>
-                                <select name="pieza_id[]" class="form-control selectArticulo" {{ $artSoloLectura ? 'disabled' : '' }}>
-                                    <option value="">Seleccionar...</option>
-                                    @foreach($artCatalogo as $piezaId => $opciones)
-                                        @php $primera = $opciones[0]; @endphp
-                                        <option value="{{ $piezaId }}" {{ $fila['pieza_id'] == $piezaId ? 'selected' : '' }}>
-                                            {{ trim($primera['codigo'] . ' - ' . $primera['descripcion']) }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                @if($artSoloLectura)
+                                    {{-- En la lupa no hay nada que elegir: se muestra el concepto --}}
+                                    <input type="text" class="form-control" value="{{ $fila['etiqueta'] ?? '' }}" readonly disabled>
+                                @else
+                                    <select name="pieza_id[]" class="form-control selectArticulo">
+                                        <option value="">Seleccionar...</option>
+                                        @foreach($artCatalogo as $piezaId => $opciones)
+                                            @php $primera = $opciones[0]; @endphp
+                                            <option value="{{ $piezaId }}" {{ $fila['pieza_id'] == $piezaId ? 'selected' : '' }}>
+                                                {{ trim($primera['codigo'] . ' - ' . $primera['descripcion']) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                             </td>
                             @php
                                 // La sucursal no se elige: es la de la venta. No se puede
                                 // vender un artículo del depósito de otra sucursal.
                                 $filaSucursalId = $fila['sucursal_id'] ?: $artSucursalId;
-                                $filaSucursalNombre = optional($opcionesSucursal->firstWhere('sucursal_id', $filaSucursalId))['sucursal_nombre']
+                                $filaSucursalNombre = $fila['sucursal_nombre']
+                                    ?? optional($opcionesSucursal->firstWhere('sucursal_id', $filaSucursalId))['sucursal_nombre']
                                     ?? $artSucursalNombre;
                             @endphp
                             <td>

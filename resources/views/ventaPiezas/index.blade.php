@@ -12,7 +12,7 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Venta Piezas</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Venta de artículos</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 
@@ -86,13 +86,13 @@
 
                         <th scope="col">Fecha</th>
                         <th scope="col">Cliente</th>
-                        <th scope="col">Orden de Servicio</th>
+                        <th scope="col">Origen</th>
                         <th scope="col">Destino</th>
                         <th scope="col">Monto</th>
                         <th scope="col">Sucursal</th>
                         <th scope="col">Vendedor</th>
                         <th scope="col">Estado</th>
-                        <th scope="col">Piezas</th>
+                        <th scope="col">Artículos</th>
 
                         <th scope="col">Acciones</th>
 
@@ -193,6 +193,17 @@
                         "render": function(data, type, row) {
                             // Construir HTML para las acciones
                             var actionsHtml = '<div>';
+
+                            // Los artículos vendidos junto con una moto son parte de esa
+                            // operación: no se editan ni se anulan por afuera. Desde acá
+                            // solo se va a ver la venta que los contiene.
+                            if (row.venta_id) {
+                                @can('venta-listar')
+                                    actionsHtml += '<a href="{{ route("ventas.show", ":id") }}" class="btn btn-link p-0" alt="Ver la venta" title="Ver la venta de la moto" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-motorcycle"></span></a>'.replace(':id', row.venta_id);
+                                @endcan
+                                return actionsHtml + '</div>';
+                            }
+
                             @can('venta-pieza-ver')
 
                                 actionsHtml += '<a href="{{ route("ventaPiezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);

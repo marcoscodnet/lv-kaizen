@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-cogs" aria-hidden="true"></i><span class="ms-2">Editar pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-cogs" aria-hidden="true"></i><span class="ms-2">Editar artículo</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -111,7 +111,7 @@
                         <div class="row">
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">
-                                    <label>Foto de la pieza</label>
+                                    <label>Foto del artículo</label>
                                     <div>
                                         <video id="video" width="320" height="240" autoplay></video>
                                         <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>

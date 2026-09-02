@@ -161,7 +161,7 @@
 
     <table>
         <tr style="background-color: #999999;">
-            <th>Código</th><th>Pieza</th><th>Cantidad</th>
+            <th>Código</th><th>Artículo</th><th>Cantidad</th>
         </tr>
         @foreach($piezas as $piezaMovimiento)
             <tr>
@@ -232,7 +232,7 @@
 
     <table>
         <tr style="background-color: #999999;">
-            <th>Código</th><th>Pieza</th><th>Cantidad</th>
+            <th>Código</th><th>Artículo</th><th>Cantidad</th>
         </tr>
         @foreach($piezas as $piezaMovimiento)
             <tr>

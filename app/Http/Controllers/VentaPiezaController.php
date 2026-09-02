@@ -34,6 +34,18 @@ class VentaPiezaController extends Controller
     use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, FechaDeCobro;
 
     /**
+     * Los artículos vendidos junto con una moto son parte de esa operación: se
+     * editan y se anulan desde la venta, nunca desde acá. Si no, se rompería el
+     * importe a cobrar y el estado de autorización de la venta.
+     */
+    private function perteneceAUnaVenta($id): ?VentaPieza
+    {
+        $venta = VentaPieza::find($id);
+
+        return ($venta && $venta->venta_id) ? $venta : null;
+    }
+
+    /**
      * Sucursal cuya caja del día recibe el efectivo de una venta de piezas.
      * En Salón no hay sucursal a nivel venta, así que se resuelve por los ítems
      * y, si tampoco, por la sucursal del vendedor.
@@ -78,11 +90,32 @@ class VentaPiezaController extends Controller
     }
 
 
-    // SQL CASE that returns 'Autorizada' when the sale has payments and all of them are authorized
+    /**
+     * Estado de autorización de una venta de artículos.
+     *
+     * Los artículos que se vendieron junto con una moto no tienen pagos propios:
+     * la plata está en la venta de la unidad. Así que heredan su estado — recién
+     * quedan autorizados cuando se autoriza toda la operación de la moto. De eso
+     * depende la comisión, por eso tiene que verse en esta nómina.
+     */
     private function autorizacionCase(string $alias = ''): string
     {
         $as = $alias ? " as $alias" : '';
         return "CASE
+            WHEN venta_piezas.venta_id IS NOT NULL THEN (
+                CASE
+                    WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_id = venta_piezas.venta_id)
+                     AND NOT EXISTS (
+                         SELECT 1 FROM pagos p3
+                         JOIN entidads e3 ON e3.id = p3.entidad_id
+                         LEFT JOIN autorizacions a3 ON a3.pago_id = p3.id
+                         WHERE p3.venta_id = venta_piezas.venta_id
+                           AND e3.autorizacion = 1
+                           AND a3.id IS NULL
+                     )
+                    THEN 'Autorizada' ELSE 'No autorizada'
+                END
+            )
             WHEN EXISTS (SELECT 1 FROM pagos WHERE pagos.venta_pieza_id = venta_piezas.id)
              AND NOT EXISTS (
                  SELECT 1 FROM pagos p2
@@ -93,6 +126,30 @@ class VentaPiezaController extends Controller
                    AND a2.id IS NULL
              )
             THEN 'Autorizada' ELSE 'No autorizada' END{$as}";
+    }
+
+    /**
+     * De dónde viene la venta de artículos: de una orden de taller, de una venta
+     * de moto, o de nada (mostrador).
+     */
+    private function origenCase(string $alias = ''): string
+    {
+        $as = $alias ? " as $alias" : '';
+        return "CASE
+            WHEN venta_piezas.venta_id IS NOT NULL THEN CONCAT(
+                'Venta de moto #', venta_piezas.venta_id,
+                IFNULL(CONCAT(' - Motor ', (
+                    SELECT u.motor FROM ventas v
+                    JOIN unidads u ON u.id = v.unidad_id
+                    WHERE v.id = venta_piezas.venta_id
+                )), '')
+            )
+            WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ',
+                (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id),
+                IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo),
+                NULLIF(servicios.motor, '')
+            )), '')
+            ELSE NULL END{$as}";
     }
 
     // SQL predicate (for servicios queries) that is TRUE when the service order is NOT authorized.
@@ -187,7 +244,7 @@ class VentaPiezaController extends Controller
         $columnas = [
             'venta_piezas.fecha',
             DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),
-            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END"),
+            DB::raw($this->origenCase()),
             'venta_piezas.destino',
             DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
@@ -219,9 +276,10 @@ class VentaPiezaController extends Controller
 
         $query = VentaPieza::select(
             'venta_piezas.id as id',
+            'venta_piezas.venta_id as venta_id',
             'venta_piezas.fecha',
             DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),
-            DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END as orden_servicio"),
+            DB::raw($this->origenCase('orden_servicio')),
             'venta_piezas.destino',
             DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
@@ -250,9 +308,7 @@ class VentaPiezaController extends Controller
             ->leftJoin('servicios', 'venta_piezas.servicio_id', '=', 'servicios.id')
             ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
             ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
-            // Los conceptos cargados dentro de una venta de moto no son
-            // operaciones sueltas: se ven adentro de esa venta.
-            ->whereNull('venta_piezas.venta_id');
+            ;
 
         if (!empty($user_id) && $user_id != '-1') {
             $query->where('venta_piezas.user_id', $user_id);
@@ -384,7 +440,7 @@ class VentaPiezaController extends Controller
                 ->sum('cantidad');
 
             if ($stockDisponible < $cantidadSolicitada) {
-                throw new \Exception("No hay suficiente stock de la pieza {$piezaId} en la sucursal seleccionada.");
+                throw new \Exception("No hay suficiente stock del artículo {$piezaId} en la sucursal seleccionada.");
             }
         }
 
@@ -560,10 +616,10 @@ class VentaPiezaController extends Controller
 
         $messages = [
             'fecha.required'        => 'La fecha es obligatoria.',
-            'pieza_id.required'     => 'Debe agregar al menos una pieza.',
-            'pieza_id.min'          => 'Debe agregar al menos una pieza.',
-            'pieza_id.*.required'   => 'Debe seleccionar una pieza.',
-            'pieza_id.*.distinct'   => 'No puede repetir piezas.',
+            'pieza_id.required'     => 'Debe agregar al menos un artículo.',
+            'pieza_id.min'          => 'Debe agregar al menos un artículo.',
+            'pieza_id.*.required'   => 'Debe seleccionar un artículo.',
+            'pieza_id.*.distinct'   => 'No puede repetir artículos.',
             'comprobante.*.mimes'   => 'El comprobante debe ser JPG, PNG o PDF.',
             'comprobante.*.max'     => 'El comprobante no puede superar los 5MB.',
         ];
@@ -612,10 +668,10 @@ class VentaPiezaController extends Controller
 
         $messages = [
             'fecha.required'        => 'La fecha es obligatoria.',
-            'pieza_id.required'     => 'Debe agregar al menos una pieza.',
-            'pieza_id.min'          => 'Debe agregar al menos una pieza.',
-            'pieza_id.*.required'   => 'Debe seleccionar una pieza.',
-            'pieza_id.*.distinct'   => 'No puede repetir piezas.',
+            'pieza_id.required'     => 'Debe agregar al menos un artículo.',
+            'pieza_id.min'          => 'Debe agregar al menos un artículo.',
+            'pieza_id.*.required'   => 'Debe seleccionar un artículo.',
+            'pieza_id.*.distinct'   => 'No puede repetir artículos.',
             'comprobante.*.mimes'   => 'El comprobante debe ser JPG, PNG o PDF.',
             'comprobante.*.max'     => 'El comprobante no puede superar los 5MB.',
         ];
@@ -645,6 +701,11 @@ class VentaPiezaController extends Controller
         // edición se rechaza y el ajuste se hace a mano desde caja.
         if ($mensajeCaja = $this->movimientosBloqueadosPorCajaCerrada('venta_pieza_id', $id)) {
             return redirect()->back()->withErrors($mensajeCaja)->withInput();
+        }
+
+        if ($ventaDeMoto = $this->perteneceAUnaVenta($id)) {
+            return redirect()->route('ventas.show', $ventaDeMoto->venta_id)
+                ->with('error', 'Estos artículos se cargaron dentro de la venta de la moto: se modifican desde ahí.');
         }
 
         DB::beginTransaction();
@@ -724,6 +785,11 @@ class VentaPiezaController extends Controller
 
     public function edit($id)
     {
+        if ($ventaDeMoto = $this->perteneceAUnaVenta($id)) {
+            return redirect()->route('ventas.show', $ventaDeMoto->venta_id)
+                ->with('error', 'Estos artículos se cargaron dentro de la venta de la moto: se modifican desde ahí.');
+        }
+
         $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal', 'pagos', 'cliente'])->findOrFail($id);
 
         $user = auth()->user();
@@ -826,6 +892,11 @@ class VentaPiezaController extends Controller
      */
     public function destroy($id)
     {
+        if ($ventaDeMoto = $this->perteneceAUnaVenta($id)) {
+            return redirect()->route('ventas.show', $ventaDeMoto->venta_id)
+                ->with('error', 'Estos artículos se cargaron dentro de la venta de la moto: se modifican desde ahí.');
+        }
+
 
 
         DB::transaction(function () use ($id) {
@@ -865,7 +936,7 @@ class VentaPiezaController extends Controller
         });
 
         return redirect()->route('ventaPiezas.index')
-            ->with('success','Venta pieza anulada con éxito');
+            ->with('success','Venta de artículos anulada con éxito');
     }
 
     public function generatePDF(Request $request,$attach = false)
@@ -912,7 +983,7 @@ class VentaPiezaController extends Controller
 
         $pdf = PDF::loadView($template, $data);
 
-        $pdfPath = 'Venta_Pieza_' . $ventaPiezaId . '.pdf';
+        $pdfPath = 'Venta_Articulo_' . $ventaPiezaId . '.pdf';
 
         if ($attach) {
             $fullPath = public_path('/temp/' . $pdfPath);
@@ -929,7 +1000,7 @@ class VentaPiezaController extends Controller
 
     public function exportarXLS(Request $request)
     {
-        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END"),'venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw($this->origenCase()),'venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -962,7 +1033,7 @@ class VentaPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw($this->origenCase('orden_servicio')),'venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -982,8 +1053,6 @@ class VentaPiezaController extends Controller
             ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
             ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
-            // Los conceptos de una venta de moto se ven adentro de esa venta
-            ->whereNull('venta_piezas.venta_id')
         ;
 
         if (!empty($user_id) && $user_id != '-1') {
@@ -1014,7 +1083,7 @@ class VentaPiezaController extends Controller
         // ===============================
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle("Venta Piezas");
+        $sheet->setTitle("Venta de artículos");
 
         // ------------------------------
         // FILTROS
@@ -1044,7 +1113,7 @@ class VentaPiezaController extends Controller
         // ------------------------------
         $headers = [
             "Fecha", "Cliente", "Orden de Servicio", "Destino",
-            "Monto", "Sucursal", "Vendedor", "Piezas","Estado"
+            "Monto", "Sucursal", "Vendedor", "Artículos","Estado"
         ];
 
         $col = 1;
@@ -1106,7 +1175,7 @@ class VentaPiezaController extends Controller
         ini_set('memory_limit', '-1'); // ilimitado
         ini_set('max_execution_time', 0);
 
-        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END"),'venta_piezas.destino',DB::raw("(
+        $columnas = [  'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente))"),DB::raw($this->origenCase()),'venta_piezas.destino',DB::raw("(
         SELECT SUM(pvp.precio * pvp.cantidad)
         FROM pieza_venta_piezas pvp
         WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -1140,7 +1209,7 @@ class VentaPiezaController extends Controller
         // ------------------------------
         // MISMA QUERY QUE DATATABLE()
         // ------------------------------
-        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw("CASE WHEN venta_piezas.servicio_id IS NOT NULL THEN NULLIF(TRIM(CONCAT_WS(' ', (SELECT m.nombre FROM marcas m WHERE m.id = servicios.marca_id), IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo), NULLIF(servicios.motor, ''))), '') ELSE NULL END as orden_servicio"),'venta_piezas.destino',DB::raw("(
+        $query = VentaPieza::select('venta_piezas.id as id', 'venta_piezas.fecha',DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),DB::raw($this->origenCase('orden_servicio')),'venta_piezas.destino',DB::raw("(
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
@@ -1160,8 +1229,6 @@ class VentaPiezaController extends Controller
             ->leftJoin('clientes as clientes_serv', 'servicios.cliente_id', '=', 'clientes_serv.id')
             ->leftJoin('sucursals as suc_serv', 'servicios.sucursal_id', '=', 'suc_serv.id')
             ->leftJoin('users', 'venta_piezas.user_id', '=', 'users.id')
-            // Los conceptos de una venta de moto se ven adentro de esa venta
-            ->whereNull('venta_piezas.venta_id')
         ;
 
         if (!empty($user_id) && $user_id != '-1') {

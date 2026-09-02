@@ -67,7 +67,7 @@ class TipoPiezaController extends Controller
 
 
         return redirect()->route('tipoPiezas.index')
-            ->with('success','Tipo de Pieza creado con éxito');
+            ->with('success','Tipo de artículo creado con éxito');
     }
 
     /**
@@ -121,7 +121,7 @@ class TipoPiezaController extends Controller
 
 
         return redirect()->route('tipoPiezas.index')
-            ->with('success','Tipo de Pieza modificado con éxito');
+            ->with('success','Tipo de artículo modificado con éxito');
     }
 
     /**
@@ -137,6 +137,6 @@ class TipoPiezaController extends Controller
         TipoPieza::find($id)->delete();
 
         return redirect()->route('tipoPiezas.index')
-            ->with('success','Tipo de Pieza eliminado con éxito');
+            ->with('success','Tipo de artículo eliminado con éxito');
     }
 }

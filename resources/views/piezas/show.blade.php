@@ -12,7 +12,7 @@
                 <div class="col-auto align-self-center">
                     <h5 class="mb-0">
                         <i class="fa fa-cogs"></i>
-                        <span class="ms-2">Ver pieza</span>
+                        <span class="ms-2">Ver artículo</span>
                     </h5>
                 </div>
             </div>
@@ -52,7 +52,7 @@
                 {{-- Foto --}}
                 <div class="row mt-3">
                     <div class="col-12 col-lg-6">
-                        <label>Foto de la pieza</label>
+                        <label>Foto del artículo</label>
                         <div>
                             @if($pieza->foto)
                                 <img src="{{ asset('images/'.$pieza->foto) }}"

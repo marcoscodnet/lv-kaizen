@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-exchange-alt" aria-hidden="true"></i><span class="ms-2">Ver movimiento de piezas</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-exchange-alt" aria-hidden="true"></i><span class="ms-2">Ver movimiento de artículos</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -80,7 +80,7 @@
                                 <thead>
 
                                 <th>Código</th>
-                                <th>Pieza</th>
+                                <th>Artículo</th>
                                 <th>Cantidad</th>
 
 

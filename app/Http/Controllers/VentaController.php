@@ -733,7 +733,7 @@ class VentaController extends Controller
     }
 
     public function edit($id) {
-        $venta = Venta::with('pagos', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza')->findOrFail($id);
+        $venta = Venta::with('pagos', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza', 'ventaArticulos.piezas.sucursal')->findOrFail($id);
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -987,7 +987,7 @@ class VentaController extends Controller
     }
 
     public function show($id) {
-        $venta = Venta::with('pagos.comprobantes', 'pagos.entidad', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza')->findOrFail($id);
+        $venta = Venta::with('pagos.comprobantes', 'pagos.entidad', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza', 'ventaArticulos.piezas.sucursal')->findOrFail($id);
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('', '');

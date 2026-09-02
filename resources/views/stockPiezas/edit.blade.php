@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Editar stock pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Editar stock</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-12 col-lg-9">
                                 <div class="form-group">
-                                    <label for="pieza_id">Pieza</label>
+                                    <label for="pieza_id">Artículo</label>
                                     <select name="pieza_id" id="pieza_id" class="form-control js-example-basic-single" disabled>
 
                                         @foreach($piezas as $piezaId => $pieza)

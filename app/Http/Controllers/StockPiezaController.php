@@ -158,7 +158,7 @@ class StockPiezaController extends Controller
         // Definir los mensajes de error personalizados
         $messages = [
 
-            'pieza_id.required' => 'El campo Pieza es obligatorio.',
+            'pieza_id.required' => 'El campo Artículo es obligatorio.',
             'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
 
         ];
@@ -271,7 +271,7 @@ class StockPiezaController extends Controller
         // Definir los mensajes de error personalizados
         $messages = [
 
-            'pieza_id.required' => 'El campo Pieza es obligatorio.',
+            'pieza_id.required' => 'El campo Artículo es obligatorio.',
             'sucursal_id.required' => 'El campo Sucursal es obligatorio.',
 
         ];
@@ -402,7 +402,7 @@ class StockPiezaController extends Controller
         if ($ok) {
             DB::commit();
             return redirect()->route('stockPiezas.index')
-                ->with('success', 'Stock Pieza eliminado con éxito');
+                ->with('success', 'Stock eliminado con éxito');
         } else {
             DB::rollback();
             return redirect()->route('stockPiezas.index')
@@ -465,7 +465,7 @@ class StockPiezaController extends Controller
         // ===============================
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle("Stock Piezas");
+        $sheet->setTitle("Stock de artículos");
 
         // ------------------------------
         // FILTROS
@@ -630,7 +630,7 @@ class StockPiezaController extends Controller
         ];
 
         $messages = [
-            'rows.*.pieza_id.required'   => 'El campo Pieza es obligatorio.',
+            'rows.*.pieza_id.required'   => 'El campo Artículo es obligatorio.',
             'rows.*.sucursal_id.required'=> 'El campo Sucursal es obligatorio.',
         ];
 

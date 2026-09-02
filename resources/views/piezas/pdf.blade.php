@@ -15,7 +15,7 @@
 <!-- Cabecera con imagen -->
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Piezas</h2>
+    <h2 style="margin-top: 10px;">Listado de artículos</h2>
 </div>
 
 <!-- Filtros aplicados -->

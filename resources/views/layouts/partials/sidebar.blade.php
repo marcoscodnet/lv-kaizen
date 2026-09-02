@@ -109,7 +109,7 @@
                     @endcan
                     @can('tipo-pieza-listar')
                         <a class="nav-link {{ request()->routeIs('tipoPiezas.*') ? 'active' : '' }}" href="{{ route('tipoPiezas.index') }}" role="button">
-                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Tipos de Piezas</span>
+                            <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Tipos de artículo</span>
                             </div>
                         </a>
                     @endcan
@@ -143,7 +143,7 @@
                         @endcan
                         @can('pieza-listar')
                             <a class="nav-link {{ request()->routeIs('piezas.*') ? 'active' : '' }}" href="{{ route('piezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Piezas</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-cogs"></span></span><span class="nav-link-text ps-1">Artículos</span>
                                 </div>
                             </a>
                         @endcan
@@ -239,7 +239,7 @@
 
                         @can('pieza-movimiento-listar')
                             <a class="nav-link {{ request()->routeIs('movimientoPiezas.*') ? 'active' : '' }}" href="{{ route('movimientoPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos Piezas</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-exchange-alt"></span></span><span class="nav-link-text ps-1">Movimientos de artículos</span>
                                 </div>
                             </a>
                         @endcan
@@ -266,14 +266,14 @@
 
                         @can('stock-pieza-listar')
                             <a class="nav-link {{ request()->routeIs('stockPiezas.*') ? 'active' : '' }}" href="{{ route('stockPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Alta de stock Piezas</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-toolbox"></span></span><span class="nav-link-text ps-1">Alta de stock</span>
                                 </div>
                             </a>
                         @endcan
 
                         @can('venta-pieza-listar')
                             <a class="nav-link {{ request()->routeIs('ventaPiezas.*') ? 'active' : '' }}" href="{{ route('ventaPiezas.index') }}" role="button">
-                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-shopping-cart"></span></span><span class="nav-link-text ps-1">Venta Piezas</span>
+                                <div class="d-flex align-items-center"><span class="nav-link-icon"><span class="fas fa-shopping-cart"></span></span><span class="nav-link-text ps-1">Venta de artículos</span>
                                 </div>
                             </a>
                         @endcan

@@ -12,7 +12,7 @@
 
             <div class="row flex-between-center">
                 <div class="col-4 col-sm-auto d-flex align-items-center pe-0">
-                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-cogs" aria-hidden="true"></i><span class="ms-2">Piezas</span></h5>
+                    <h5 class="fs-9 mb-0 text-nowrap py-2 py-xl-0"><i class="fa fa-cogs" aria-hidden="true"></i><span class="ms-2">Artículos</span></h5>
                 </div>
                 <div class="col-8 col-sm-auto text-end ps-2">
 

@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Ver venta pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Ver venta de artículos</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -56,7 +56,7 @@
                             <table class="table">
                                 <thead>
 
-                                <th>Pieza</th>
+                                <th>Artículo</th>
                                 <th>Sucursal</th>
                                 {{-- <th>Costo</th> --}}
                                 {{-- <th>$ min.</th> --}}
@@ -278,7 +278,7 @@
                                 @include('includes.aviso_acreditacion', [
                                     'pagos'    => $ventaPieza->pagos,
                                     'sugerido' => $totalPiezas,
-                                    'etiqueta' => 'Piezas',
+                                    'etiqueta' => 'Artículos',
                                 ])
                             </div>
 

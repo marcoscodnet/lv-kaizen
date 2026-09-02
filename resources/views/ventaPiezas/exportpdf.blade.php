@@ -49,7 +49,7 @@
 <!-- Cabecera con imagen -->
 <div style="text-align: center; margin-bottom: 20px;">
     <img src="{{ public_path('images/logo_kaisen.png') }}" width="180">
-    <h2 style="margin-top: 10px;">Listado de Venta de Piezas</h2>
+    <h2 style="margin-top: 10px;">Listado de ventas de artículos</h2>
 </div>
 
 
@@ -78,7 +78,7 @@
         <th>Monto</th>
         <th>Sucursal</th>
         <th>Vendedor</th>
-        <th>Piezas</th>
+        <th>Artículos</th>
         <th>Estado</th>
     </tr>
     </thead>

@@ -8,7 +8,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Editar venta pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-shopping-cart" aria-hidden="true"></i><span class="ms-2">Editar venta de artículos</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -54,7 +54,7 @@
                             <table class="table">
                                 <thead>
 
-                                <th>Pieza</th>
+                                <th>Artículo</th>
                                 <th>Sucursal</th>
                                 {{-- <th>Costo</th> --}}
                                 {{-- <th>$ min.</th> --}}
@@ -985,13 +985,13 @@
                 $aviso.show();
                 if (Math.abs(diff) < 0.01) {
                     $aviso.removeClass('alert-warning alert-danger').addClass('alert-success')
-                        .html('Cobro completo ✓ — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos));
+                        .html('Cobro completo ✓ — Artículos: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos));
                 } else if (diff < 0) {
                     $aviso.removeClass('alert-success alert-danger').addClass('alert-warning')
-                        .html('Cobro parcial — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Falta: $' + fmt(Math.abs(diff)));
+                        .html('Cobro parcial — Artículos: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Falta: $' + fmt(Math.abs(diff)));
                 } else {
                     $aviso.removeClass('alert-success alert-warning').addClass('alert-danger')
-                        .html('Cobrado de más — Piezas: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Excedente: $' + fmt(diff));
+                        .html('Cobrado de más — Artículos: $' + fmt(totalPiezas) + ' · Pagado: $' + fmt(totalPagos) + ' · Excedente: $' + fmt(diff));
                 }
             }
 

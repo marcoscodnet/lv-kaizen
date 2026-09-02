@@ -137,10 +137,10 @@ class MovimientoPiezaController extends Controller
             'sucursal_origen_id.required' => 'El campo Origen es obligatorio.',
             'sucursal_destino_id.required' => 'El campo Destino es obligatorio.',
             'fecha.required' => 'La fecha es obligatoria.',
-            'pieza_id.required' => 'Debe agregar al menos una pieza.',
-            'pieza_id.min' => 'Debe agregar al menos una pieza.',
-            'pieza_id.*.required' => 'Debe seleccionar una pieza para cada producto.',
-            'pieza_id.*.distinct' => 'No puede repetir piezas.',
+            'pieza_id.required' => 'Debe agregar al menos un artículo.',
+            'pieza_id.min' => 'Debe agregar al menos un artículo.',
+            'pieza_id.*.required' => 'Debe seleccionar un artículo para cada producto.',
+            'pieza_id.*.distinct' => 'No puede repetir artículos.',
         ];
 
 
@@ -165,7 +165,7 @@ class MovimientoPiezaController extends Controller
             if ($stockDisponible < $cantidadSolicitada) {
                 return redirect()->back()
                     ->withErrors([
-                        'stock' => 'Stock insuficiente para la pieza ID '.$piezaId.
+                        'stock' => 'Stock insuficiente para el artículo ID '.$piezaId.
                             '. Disponible: '.$stockDisponible.
                             ', solicitado: '.$cantidadSolicitada
                     ])
@@ -296,7 +296,7 @@ class MovimientoPiezaController extends Controller
 
                 if ($restante > 0) {
                     throw new \Exception(
-                        'Stock inconsistente al revertir la pieza ID ' . $piezaId
+                        'Stock inconsistente al revertir el artículo ID ' . $piezaId
                     );
                 }
 
@@ -361,7 +361,7 @@ class MovimientoPiezaController extends Controller
 
         $pdf = PDF::loadView($template, $data);
 
-        $pdfPath = 'Movimiento_pieza_' . $movimientoId . '.pdf';
+        $pdfPath = 'Movimiento_articulo_' . $movimientoId . '.pdf';
 
         if ($attach) {
             $fullPath = public_path('/temp/' . $pdfPath);
@@ -504,7 +504,7 @@ class MovimientoPiezaController extends Controller
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        $sheet->setTitle("Movimientos de piezas");
+        $sheet->setTitle("Movimientos de artículos");
 
         // FILTROS
         $sheet->setCellValue('A1', 'Filtros aplicados');
@@ -516,7 +516,7 @@ class MovimientoPiezaController extends Controller
 
         // ENCABEZADOS
         $headers = [
-            "Usuario", "Origen", "Destino", "Fecha", "Piezas"
+            "Usuario", "Origen", "Destino", "Fecha", "Artículos"
         ];
 
         $row = 4;
@@ -715,7 +715,7 @@ class MovimientoPiezaController extends Controller
                 }
 
                 if ($restante > 0) {
-                    throw new \Exception('Stock insuficiente para la pieza ID '.$piezaId);
+                    throw new \Exception('Stock insuficiente para el artículo ID '.$piezaId);
                 }
 
                 // ==========================

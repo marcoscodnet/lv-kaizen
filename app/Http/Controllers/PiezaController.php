@@ -234,7 +234,7 @@ class PiezaController extends Controller
             throw $e;
         }
         return redirect()->route('piezas.index')
-            ->with('success','Pieza creada con éxito');
+            ->with('success','Artículo creado con éxito');
     }
 
 
@@ -404,11 +404,11 @@ class PiezaController extends Controller
         }
         // Si no tiene permisos, prohibir
         else {
-            abort(403, 'No tienes permisos para editar esta pieza.');
+            abort(403, 'No tienes permisos para editar este artículo.');
         }
 
         return redirect()->route('piezas.index')
-            ->with('success','Pieza modificada con éxito');
+            ->with('success','Artículo modificado con éxito');
     }
 
 
@@ -432,18 +432,18 @@ class PiezaController extends Controller
             }
 
             return redirect()->route('piezas.index')
-                ->with('success', 'Pieza eliminada con éxito');
+                ->with('success', 'Artículo eliminado con éxito');
 
         } catch (\Illuminate\Database\QueryException $e) {
 
             // Error 1451 = clave foránea impide borrar
             if ($e->errorInfo[1] == 1451) {
                 return redirect()->route('piezas.index')
-                    ->with('error', 'No se puede eliminar la pieza porque está asociada a ventas.');
+                    ->with('error', 'No se puede eliminar el artículo porque está asociado a ventas.');
             }
 
             return redirect()->route('piezas.index')
-                ->with('error', 'Ocurrió un error al intentar eliminar la pieza.');
+                ->with('error', 'Ocurrió un error al intentar eliminar el artículo.');
         }
     }
 
@@ -515,7 +515,7 @@ class PiezaController extends Controller
         Pieza::insert($dataToInsert);
 
         return redirect()->route('piezas.index')
-            ->with('success', 'Piezas cargadas correctamente');
+            ->with('success', 'Artículos cargados correctamente');
     }
 
 
@@ -606,7 +606,7 @@ class PiezaController extends Controller
         // ===============================
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle("Piezas");
+        $sheet->setTitle("Artículos");
 
         // ------------------------------
         // FILTROS

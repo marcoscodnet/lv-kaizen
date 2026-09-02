@@ -10,7 +10,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Crear stock pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Crear stock</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -29,7 +29,7 @@
                             <div class="col-md-9">
                                 <div class="form-group d-flex align-items-end gap-2">
                                     <div class="flex-grow-1">
-                                        <label for="pieza_id">Pieza</label>
+                                        <label for="pieza_id">Artículo</label>
                                         <select name="pieza_id" id="pieza_id" class="form-control js-example-basic-single" required>
 
                                             @foreach($piezas as $piezaId => $pieza)
@@ -140,7 +140,7 @@
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title" id="nuevoClienteLabel">Nueva Pieza</h5>
+                        <h5 class="modal-title" id="nuevoClienteLabel">Nuevo artículo</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
 
@@ -198,11 +198,11 @@
                         <div class="row">
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
-                                    <label>Foto de la pieza</label>
+                                    <label>Foto del artículo</label>
                                     <div>
                                         <video id="video" width="320" height="240" autoplay></video>
                                         <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-                                        <img id="photo" src="" alt="Foto de la pieza" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
+                                        <img id="photo" src="" alt="Foto del artículo" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
                                     </div>
                                     <button type="button" id="capture" class="btn btn-info mt-2">📸 Capturar</button>
                                     <input type="hidden" name="foto" id="foto">

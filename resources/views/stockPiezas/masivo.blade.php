@@ -45,7 +45,7 @@
         <div class="card-header">
             <div class="row flex-between-end">
                 <div class="col-auto align-self-center">
-                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Carga masiva de stock pieza</span></h5>
+                    <h5 class="mb-0" data-anchor="data-anchor"><i class="fa fa-toolbox" aria-hidden="true"></i><span class="ms-2">Carga masiva de stock</span></h5>
                 </div>
                 <div class="col-auto ms-auto">
 
@@ -62,7 +62,7 @@
                 <table class="table table-bordered" id="tablaMasiva">
                     <thead class="table-light">
                     <tr>
-                        <th style="width: 250px;">Pieza</th>
+                        <th style="width: 250px;">Artículo</th>
                         <th style="width: 120px;">Cantidad</th>
                         <th>Sucursal</th>
                         <th>Proveedor</th>

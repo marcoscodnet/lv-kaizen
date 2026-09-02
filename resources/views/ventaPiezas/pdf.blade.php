@@ -148,7 +148,7 @@
         <div class="content">
             <table>
                 <tr style="background-color: #999999;">
-                    <th>Código</th><th>Pieza</th><th>Suc. Origen</th><th>Cant. Pedida</th><th>Monto a Cobrar</th>
+                    <th>Código</th><th>Artículo</th><th>Suc. Origen</th><th>Cant. Pedida</th><th>Monto a Cobrar</th>
                 </tr>
                 @php $total = 0; @endphp
                 @foreach($piezaVentapiezas as $piezaVentapieza)
