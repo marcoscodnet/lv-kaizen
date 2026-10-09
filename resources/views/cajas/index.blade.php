@@ -174,9 +174,11 @@
                         }
                     }
                 ],
-                order: [[1,'desc']],
+                order: [[0,'desc']],
                 language: { url: "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}" },
-                stateSave: true
+                stateSave: true,
+                // Siempre arrancar por apertura más reciente, aunque haya un orden guardado viejo.
+                stateLoadParams: function(settings, data) { delete data.order; }
             });
 
             $('#filtroSucursal,#fechaDesde,#fechaHasta').change(function() {

@@ -31,6 +31,7 @@ class MovimientoCajaController extends Controller
     public function create($caja_id)
     {
         $caja = Caja::findOrFail($caja_id);
+        $this->autorizarCaja($caja);
         $conceptos = Concepto::where('activo', true)->get();
         $entidads = Entidad::where('activa', true)->where('tangible', true)->get();
 
@@ -50,6 +51,8 @@ class MovimientoCajaController extends Controller
             'acreditado' => 'nullable|boolean',
             'referencia' => 'nullable|string|max:255'
         ]);
+
+        $this->autorizarCaja(Caja::findOrFail($request->caja_id));
 
         DB::transaction(function () use ($request) {
             MovimientoCaja::create([
@@ -76,6 +79,7 @@ class MovimientoCajaController extends Controller
     {
 
         $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
+        $this->autorizarCaja($mov->caja);
 
         // 🔒 Bloquear si la caja ya está cerrada
         if ($mov->caja->estado === 'Cerrada') {
@@ -98,6 +102,7 @@ class MovimientoCajaController extends Controller
     public function update(Request $request, $movimiento_id)
     {
         $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
+        $this->autorizarCaja($mov->caja);
 
         // 🔒 Validaciones de negocio
         if ($mov->caja->estado === 'Cerrada') {
@@ -142,6 +147,7 @@ class MovimientoCajaController extends Controller
     public function destroy($movimiento_id)
     {
         $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
+        $this->autorizarCaja($mov->caja);
 
         // Bloquear si la caja está cerrada
         if ($mov->caja->estado === 'Cerrada') {
@@ -167,9 +173,18 @@ class MovimientoCajaController extends Controller
     public function acreditar($movimiento_id)
     {
         $mov = MovimientoCaja::findOrFail($movimiento_id);
+        $this->autorizarCaja($mov->caja);
         $mov->update(['acreditado' => true]);
 
         return redirect()->route('cajas.show', $mov->caja_id)
             ->with('success', 'Movimiento acreditado correctamente.');
+    }
+
+    // 403 si la caja no es de la sucursal del usuario (salvo Administrador).
+    private function autorizarCaja($caja): void
+    {
+        if (!$caja || !$caja->esVisiblePara(auth()->user())) {
+            abort(403, 'No tenés acceso a las cajas de otra sucursal.');
+        }
     }
 }

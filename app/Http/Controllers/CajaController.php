@@ -37,7 +37,11 @@ class CajaController extends Controller
     // Listado de cajas
     public function index()
     {
-        $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        if (Caja::veTodasLasSucursales(auth()->user())) {
+            $sucursals = Sucursal::orderBy('nombre')->pluck('nombre', 'id')->prepend('Todas', '-1');
+        } else {
+            $sucursals = Sucursal::where('id', auth()->user()->sucursal_id)->pluck('nombre', 'id');
+        }
 
         return view('cajas.index', compact('sucursals'));
     }
@@ -70,7 +74,8 @@ class CajaController extends Controller
             'users.name as usuario_nombre'
         )
             ->leftJoin('sucursals', 'cajas.sucursal_id', '=', 'sucursals.id')
-            ->leftJoin('users', 'cajas.user_id', '=', 'users.id');
+            ->leftJoin('users', 'cajas.user_id', '=', 'users.id')
+            ->visiblesPara(auth()->user());
 
         if (!empty($sucursal_id) && $sucursal_id != '-1') {
             $query->where('cajas.sucursal_id', $sucursal_id);
@@ -93,7 +98,7 @@ class CajaController extends Controller
         }
 
         $recordsFiltered = $query->count();
-        $recordsTotal = Caja::count();
+        $recordsTotal = Caja::visiblesPara(auth()->user())->count();
 
         $datos = $query->orderBy($columnaOrden, $orden)
             ->skip($request->input('start', 0))
@@ -126,7 +131,15 @@ class CajaController extends Controller
 
     public function arqueoActual()
     {
-        $caja = Caja::where('estado','Abierta')->firstOrFail();
+        $caja = Caja::where('estado','Abierta')
+            ->visiblesPara(auth()->user())
+            ->orderByDesc('apertura')
+            ->first();
+
+        if (!$caja) {
+            return redirect()->route('cajas.index')
+                ->withErrors('No hay una caja abierta para tu sucursal.');
+        }
         return redirect()->route('cajas.arqueo', $caja->id);
     }
 
@@ -135,7 +148,11 @@ class CajaController extends Controller
     public function abrir()
     {
         // Obtener las sucursales disponibles para abrir caja
-        $sucursals = Sucursal::where('activa', 1)->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
+        $sucursals = Sucursal::where('activa', 1)
+            ->when(!Caja::veTodasLasSucursales(auth()->user()), function ($q) {
+                $q->where('id', auth()->user()->sucursal_id);
+            })
+            ->orderBy('nombre')->pluck('nombre', 'id')->prepend('', '');
 
         return view('cajas.abrir', compact('sucursals'));
     }
@@ -149,6 +166,10 @@ class CajaController extends Controller
         ]);
 
         $sucursalId = $this->sanitizeInput($request->input('sucursal_id'));
+
+        if (!Caja::veTodasLasSucursales(auth()->user()) && (int)$sucursalId !== (int)auth()->user()->sucursal_id) {
+            abort(403, 'Solo podés abrir la caja de tu sucursal.');
+        }
 
         // Regla de negocio: una sola caja por sucursal y por día.
         // Si ya hay una caja abierta hoy para esta sucursal, todos los usuarios
@@ -210,6 +231,7 @@ class CajaController extends Controller
             'movimientos.ventaPieza.piezas.pieza',
             'movimientos.servicio.cliente','movimientos.servicio.marca',
         ])->findOrFail($id);
+        $this->autorizarCaja($caja);
         $conceptos = Concepto::where('activo',true)->get();
         $entidads = Entidad::where('activa',true)->get();
         return view('cajas.show', compact('caja','conceptos','entidads'));
@@ -221,6 +243,7 @@ class CajaController extends Controller
     public function cerrar($id)
     {
         $caja = Caja::with('movimientos')->findOrFail($id);
+        $this->autorizarCaja($caja);
 
         // Evitar cerrar dos veces la misma caja.
         if ($caja->estado === 'Cerrada') {
@@ -251,6 +274,7 @@ class CajaController extends Controller
     public function reabrir($id)
     {
         $caja = Caja::findOrFail($id);
+        $this->autorizarCaja($caja);
 
         if ($caja->estado === 'Abierta') {
             return redirect()->route('cajas.arqueo', $caja->id)
@@ -278,6 +302,7 @@ class CajaController extends Controller
             'movimientos.ventaPieza.piezas.pieza',
             'movimientos.servicio.cliente','movimientos.servicio.marca',
         ])->findOrFail($id);
+        $this->autorizarCaja($caja);
 
         // Totales separados por tipo y acreditado
         $totales = [
@@ -297,6 +322,7 @@ class CajaController extends Controller
             'movimientos.ventaPieza.piezas.pieza',
             'movimientos.servicio.cliente', 'movimientos.servicio.marca',
         ])->findOrFail($cajaId);
+        $this->autorizarCaja($caja);
 
         $data = [
             'caja' => $caja
@@ -323,6 +349,7 @@ class CajaController extends Controller
             'movimientos.ventaPieza.piezas.pieza',
             'movimientos.servicio.cliente', 'movimientos.servicio.marca',
         ])->findOrFail($cajaId);
+        $this->autorizarCaja($caja);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -397,6 +424,11 @@ class CajaController extends Controller
         exit;
     }
 
-
-
+    // 403 si la caja no es de la sucursal del usuario (salvo Administrador).
+    private function autorizarCaja(Caja $caja): void
+    {
+        if (!$caja->esVisiblePara(auth()->user())) {
+            abort(403, 'No tenés acceso a las cajas de otra sucursal.');
+        }
+    }
 }
