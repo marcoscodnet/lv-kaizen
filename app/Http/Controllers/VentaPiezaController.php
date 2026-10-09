@@ -250,7 +250,7 @@ class VentaPiezaController extends Controller
             SELECT SUM(pvp.precio * pvp.cantidad)
             FROM pieza_venta_piezas pvp
             WHERE pvp.venta_pieza_id = venta_piezas.id
-        ) as precio_total"),
+        )"),
             DB::raw("IFNULL((
             SELECT GROUP_CONCAT(DISTINCT s.nombre SEPARATOR ', ')
             FROM pieza_venta_piezas pvp
@@ -258,13 +258,13 @@ class VentaPiezaController extends Controller
             WHERE pvp.venta_pieza_id = venta_piezas.id
         ), IFNULL(suc_serv.nombre, sucursals.nombre))"),
             DB::raw("IFNULL(users.name, venta_piezas.user_name)"),
+            DB::raw($this->autorizacionCase()),
             DB::raw("(
             SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
             FROM pieza_venta_piezas pvp
             INNER JOIN piezas p ON p.id = pvp.pieza_id
             WHERE pvp.venta_pieza_id = venta_piezas.id
-        ) as piezas_codigos"),
-            DB::raw($this->autorizacionCase()),
+        )"),
         ];
 
         $columnaOrden = $columnas[$request->input('order.0.column')];
