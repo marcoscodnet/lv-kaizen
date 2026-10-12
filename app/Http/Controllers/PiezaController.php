@@ -366,6 +366,10 @@ class PiezaController extends Controller
             // Mantener la ruta de la foto si se cargó
             if (isset($filePath)) {
                 $input['foto'] = 'piezas/'.$fileName;
+            } else {
+                // No se capturó foto nueva: conservar la que ya tenía.
+                // (el hidden "foto" llega vacío -> null por ConvertEmptyStringsToNull y la pisaba)
+                unset($input['foto']);
             }
 
             try{
