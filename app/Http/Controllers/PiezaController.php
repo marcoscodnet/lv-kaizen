@@ -477,25 +477,45 @@ class PiezaController extends Controller
 
     public function storeMasivo(Request $request)
     {
-        $codigos = $request->input('codigo', []);
+        $codigos = array_map(function ($c) { return trim((string) $c); }, $request->input('codigo', []));
         $tipos = $request->input('tipo_pieza_id', []);
         $descripciones = $request->input('descripcion', []);
         $fotos = $request->input('foto', []);
 
-        $count = count($codigos);
+        // Validar todo ANTES de guardar fotos o insertar nada
+        $filasError = [];
+
+        foreach ($codigos as $i => $codigo) {
+            if ($codigo === '' || empty($tipos[$i]) || empty(trim((string) ($descripciones[$i] ?? '')))) {
+                $filasError[$i][] = 'Tiene campos vacíos.';
+            }
+        }
+
+        foreach ($this->analizarCodigosMasivo($codigos) as $i => $msg) {
+            $filasError[$i][] = $msg;
+        }
+
+        if ($filasError) {
+            ksort($filasError);
+            $errores = [];
+            foreach ($filasError as $i => $msgs) {
+                $errores[] = 'Fila ' . ($i + 1) . ' (' . ($codigos[$i] !== '' ? $codigos[$i] : 'sin código') . '): ' . implode(' ', $msgs);
+            }
+
+            // Las fotos (base64) no se mandan a la sesión: son pesadas
+            return redirect()->back()
+                ->withErrors($errores)
+                ->with('filas_error', array_keys($filasError))
+                ->withInput($request->except('foto'));
+        }
 
         $dataToInsert = [];
 
-        for ($i = 0; $i < $count; $i++) {
-            // Validación simple por fila
-            if (empty($codigos[$i]) || empty($tipos[$i]) || empty($descripciones[$i])) {
-                return redirect()->back()->withErrors("La fila " . ($i+1) . " tiene campos vacíos")->withInput();
-            }
-
+        foreach ($codigos as $i => $codigo) {
             $data = [
-                'codigo' => $codigos[$i],
+                'codigo' => $codigo,
                 'tipo_pieza_id' => $tipos[$i],
-                'descripcion' => $descripciones[$i],
+                'descripcion' => $this->sanitizeInput($descripciones[$i]),
                 'foto' => null
             ];
 
@@ -515,11 +535,75 @@ class PiezaController extends Controller
             $dataToInsert[] = $data;
         }
 
-        // Insertar todas las piezas de una vez
-        Pieza::insert($dataToInsert);
+        try {
+            // Insertar todas las piezas de una vez
+            Pieza::insert($dataToInsert);
+        } catch (QueryException $e) {
+            // Por si otro usuario cargó el mismo código entre la validación y el insert
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->back()
+                    ->withErrors('Uno de los códigos ya fue cargado por otro usuario mientras guardabas. Revisá la carga y volvé a intentar.')
+                    ->withInput($request->except('foto'));
+            }
+            throw $e;
+        }
 
         return redirect()->route('piezas.index')
             ->with('success', 'Artículos cargados correctamente');
+    }
+
+    /**
+     * Verifica (vía AJAX) qué códigos de la carga masiva ya existen o están repetidos.
+     * Devuelve { errores: { indiceFila: "mensaje" } }
+     */
+    public function verificarCodigosMasivo(Request $request)
+    {
+        $codigos = array_map(function ($c) { return trim((string) $c); }, $request->input('codigo', []));
+
+        return response()->json([
+            'errores' => (object) $this->analizarCodigosMasivo($codigos),
+        ]);
+    }
+
+    /**
+     * Devuelve [indiceFila => mensaje] para códigos repetidos dentro de la carga
+     * o que ya existen en la base. Comparación sin distinguir mayúsculas.
+     */
+    private function analizarCodigosMasivo(array $codigos): array
+    {
+        $errores = [];
+
+        // Repetidos dentro de la misma carga
+        $porCodigo = [];
+        foreach ($codigos as $i => $codigo) {
+            if ($codigo === '') continue;
+            $porCodigo[mb_strtolower($codigo)][] = $i;
+        }
+        foreach ($porCodigo as $filas) {
+            if (count($filas) > 1) {
+                foreach ($filas as $i) {
+                    $otras = array_map(function ($f) { return $f + 1; }, array_diff($filas, [$i]));
+                    $errores[$i] = 'El código está repetido en esta carga (fila ' . implode(', ', $otras) . ').';
+                }
+            }
+        }
+
+        // Ya existentes en la base
+        $noVacios = array_values(array_filter($codigos, function ($c) { return $c !== ''; }));
+        if ($noVacios) {
+            $existentes = Pieza::whereIn('codigo', $noVacios)->get(['codigo', 'descripcion'])
+                ->keyBy(function ($p) { return mb_strtolower(trim($p->codigo)); });
+
+            foreach ($codigos as $i => $codigo) {
+                $p = $existentes->get(mb_strtolower($codigo));
+                if ($p) {
+                    $msg = 'El código ya existe en el sistema (' . $p->descripcion . ').';
+                    $errores[$i] = isset($errores[$i]) ? $errores[$i] . ' ' . $msg : $msg;
+                }
+            }
+        }
+
+        return $errores;
     }
 
 

@@ -121,6 +121,9 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('/piezas/store-masivo', [PiezaController::class, 'storeMasivo'])
         ->name('piezas.storeMasivo');
 
+    Route::post('/piezas/verificar-codigos-masivo', [PiezaController::class, 'verificarCodigosMasivo'])
+        ->name('piezas.verificarCodigosMasivo');
+
     Route::get('/piezas/exportar', [PiezaController::class, 'exportarXLS'])
         ->name('piezas.exportarXLS');
 

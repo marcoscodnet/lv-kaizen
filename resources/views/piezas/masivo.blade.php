@@ -27,7 +27,11 @@
             </div>
 
 
-            <form action="{{ route('piezas.storeMasivo') }}" method="POST">
+            @include('includes.messages')
+
+            <div id="alerta-duplicados" class="alert alert-danger" style="display:none;"></div>
+
+            <form id="form-masivo" action="{{ route('piezas.storeMasivo') }}" method="POST">
                 @csrf
                 <table class="table table-bordered">
                     <thead>
@@ -40,15 +44,35 @@
                     </tr>
                     </thead>
                     <tbody id="piezas-masivo-body">
-                    @for($i = 0; $i < 5; $i++)
-                        <tr>
-                            <td><input type="text" name="codigo[]" class="form-control" required></td>
+                    @php
+                        $oldCodigos = old('codigo', array_fill(0, 5, ''));
+                        $filasError = session('filas_error', []);
+                    @endphp
+                    @foreach($oldCodigos as $i => $oldCodigo)
+                        <tr class="{{ in_array($i, $filasError) ? 'table-danger' : '' }}">
+                            <td>
+                                <input type="text" name="codigo[]" class="form-control" value="{{ $oldCodigo }}" required>
+                                <small class="text-danger fila-error-msg"></small>
+                            </td>
                             <td>
                                 <select name="tipo_pieza_id[]" class="form-control js-example-basic-single" required>
                                     <option value="">Seleccione...</option>
                                     @foreach($tipos as $id => $tipo)
-                                        <option value="{{ $id }}">{{ $tipo }}</option>
+                                        <option value="{{ $id }}" {{ (string) old('tipo_pieza_id.'.$i) === (string) $id ? 'selected' : '' }}>{{ $tipo }}</option>
                                     @endforeach
+                                </select>
+                            </td>
+                            <td><input type="text" name="descripcion[]" class="form-control" value="{{ old('descripcion.'.$i) }}" required></td>
+                            <td>
+                                <img src="" class="foto-preview border" style="width:80px; height:60px; display:none;">
+                                <input type="hidden" name="foto[]" class="foto-input">
+                                <button type="button" class="btn btn-sm btn-secondary asignar-foto">Asignar foto</button>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-danger eliminar-fila"><i class="fa fa-times text-white"></i></button>
+                            </td>
+                        </tr>
+                    @endforeacheach
                                 </select>
                             </td>
                             <td><input type="text" name="descripcion[]" class="form-control" required></td>
@@ -88,7 +112,10 @@
 
             $('#agregar-fila').click(function() {
                 let row = `<tr>
-            <td><input type="text" name="codigo[]" class="form-control" required></td>
+            <td>
+                <input type="text" name="codigo[]" class="form-control" required>
+                <small class="text-danger fila-error-msg"></small>
+            </td>
             <td>
                 <select name="tipo_pieza_id[]" class="form-control js-example-basic-single" required>
                     <option value="">Seleccione...</option>
@@ -111,11 +138,77 @@
                 $('.js-example-basic-single').select2({ language: 'es' });
             });
 
-            // Eliminar fila con confirmación
+            // Eliminar fila (sin confirmación, para agilizar)
             $(document).on('click', '.eliminar-fila', function() {
-                if(confirm("¿Está seguro que desea eliminar esta fila?")) {
-                    $(this).closest('tr').remove();
+                $(this).closest('tr').remove();
+            });
+
+            // El lector de código de barras manda "Enter" al final: que no envíe el formulario
+            $(document).on('keydown', 'input[name="codigo[]"]', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    $(this).closest('tr').find('input[name="descripcion[]"]').focus();
                 }
+            });
+
+            // Al corregir un código, sacar la marca de error de esa fila
+            $(document).on('input', 'input[name="codigo[]"]', function() {
+                $(this).closest('tr').removeClass('table-danger').find('.fila-error-msg').text('');
+            });
+
+            // Antes de guardar: verificar códigos repetidos en la carga o ya existentes
+            let codigosVerificados = false;
+            $('#form-masivo').on('submit', function(e) {
+                if (codigosVerificados) return; // ya verificado, dejar enviar
+
+                e.preventDefault();
+                const form = this;
+                const $btn = $(form).find('button[type="submit"]');
+                const $filas = $('#piezas-masivo-body tr');
+                const $alerta = $('#alerta-duplicados');
+
+                $filas.removeClass('table-danger').find('.fila-error-msg').text('');
+                $alerta.hide().empty();
+
+                const codigos = $filas.find('input[name="codigo[]"]').map(function() {
+                    return $(this).val().trim();
+                }).get();
+
+                $btn.prop('disabled', true);
+
+                $.post("{{ route('piezas.verificarCodigosMasivo') }}", {
+                    _token: "{{ csrf_token() }}",
+                    codigo: codigos
+                })
+                    .done(function(resp) {
+                        const errores = resp.errores || {};
+                        const indices = Object.keys(errores);
+
+                        if (!indices.length) {
+                            codigosVerificados = true;
+                            form.submit();
+                            return;
+                        }
+
+                        const $lista = $('<ul class="mb-0"></ul>');
+                        indices.forEach(function(i) {
+                            const $fila = $filas.eq(parseInt(i, 10));
+                            $fila.addClass('table-danger').find('.fila-error-msg').text(errores[i]);
+                            $lista.append($('<li></li>').text('Fila ' + (parseInt(i, 10) + 1) + ' (' + codigos[i] + '): ' + errores[i]));
+                        });
+
+                        $alerta
+                            .append('<strong>No se guardó nada. Revisá estos códigos (corregilos o eliminá la fila):</strong>')
+                            .append($lista)
+                            .show();
+                        $('html, body').animate({ scrollTop: $alerta.offset().top - 80 }, 200);
+                        $btn.prop('disabled', false);
+                    })
+                    .fail(function() {
+                        // Si falla la verificación, el servidor vuelve a validar al guardar
+                        codigosVerificados = true;
+                        form.submit();
+                    });
             });
 
             // Configurar cámara
