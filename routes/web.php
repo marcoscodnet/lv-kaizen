@@ -31,7 +31,6 @@ use App\Http\Controllers\ProveedorController;
 use App\Exports\PiezasExport;
 use App\Http\Controllers\MovimientoPiezaController;
 use App\Http\Controllers\MovimientoCuentaController;
-use App\Http\Controllers\SeniaController;
 use App\Http\Controllers\AuditoriaController;
 
 /*
@@ -260,14 +259,6 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('arqueo/{caja}/export-excel', [CajaController::class, 'generateArqueoExcel'])->name('arqueo.export.excel');
 
 
-    });
-
-// 📌 Señas (se registran desde la caja y se aplican en la venta)
-    Route::prefix('senias')->name('senias.')->group(function () {
-        Route::get('/', [SeniaController::class, 'index'])->name('index');
-        Route::get('aplicables', [SeniaController::class, 'aplicables'])->name('aplicables');
-        Route::post('{senia}/devolver', [SeniaController::class, 'devolver'])->name('devolver');
-        Route::post('{senia}/retener', [SeniaController::class, 'retener'])->name('retener');
     });
 
 // 📌 Movimientos de Caja

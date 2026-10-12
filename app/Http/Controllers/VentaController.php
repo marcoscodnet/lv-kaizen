@@ -19,7 +19,6 @@ use App\Models\Documento;
 use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
-use App\Traits\AplicaSenias;
 use App\Traits\CatalogoArticulos;
 use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
@@ -39,7 +38,7 @@ use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos, FechaDeCobro, AplicaSenias;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos, FechaDeCobro;
     /**
      * Display a listing of the resource.
      *
@@ -249,7 +248,7 @@ class VentaController extends Controller
      *
      * Cobrar de más no traba: se avisa en pantalla y se deja seguir.
      */
-    private function validarCobroCompleto($validator, Request $request, $ventaId = null): void
+    private function validarCobroCompleto($validator, Request $request): void
     {
         $aCobrar = $this->importeACobrarDelRequest($request);
 
@@ -261,9 +260,6 @@ class VentaController extends Controller
         foreach ((array) $request->input('monto', []) as $monto) {
             $cobrado += (float) $this->sanitizeInput($monto);
         }
-
-        // Las señas aplicadas también cubren la operación
-        $cobrado += $this->montoSenias($request, $ventaId);
 
         if ($cobrado >= $aCobrar - 0.01) {
             return;
@@ -571,8 +567,7 @@ class VentaController extends Controller
             'forma' => 'required',
             'monto_unidad' => 'required|numeric|min:0',
             'fecha' => 'required|date_format:d/m/Y H:i:s',
-            // Sin filas de cobro alcanza con aplicar señas
-            'entidad_id' => 'required_without:senias|array',
+            'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:1',
             'fecha_pago.*' => 'required|date',
@@ -582,7 +577,7 @@ class VentaController extends Controller
         $messages = [
             'fecha.required' => 'La fecha es obligatoria.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
-            'entidad_id.required_without' => 'Debe agregar al menos un pago.',
+            'entidad_id.required' => 'Debe agregar al menos un pago.',
             'entidad_id.min' => 'Debe agregar al menos un pago.',
             'entidad_id.*.required' => 'Debe seleccionar una forma de pago.',
             'monto.*.required' => 'El importe es obligatorio.',
@@ -611,7 +606,6 @@ class VentaController extends Controller
         // cobrar. Cobrar de menos no se confirma; cobrar de más solo avisa.
         $validator->after(function ($validator) use ($request) {
             $this->validarCobroCompleto($validator, $request);
-            $this->validarSenias($validator, $request);
         });
 
         if ($validator->fails()) {
@@ -648,7 +642,7 @@ class VentaController extends Controller
             $this->sincronizarArticulos($request, $venta);
             $this->actualizarTotalVenta($venta);
 
-            foreach ((array) $request->input('entidad_id', []) as $i => $entidadId) {
+            foreach ($request->entidad_id as $i => $entidadId) {
                 $entidad = Entidad::find($entidadId);
 
                 $detalle = new Pago();
@@ -718,10 +712,6 @@ class VentaController extends Controller
                 }
             }
 
-
-            // Señas del cliente aplicadas como pago (no tocan la caja de hoy)
-            $this->sincronizarSenias($request, $venta);
-
         } catch (\Exception $ex) {
             // Incluye QueryException y el faltante de stock de los conceptos:
             // cualquiera de los dos tiene que hacer rollback, nunca un 500.
@@ -774,8 +764,7 @@ class VentaController extends Controller
             'forma' => 'required',
             'monto_unidad' => 'required|numeric|min:0',
             'fecha' => 'required|date_format:d/m/Y H:i:s',
-            // Sin filas de cobro alcanza con aplicar señas
-            'entidad_id' => 'required_without:senias|array',
+            'entidad_id' => 'required|array|min:1',
             'entidad_id.*' => 'required',
             'monto.*' => 'required|numeric|min:0',
             'fecha_pago.*' => 'required|date',
@@ -785,7 +774,7 @@ class VentaController extends Controller
         $messages = [
             'fecha.required' => 'La fecha es obligatoria.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
-            'entidad_id.required_without' => 'Debe agregar al menos un pago.',
+            'entidad_id.required' => 'Debe agregar al menos un pago.',
             'entidad_id.min' => 'Debe agregar al menos un pago.',
             'entidad_id.*.required' => 'Debe seleccionar una forma de pago.',
             'monto.*.required' => 'El importe es obligatorio.',
@@ -813,9 +802,8 @@ class VentaController extends Controller
 
         // El neteo de la operación: los pagos tienen que cubrir el importe a
         // cobrar. Cobrar de menos no se confirma; cobrar de más solo avisa.
-        $validator->after(function ($validator) use ($request, $venta) {
-            $this->validarCobroCompleto($validator, $request, $venta->id);
-            $this->validarSenias($validator, $request, $venta->id);
+        $validator->after(function ($validator) use ($request) {
+            $this->validarCobroCompleto($validator, $request);
         });
 
         if ($validator->fails()) {
@@ -868,9 +856,7 @@ class VentaController extends Controller
 
             // Preserve auditor data and existing proofs before deleting payments
             // Map old payments by their index order so we can re-link proofs/audit data
-            // Los pagos que vienen de una seña no son filas del formulario: se
-            // dejan afuera y se sincronizan aparte con sincronizarSenias().
-            $pagosViejos = $venta->pagos->whereNull('senia_id')->values();
+            $pagosViejos = $venta->pagos->values();
 
             // Capture existing proof paths (indexed like the payments) before deleting,
             // since comprobantes rows cascade-delete when their payments are removed.
@@ -890,9 +876,9 @@ class VentaController extends Controller
             })->all();
 
             Autorizacion::whereIn('pago_id', $pagosViejos->pluck('id'))->delete();
-            $venta->pagos()->whereNull('senia_id')->delete();
+            $venta->pagos()->delete();
 
-            foreach ((array) $request->input('entidad_id', []) as $i => $entidadId) {
+            foreach ($request->entidad_id as $i => $entidadId) {
                 $pagoViejo = $pagosViejos[$i] ?? null;
                 $entidad = Entidad::find($entidadId);
 
@@ -984,10 +970,6 @@ class VentaController extends Controller
                 }
             }
 
-
-            // Señas del cliente aplicadas como pago (no tocan la caja de hoy)
-            $this->sincronizarSenias($request, $venta);
-
         } catch (\Exception $ex) {
             // Incluye QueryException y el faltante de stock de los conceptos:
             // cualquiera de los dos tiene que hacer rollback, nunca un 500.
@@ -1034,8 +1016,6 @@ class VentaController extends Controller
         }
 
         $venta->autorizaciones()->delete();
-        // Las señas aplicadas vuelven a quedar pendientes para el cliente
-        $this->liberarSeniasDeVenta($venta);
         // Elimina las relaciones
         $venta->pagos()->delete();
 

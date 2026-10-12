@@ -33,17 +33,6 @@ class Venta extends Model
         return $this->hasMany(Pago::class, 'venta_id');
     }
 
-    // Pagos cargados en las filas de cobro (sin los que vienen de una seña)
-    public function pagosDeCobro()
-    {
-        return $this->hasMany(Pago::class, 'venta_id')->whereNull('senia_id');
-    }
-
-    public function senias()
-    {
-        return $this->hasMany(Senia::class, 'venta_id');
-    }
-
     /**
      * Venta de artículos que cuelga de esta venta: patentamiento, seguro, casco
      * y lo que se haya cargado en la misma pantalla. No tiene pagos propios —

@@ -152,14 +152,10 @@
                                 'sucursalNombre'=> $sucursals[old('sucursal_id', $venta->sucursal_id)] ?? '',
                             ])
 
-                        {{-- Señas del cliente aplicadas como pago --}}
-                        @include('includes.senias_venta', ['ventaId' => $venta->id])
-
                         @include('includes.cobro', [
                                 'entidads'        => $entidads,
                                 'formaActual'     => $venta->forma ?? '',
-                                // Los pagos que vienen de una seña van en su propio bloque
-                                'pagosExistentes' => $venta->pagos->whereNull('senia_id')->values(),
+                                'pagosExistentes' => $venta->pagos,
                             ])
 
                         {{-- Botones --}}

@@ -137,9 +137,6 @@
                                 'sucursalNombre'=> $sucursals[old('sucursal_id', auth()->user()->sucursal_id)] ?? '',
                             ])
 
-                        {{-- Señas del cliente aplicadas como pago --}}
-                        @include('includes.senias_venta', ['ventaId' => null])
-
                         @include('includes.cobro', [
                                 'entidads'    => $entidads,
                                 'formaActual' => $venta->forma ?? '',

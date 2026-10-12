@@ -7,7 +7,6 @@ use App\Models\MovimientoCaja;
 use App\Models\Caja;
 use App\Models\Concepto;
 use App\Models\Entidad;
-use App\Models\Senia;
 use DB;
 use App\Traits\SanitizesInput;
 class MovimientoCajaController extends Controller
@@ -50,36 +49,13 @@ class MovimientoCajaController extends Controller
             'entidad_id' => 'nullable|exists:entidads,id',
             'venta_id' => 'nullable|integer',
             'acreditado' => 'nullable|boolean',
-            'referencia' => 'nullable|string|max:255',
-            'cliente_id' => 'nullable|exists:clientes,id',
+            'referencia' => 'nullable|string|max:255'
         ]);
 
-        $caja = Caja::findOrFail($request->caja_id);
-        $this->autorizarCaja($caja);
+        $this->autorizarCaja(Caja::findOrFail($request->caja_id));
 
-        // Seña: ingreso atado a un cliente, que después se aplica a la venta
-        $esSenia = (int) $request->concepto_id === (int) Senia::conceptoId();
-        if ($esSenia) {
-            $errores = [];
-            if (!$request->filled('cliente_id')) {
-                $errores[] = 'Para registrar una seña hay que elegir el cliente.';
-            }
-            if ($request->tipo !== 'Ingreso') {
-                $errores[] = 'Una seña es siempre un ingreso.';
-            }
-            if (!$request->filled('entidad_id')) {
-                $errores[] = 'Para registrar una seña hay que elegir la forma de pago.';
-            }
-            if ($caja->estado !== 'Abierta') {
-                $errores[] = 'La seña se registra en una caja abierta.';
-            }
-            if ($errores) {
-                return redirect()->back()->withErrors($errores)->withInput();
-            }
-        }
-
-        DB::transaction(function () use ($request, $esSenia, $caja) {
-            $mov = MovimientoCaja::create([
+        DB::transaction(function () use ($request) {
+            MovimientoCaja::create([
                 'caja_id' => $this->sanitizeInput($request->caja_id),
                 'concepto_id' => $this->sanitizeInput($request->concepto_id),
                 'entidad_id' => $this->sanitizeInput($request->entidad_id),
@@ -92,22 +68,10 @@ class MovimientoCajaController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            if ($esSenia) {
-                Senia::create([
-                    'movimiento_caja_id' => $mov->id,
-                    'cliente_id'         => $this->sanitizeInput($request->cliente_id),
-                    'sucursal_id'        => $caja->sucursal_id,
-                    'monto'              => $mov->monto,
-                    'fecha'              => $mov->fecha,
-                    'estado'             => Senia::PENDIENTE,
-                    'observacion'        => $mov->referencia,
-                    'user_id'            => auth()->id(),
-                ]);
-            }
         });
 
         return redirect()->route('cajas.show', $request->caja_id)
-            ->with('success', $esSenia ? 'Seña registrada correctamente.' : 'Movimiento registrado correctamente.');
+            ->with('success', 'Movimiento registrado correctamente.');
     }
 
     // Editar movimiento
@@ -121,11 +85,6 @@ class MovimientoCajaController extends Controller
         if ($mov->caja->estado === 'Cerrada') {
             return redirect()->back()->withErrors('No se pueden editar movimientos de una caja cerrada.');
         }
-        // 🔒 Las señas no se editan: se eliminan (si siguen pendientes) o se devuelven
-        if ($mov->senia) {
-            return redirect()->back()->withErrors('Una seña no se edita. Si está pendiente, eliminala y cargala de nuevo, o devolvela desde Señas.');
-        }
-
         //dd($mov);
         // 🔒 Bloquear si ya está acreditado
         if ($mov->acreditado) {
@@ -154,11 +113,6 @@ class MovimientoCajaController extends Controller
         if ($mov->acreditado) {
             return redirect()->route('cajas.show', $mov->caja_id)
                 ->withErrors('No se pueden editar movimientos ya acreditados.');
-        }
-
-        if ($mov->senia || (int) $request->concepto_id === (int) Senia::conceptoId()) {
-            return redirect()->route('cajas.show', $mov->caja_id)
-                ->withErrors('Las señas se registran desde "Registrar Movimiento" y no se editan.');
         }
 
         // Validación de datos
@@ -207,14 +161,8 @@ class MovimientoCajaController extends Controller
                 ->withErrors('No se pueden eliminar movimientos acreditados.');
         }
 
-        // Una seña ya aplicada a una venta o dada de baja no se puede borrar
-        if ($mov->senia && !$mov->senia->esPendiente()) {
-            return redirect()->route('cajas.show', $mov->caja_id)
-                ->withErrors('No se puede eliminar una seña ' . strtolower($mov->senia->estado) . '.');
-        }
-
         $caja_id = $mov->caja_id;
-        $mov->delete(); // la seña pendiente se borra en cascada
+        $mov->delete();
 
         return redirect()->route('cajas.show', $caja_id)
             ->with('success', 'Movimiento eliminado correctamente.');
