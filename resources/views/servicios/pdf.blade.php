@@ -131,7 +131,7 @@
     </tr>
     <tr>
         <td colspan="2" style="font-weight: bold;">ESTADO GENERAL DEL VEHÍCULO</td>
-        <td class="bg-dark-gray no-bottom-border" style="font-size: 9px">Compromiso de entrega: {{ date('d/m/Y', strtotime($servicio->entrega)) }}</td>
+        <td class="bg-dark-gray no-bottom-border" style="font-size: 9px">Compromiso de entrega: {{ $servicio->entrega ? date('d/m/Y', strtotime($servicio->entrega)) : '-' }}</td>
     </tr>
     <tr>
         <td colspan="2">KILOMETRAJE / HORAS: {{ $servicio->kilometros }}</td>

@@ -415,8 +415,8 @@ class ServicioController extends Controller
             'kilometros' => 'required',
             'tipo_servicio_id' => 'required',
             'ingreso' => 'required|date_format:d/m/Y H:i:s',
-            'entrega' => 'required|date',
-            'mano_de_obra' => 'required|numeric|min:0',
+            'entrega' => 'nullable|date',
+            'mano_de_obra' => 'nullable|numeric|min:0',
             'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
@@ -432,7 +432,6 @@ class ServicioController extends Controller
             'tipo_servicio_id.required' => 'Debe seleccionar un tipo.',
             'ingreso.required' => 'La fecha de ingreso es obligatoria.',
             'ingreso.date_format' => 'La fecha de ingreso no coincide con el formato d/m/Y H:i:s.',
-            'entrega.required' => 'La fecha de compromiso entrega es obligatoria.',
             'comprobante.*.mimes' => 'El comprobante debe ser JPG, PNG o PDF.',
             'comprobante.*.max' => 'El comprobante no puede superar los 5MB.',
         ];
@@ -655,8 +654,12 @@ class ServicioController extends Controller
             'kilometros' => 'required',
             'tipo_servicio_id' => 'required',
             'ingreso' => 'required|date_format:d/m/Y H:i:s',
-            'entrega' => 'required|date',
+            'entrega' => 'nullable|date',
             'mano_de_obra' => 'required|numeric|min:0',
+            // La orden se completa de a poco; recién al cerrarla se exige lo del servicio
+            'mecanicos' => 'required_if:pagado,1',
+            'tiempo' => 'required_if:pagado,1',
+            'diagnostico' => 'required_if:pagado,1',
             'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
         ];
 
@@ -672,7 +675,9 @@ class ServicioController extends Controller
             'tipo_servicio_id.required' => 'Debe seleccionar un tipo.',
             'ingreso.required' => 'La fecha de ingreso es obligatoria.',
             'ingreso.date_format' => 'La fecha de ingreso no coincide con el formato d/m/Y H:i:s.',
-            'entrega.required' => 'La fecha de compromiso entrega es obligatoria.',
+            'mecanicos.required_if' => 'Para cerrar la orden hay que cargar los mecánicos.',
+            'tiempo.required_if' => 'Para cerrar la orden hay que cargar el tiempo de mano de obra.',
+            'diagnostico.required_if' => 'Para cerrar la orden hay que cargar el diagnóstico y la reparación realizada.',
             'comprobante.*.mimes' => 'El comprobante debe ser JPG, PNG o PDF.',
             'comprobante.*.max' => 'El comprobante no puede superar los 5MB.',
         ];

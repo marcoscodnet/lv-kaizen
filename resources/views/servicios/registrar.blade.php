@@ -196,118 +196,26 @@
 
                                 </div>
                                 <div class="row">
-
-                                    <div class="col-lg-5">
+                                    <div class="col-lg-6">
                                         <div class="form-group">
                                             <label for="descripcion">Descripciones y pedidos del cliente</label>
                                             <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ old('descripcion') }}</textarea>
                                         </div>
                                     </div>
-
-                                    <div class="col-lg-4">
-                                        <div class="form-group">
-                                            <label for="diagnostico">Diagnóstico y reparación realizada</label>
-                                            <textarea class="form-control" id="diagnostico" name="diagnostico" rows="3">{{ old('diagnostico') }}</textarea>
-                                        </div>
-                                    </div>
-
-                                </div>
-
-                                <div class="row">
-
-                                    <div class="col-lg-5">
-                                        <div class="form-group">
-                                            <label for="repuestos">Repuestos utilizados</label>
-                                            <textarea class="form-control" id="repuestos" name="repuestos" rows="3">{{ old('repuestos') }}</textarea>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-lg-4">
-                                        <div class="form-group">
-                                            <label for="instrumentos">Instrumentos de medición utilizados</label>
-                                            <textarea class="form-control" id="instrumentos" name="instrumentos" rows="3">{{ old('instrumentos') }}</textarea>
-                                        </div>
-                                    </div>
-
-                                </div>
-                                <div class="row">
                                     <div class="col-lg-3">
-                                        <label for="mecanicos">Mecánicos</label>
-                                        <input type="text" class="form-control" id="mecanicos" name="mecanicos"
-                                               value="{{ old('mecanicos') }}" required>
-                                    </div>
-                                    <div class="col-lg-2">
-                                        <label for="tiempo">Tiempo de mano de obra</label>
-                                        <input type="text" class="form-control" id="tiempo" name="tiempo"
-                                               value="{{ old('tiempo') }}" required>
-                                    </div>
-                                    <div class="col-lg-2">
                                         <div class="form-group">
                                             <label for="entrega">F. compromiso entrega</label>
                                             <input type="date" class="form-control" id="entrega" name="entrega"
-                                                   value="{{ old('entrega') }}" required>
+                                                   value="{{ old('entrega') }}">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-lg-2">
-                                        <div class="form-group">
-                                            <label for="mano_de_obra">Mano de obra</label>
-                                            <input type="text" class="form-control formato-numero" id="mano_de_obra" name="mano_de_obra"
-                                                   value="{{ old('mano_de_obra', 0) }}" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2">
-                                        <div class="form-group">
-                                            <label for="costo_repuestos">Repuestos</label>
-                                            <input type="text" class="form-control formato-numero" id="costo_repuestos" name="costo_repuestos"
-                                                   value="{{ old('costo_repuestos', 0) }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2">
-                                        <div class="form-group">
-                                            <label for="insumos">Insumos</label>
-                                            <input type="text" class="form-control formato-numero" id="insumos" name="insumos"
-                                                   value="{{ old('insumos', $servicio->insumos ?? 0) }}" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2">
-                                        <div class="form-group">
-                                            <label for="total">Total</label>
-                                            <input type="text" class="form-control formato-numero" id="total" name="total"
-                                                   value="{{ old('total') }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2">
-                                        <div class="form-check mt-4">
-                                            <input type="hidden" name="pagado" value="0">
-                                            <input class="form-check-input" type="checkbox" id="pagado" name="pagado" value="1"
-                                                {{ old('pagado', $obj->pagado ?? false) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="pagado">
-                                                Cerrado
-                                            </label>
-                                        </div>
+                                {{-- Diagnóstico, repuestos, mecánicos, tiempo, importes y cobro se cargan
+                                     después del servicio, editando la orden. Acá solo el ingreso. --}}
+                                <div class="alert alert-info mt-3 mb-0">
+                                    El diagnóstico, los repuestos, la mano de obra y el cobro se cargan después, editando la orden de servicio.
                                 </div>
                                 </div>
-                            </div>
-                            {{-- ================================= --}}
-                            {{-- Sección: Cobro --}}
-                            {{-- ================================= --}}
-                            <div class="card mt-4">
-                                <div class="card-header bg-secondary text-white">
-                                    <h5 class="mb-0">Cobro</h5>
-                                </div>
-                                <div class="card-body">
-                                    @include('includes.cobro', [
-                                        'entidads'        => $entidads,
-                                        'formaActual'     => $servicio->forma ?? '',
-                                        'pagosExistentes' => $servicio->pagos ?? [],
-                                    ])
-
-                                    {{-- Payment control notice --}}
-                                    <div id="avisoCobro" class="alert mt-2" style="display:none;"></div>
-                                </div>
-                            </div>
                         </div>
 
 
@@ -485,29 +393,6 @@
     <script src="{{ asset('bower_components/inputmask/dist/min/jquery.inputmask.bundle.min.js') }}"></script>
 
     <script src="{{ asset('assets/js/combo-provincia-localidad-modal.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
-    {{-- Cobro module -- after jQuery and AutoNumeric --}}
-    <script>
-        var entidadsData = {!! json_encode($entidads->map(function($e) {
-            return [
-                'id' => $e->id,
-                'nombre' => $e->nombre,
-                'forma' => $e->forma,
-                'autorizacion' => $e->autorizacion,
-                'tangible' => $e->tangible,
-            ];
-        })) !!};
-    </script>
-    <script src="{{ asset('assets/js/cobro.js') }}"></script>
-    <script>
-        $(document).ready(function () {
-            $('#forma').on('change', function () {
-                $(document).trigger('forma:changed', [$(this).val()]);
-            });
-            $(document).trigger('forma:changed', [$('#forma').val()]);
-        });
-    </script>
-
     <script>
 
 
@@ -516,13 +401,6 @@
         var localidadUrl = "{{ url('localidads') }}";
 
         $(document).ready(function () {
-            // First initialize AutoNumeric on all formato-numero elements
-            new AutoNumeric.multiple('.formato-numero', {
-                digitGroupSeparator: '.',
-                decimalCharacter: ',',
-                decimalPlaces: 2,
-                unformatOnSubmit: true
-            });
 
 
             // Inicializar Select2 básico
@@ -781,62 +659,6 @@
             // Ejecutar al cargar (por si hay old() con Casado/a o Concubino/a)
             toggleConyuge();
 
-            // Recalculate total when labor cost changes
-            function recalcularTotal() {
-                var manoDeObra = AutoNumeric.getNumericString('#mano_de_obra') || 0;
-                var repuestos  = AutoNumeric.getNumericString('#costo_repuestos') || 0;
-                var insumos    = AutoNumeric.getNumericString('#insumos') || 0;
-                var total = parseFloat(manoDeObra) + parseFloat(repuestos) + parseFloat(insumos);
-                AutoNumeric.set('#total', total);
-                controlarCobro();
-            }
-
-            $('#mano_de_obra, #costo_repuestos, #insumos').on('change', recalcularTotal);
-            // Calculate total on load
-            recalcularTotal();
-
-            // Compute total from payment rows
-            function calcularTotalPagos() {
-                var total = 0;
-                $('input[name="monto[]"]').each(function () {
-                    var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
-                    total += val;
-                });
-                return total;
-            }
-
-// Informational notice: service total vs payments
-            function controlarCobro() {
-                var $aviso = $('#avisoCobro');
-                var totalServicio = parseFloat(AutoNumeric.getNumericString('#total') || 0);
-                var totalPagos = calcularTotalPagos();
-
-                // No payments yet: charging is optional, show nothing
-                if (totalPagos === 0) {
-                    $aviso.hide();
-                    return;
-                }
-
-                var fmt = function (n) {
-                    return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                };
-
-                var diff = totalPagos - totalServicio;
-
-                $aviso.show();
-                if (Math.abs(diff) < 0.01) {
-                    $aviso.removeClass('alert-warning alert-danger').addClass('alert-success')
-                        .html('Cobro completo ✓ — Servicio: $' + fmt(totalServicio) + ' · Pagado: $' + fmt(totalPagos));
-                } else if (diff < 0) {
-                    $aviso.removeClass('alert-success alert-danger').addClass('alert-warning')
-                        .html('Cobro parcial — Servicio: $' + fmt(totalServicio) + ' · Pagado: $' + fmt(totalPagos) + ' · Falta: $' + fmt(Math.abs(diff)));
-                } else {
-                    $aviso.removeClass('alert-success alert-warning').addClass('alert-danger')
-                        .html('Cobrado de más — Servicio: $' + fmt(totalServicio) + ' · Pagado: $' + fmt(totalPagos) + ' · Excedente: $' + fmt(diff));
-                }
-            }
-
-            $('body').on('input change', 'input[name="monto[]"]', controlarCobro);
         });
 
     </script>

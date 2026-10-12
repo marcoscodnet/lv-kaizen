@@ -270,18 +270,18 @@
                                     <div class="col-lg-3">
                                         <label for="mecanicos">Mecánicos</label>
                                         <input type="text" class="form-control" id="mecanicos" name="mecanicos"
-                                               value="{{ old('mecanicos',$servicio->mecanicos) }}" required>
+                                               value="{{ old('mecanicos',$servicio->mecanicos) }}">
                                     </div>
                                     <div class="col-lg-2">
                                         <label for="tiempo">Tiempo de mano de obra</label>
                                         <input type="text" class="form-control" id="tiempo" name="tiempo"
-                                               value="{{ old('tiempo',$servicio->tiempo) }}" required>
+                                               value="{{ old('tiempo',$servicio->tiempo) }}">
                                     </div>
                                     <div class="col-lg-2">
                                         <div class="form-group">
                                             <label for="entrega">F. compromiso entrega</label>
                                             <input type="date" class="form-control" id="entrega" name="entrega"
-                                                   value="@if (old('entrega')){{ old('entrega') }}@else{{ (optional($servicio)->entrega)?date('Y-m-d', strtotime($servicio->entrega)):'' }}@endif" required>
+                                                   value="@if (old('entrega')){{ old('entrega') }}@else{{ (optional($servicio)->entrega)?date('Y-m-d', strtotime($servicio->entrega)):'' }}@endif">
                                         </div>
                                     </div>
                                 </div>
