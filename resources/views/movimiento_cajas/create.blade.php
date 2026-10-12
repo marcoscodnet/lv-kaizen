@@ -9,6 +9,7 @@
         <div class="card-header">
             <h5><i class="fas fa-plus"></i> Registrar Movimiento - Caja #{{ $caja->id }}</h5>
         </div>
+        @include('includes.messages')
         <div class="card-body">
             <form action="{{ route('movimiento_cajas.store') }}" method="POST">
                 @csrf
@@ -20,7 +21,7 @@
                         <select name="concepto_id" id="concepto_id" class="form-control select2" required>
                             <option value="">Seleccione</option>
                             @foreach($conceptos as $concepto)
-                                <option value="{{ $concepto->id }}" {{ old('concepto_id') == $concepto->id ? 'selected' : '' }}>
+                                <option value="{{ $concepto->id }}" data-senia="{{ $concepto->nombre === \App\Models\Senia::CONCEPTO ? 1 : 0 }}" {{ old('concepto_id') == $concepto->id ? 'selected' : '' }}>
                                     {{ $concepto->nombre }}
                                 </option>
                             @endforeach
@@ -37,6 +38,28 @@
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+                </div>
+
+                {{-- Seña: el ingreso queda atado a un cliente y después se aplica a su venta --}}
+                <div class="row g-3 mt-2" id="senia-container" style="display:none;">
+                    <div class="col-12 col-md-8">
+                        <label for="cliente_id" class="form-label">Cliente que seña</label>
+                        <div class="d-flex gap-2">
+                            <div class="flex-grow-1">
+                                <select name="cliente_id" id="cliente_id" class="form-control">
+                                    @if(old('cliente_id'))
+                                        <option value="{{ old('cliente_id') }}" selected>{{ optional(\App\Models\Cliente::find(old('cliente_id')))->nombre }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            @can('cliente-crear')
+                                <a href="{{ route('clientes.create') }}" target="_blank" class="btn btn-outline-success" title="Alta de cliente (se abre en otra pestaña)">
+                                    <i class="fas fa-user-plus"></i>
+                                </a>
+                            @endcan
+                        </div>
+                        <small class="text-muted">La seña queda pendiente y se aplica como pago cuando se hace la venta a este cliente.</small>
                     </div>
                 </div>
 
@@ -106,6 +129,37 @@
 
             $('#tipo').change(toggleAcreditado);
             toggleAcreditado(); // Ejecutar al cargar la página
+
+            // Seña: pide cliente, fuerza Ingreso y forma de pago
+            $('#cliente_id').select2({
+                width: '100%',
+                minimumInputLength: 3,
+                language: 'es',
+                placeholder: 'Buscar cliente por nombre o documento',
+                ajax: {
+                    url: '{{ route("cliente.search") }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) { return { search: params.term }; },
+                    processResults: function (response) { return { results: response }; },
+                    cache: true
+                }
+            });
+
+            function toggleSenia() {
+                var esSenia = $('#concepto_id option:selected').data('senia') == 1;
+                $('#senia-container').toggle(esSenia);
+                $('#cliente_id').prop('required', esSenia);
+                $('#entidad_id').prop('required', esSenia);
+                if (esSenia) {
+                    $('#tipo').val('Ingreso').trigger('change');
+                    $('#tipo option[value="Egreso"]').prop('disabled', true);
+                } else {
+                    $('#tipo option[value="Egreso"]').prop('disabled', false);
+                }
+            }
+            $('#concepto_id').on('change', toggleSenia);
+            toggleSenia();
         });
     </script>
 @endsection

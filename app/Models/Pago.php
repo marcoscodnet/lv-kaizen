@@ -9,7 +9,7 @@ class Pago extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['venta_id', 'servicio_id','venta_pieza_id','entidad_id','monto','fecha','pagado','contadora','detalle','observacion'];
+    protected $fillable = ['venta_id', 'servicio_id','venta_pieza_id','entidad_id','monto','fecha','pagado','contadora','detalle','observacion','senia_id'];
 
 
 
@@ -40,6 +40,12 @@ class Pago extends Model
     public function movimientoCuenta()
     {
         return $this->hasOne(\App\Models\MovimientoCuenta::class, 'pago_id');
+    }
+
+    // Si el pago viene de una seña aplicada a la venta
+    public function senia()
+    {
+        return $this->belongsTo(\App\Models\Senia::class, 'senia_id');
     }
 
     public function comprobantes()

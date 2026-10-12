@@ -229,7 +229,7 @@ class CajaController extends Controller
             'movimientos.concepto','movimientos.entidad',
             'movimientos.venta.unidad',
             'movimientos.ventaPieza.piezas.pieza',
-            'movimientos.servicio.cliente','movimientos.servicio.marca',
+            'movimientos.servicio.cliente','movimientos.servicio.marca', 'movimientos.senia.cliente',
         ])->findOrFail($id);
         $this->autorizarCaja($caja);
         $conceptos = Concepto::where('activo',true)->get();
@@ -300,7 +300,7 @@ class CajaController extends Controller
             'movimientos.concepto','movimientos.entidad',
             'movimientos.venta.unidad',
             'movimientos.ventaPieza.piezas.pieza',
-            'movimientos.servicio.cliente','movimientos.servicio.marca',
+            'movimientos.servicio.cliente','movimientos.servicio.marca', 'movimientos.senia.cliente',
         ])->findOrFail($id);
         $this->autorizarCaja($caja);
 
@@ -320,7 +320,7 @@ class CajaController extends Controller
             'movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal',
             'movimientos.venta.unidad',
             'movimientos.ventaPieza.piezas.pieza',
-            'movimientos.servicio.cliente', 'movimientos.servicio.marca',
+            'movimientos.servicio.cliente', 'movimientos.servicio.marca', 'movimientos.senia.cliente',
         ])->findOrFail($cajaId);
         $this->autorizarCaja($caja);
 
@@ -347,7 +347,7 @@ class CajaController extends Controller
             'movimientos.concepto', 'movimientos.entidad', 'user', 'sucursal',
             'movimientos.venta.unidad',
             'movimientos.ventaPieza.piezas.pieza',
-            'movimientos.servicio.cliente', 'movimientos.servicio.marca',
+            'movimientos.servicio.cliente', 'movimientos.servicio.marca', 'movimientos.senia.cliente',
         ])->findOrFail($cajaId);
         $this->autorizarCaja($caja);
 
