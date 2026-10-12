@@ -13,6 +13,7 @@
     <tr>
         <th>Fecha</th>
         <th>Concepto</th>
+        <th>Referencia</th>
         <th>Forma de pago</th>
         <th>Origen</th>
         <th>Tipo</th>
@@ -25,6 +26,7 @@
         <tr>
             <td>{{ $mov->fecha->format('d/m/Y H:i:s') }}</td>
             <td>{{ optional($mov->concepto)->nombre ?? '-' }}</td>
+            <td>{{ $mov->referencia ?: '-' }}</td>
             <td>{{ optional($mov->entidad)->nombre ?? '-' }}</td>
             <td>{{ $mov->origen }}</td>
             <td>{{ ucfirst($mov->tipo) }}</td>

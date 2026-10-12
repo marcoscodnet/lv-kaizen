@@ -372,22 +372,24 @@ class CajaController extends Controller
         // Encabezados de la tabla
         $sheet->setCellValue('A'.$startRow, 'Fecha');
         $sheet->setCellValue('B'.$startRow, 'Concepto');
-        $sheet->setCellValue('C'.$startRow, 'Forma de pago');
-        $sheet->setCellValue('D'.$startRow, 'Origen');
-        $sheet->setCellValue('E'.$startRow, 'Tipo');
-        $sheet->setCellValue('F'.$startRow, 'Monto');
-        $sheet->setCellValue('G'.$startRow, 'Acreditado');
+        $sheet->setCellValue('C'.$startRow, 'Referencia');
+        $sheet->setCellValue('D'.$startRow, 'Forma de pago');
+        $sheet->setCellValue('E'.$startRow, 'Origen');
+        $sheet->setCellValue('F'.$startRow, 'Tipo');
+        $sheet->setCellValue('G'.$startRow, 'Monto');
+        $sheet->setCellValue('H'.$startRow, 'Acreditado');
 
         $row = $startRow + 1;
 
         foreach($caja->movimientos as $mov){
             $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i:s'));
             $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
-            $sheet->setCellValue('C'.$row, optional($mov->entidad)->nombre ?? '-');
-            $sheet->setCellValue('D'.$row, $mov->origen);
-            $sheet->setCellValue('E'.$row, ucfirst($mov->tipo));
-            $sheet->setCellValue('F'.$row, $mov->monto);
-            $sheet->setCellValue('G'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');
+            $sheet->setCellValue('C'.$row, $mov->referencia ?: '-');
+            $sheet->setCellValue('D'.$row, optional($mov->entidad)->nombre ?? '-');
+            $sheet->setCellValue('E'.$row, $mov->origen);
+            $sheet->setCellValue('F'.$row, ucfirst($mov->tipo));
+            $sheet->setCellValue('G'.$row, $mov->monto);
+            $sheet->setCellValue('H'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');
             $row++;
         }
 
@@ -396,20 +398,20 @@ class CajaController extends Controller
         $totalEgresos = $caja->movimientos->where('tipo','Egreso')->sum('monto');
         $saldo = $totalIngresos - $totalEgresos;
 
-        $sheet->setCellValue('E'.$row, 'Total Ingresos Acreditados:');
-        $sheet->setCellValue('F'.$row, $totalIngresos);
+        $sheet->setCellValue('F'.$row, 'Total Ingresos Acreditados:');
+        $sheet->setCellValue('G'.$row, $totalIngresos);
         $row++;
-        $sheet->setCellValue('E'.$row, 'Total Egresos:');
-        $sheet->setCellValue('F'.$row, $totalEgresos);
+        $sheet->setCellValue('F'.$row, 'Total Egresos:');
+        $sheet->setCellValue('G'.$row, $totalEgresos);
         $row++;
-        $sheet->setCellValue('E'.$row, 'Saldo Actual:');
-        $sheet->setCellValue('F'.$row, $saldo);
+        $sheet->setCellValue('F'.$row, 'Saldo Actual:');
+        $sheet->setCellValue('G'.$row, $saldo);
 
         // Formato de moneda
-        $sheet->getStyle('F'.($startRow+1).':F'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('G'.($startRow+1).':G'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
 
         // Autoajustar ancho de columnas
-        foreach(range('A','G') as $col){
+        foreach(range('A','H') as $col){
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
