@@ -16,6 +16,13 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+
+        // Cierre automático de fin de día: a las 00:00 se cierran las cajas que
+        // quedaron abiertas de días anteriores. Si un administrador reabre una
+        // caja vieja, queda abierta hasta la medianoche siguiente.
+        $schedule->command('cajas:cerrar-vencidas')
+            ->dailyAt('00:00')
+            ->withoutOverlapping();
     }
 
     /**

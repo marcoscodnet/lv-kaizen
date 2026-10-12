@@ -73,4 +73,26 @@ class Caja extends Model
     {
         return $this->hasMany(MovimientoCaja::class);
     }
+
+    /**
+     * Cierra la caja calculando el monto final.
+     *
+     * final = efectivo total en la caja al cerrar: ingresos acreditados (incluye
+     * el fondo inicial, registrado como movimiento de "Apertura") menos egresos.
+     * Lo usan el cierre manual (CajaController@cerrar) y el automático
+     * (comando cajas:cerrar-vencidas), para que ambos hagan la misma cuenta.
+     */
+    public function cerrar(): self
+    {
+        $ingresosAcreditados = $this->movimientos()
+            ->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto');
+        $egresos = $this->movimientos()->where('tipo', 'Egreso')->sum('monto');
+
+        $this->final = $ingresosAcreditados - $egresos;
+        $this->cierre = now();
+        $this->estado = 'Cerrada';
+        $this->save();
+
+        return $this;
+    }
 }

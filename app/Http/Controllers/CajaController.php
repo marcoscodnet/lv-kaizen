@@ -181,6 +181,20 @@ class CajaController extends Controller
                 ->with('info', "La caja del día de esta sucursal ya está abierta (#{$cajaAbierta->id}).");
         }
 
+        // Si la caja de hoy ya existe pero está cerrada, no se puede abrir otra
+        // (unique sucursal_id + fecha). Solo un administrador puede reabrirla.
+        $cajaCerradaHoy = Caja::where('sucursal_id', $sucursalId)
+            ->whereDate('fecha', now()->toDateString())
+            ->where('estado', 'Cerrada')
+            ->first();
+
+        if ($cajaCerradaHoy) {
+            return back()->withErrors(
+                "La caja de hoy de esta sucursal ya fue cerrada (#{$cajaCerradaHoy->id}). "
+                . 'Si se cerró por error, pedile a un administrador que la reabra.'
+            );
+        }
+
         DB::beginTransaction();
 
         try {
@@ -239,7 +253,8 @@ class CajaController extends Controller
 
 
 
-    // Cerrar caja automáticamente
+    // Cerrar caja (manual). El cierre automático de fin de día lo hace el
+    // comando cajas:cerrar-vencidas.
     public function cerrar($id)
     {
         $caja = Caja::with('movimientos')->findOrFail($id);
@@ -251,16 +266,8 @@ class CajaController extends Controller
                 ->withErrors('La caja ya está cerrada.');
         }
 
-        // Monto final = efectivo total en la caja al cerrar.
-        // Incluye el fondo inicial (registrado como movimiento de "Apertura"),
-        // más los ingresos acreditados del día, menos los egresos.
-        $ingresosAcreditados = $caja->movimientos->where('tipo', 'Ingreso')->where('acreditado', true)->sum('monto');
-        $egresos = $caja->movimientos->where('tipo', 'Egreso')->sum('monto');
-
-        $caja->final = $ingresosAcreditados - $egresos;
-        $caja->cierre = now();
-        $caja->estado = 'Cerrada';
-        $caja->save();
+        // Calcula el monto final y la cierra (misma lógica que el cierre automático).
+        $caja->cerrar();
 
         return redirect()->route('cajas.arqueo', $caja->id)
             ->with('success', 'Caja cerrada correctamente.');
