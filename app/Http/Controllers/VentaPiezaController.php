@@ -15,6 +15,7 @@ use App\Models\PiezaVentaPieza;
 use App\Models\Pago;
 use App\Http\Controllers\Controller;
 use App\Traits\AplicaSenias;
+use App\Traits\BloqueaOperacionCobrada;
 use App\Traits\CatalogoArticulos;
 use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
@@ -32,7 +33,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VentaPiezaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, FechaDeCobro, AplicaSenias;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, FechaDeCobro, AplicaSenias, BloqueaOperacionCobrada;
 
     /**
      * Los artículos vendidos junto con una moto son parte de esa operación: se
@@ -295,6 +296,7 @@ class VentaPiezaController extends Controller
         ), IFNULL(suc_serv.nombre, sucursals.nombre)) as sucursal_nombre"),
             DB::raw("IFNULL(users.name, venta_piezas.user_name) as usuario_nombre"),
             DB::raw($this->autorizacionCase('autorizacion')),
+            DB::raw($this->tienePagosRaw('venta_pieza_id', 'venta_piezas')),
             DB::raw("(
             SELECT GROUP_CONCAT(p.codigo SEPARATOR ', ')
             FROM pieza_venta_piezas pvp
@@ -667,6 +669,10 @@ class VentaPiezaController extends Controller
 
     public function update(Request $request, $id)
     {
+        if ($bloqueo = $this->bloqueadaPorCobro(VentaPieza::find($id), 'ventaPiezas.show')) {
+            return $bloqueo;
+        }
+
         $rules = [
             'user_id'      => 'required',
             'fecha'        => 'required|date',
@@ -809,6 +815,10 @@ class VentaPiezaController extends Controller
         if ($ventaDeMoto = $this->perteneceAUnaVenta($id)) {
             return redirect()->route('ventas.show', $ventaDeMoto->venta_id)
                 ->with('error', 'Estos artículos se cargaron dentro de la venta de la moto: se modifican desde ahí.');
+        }
+
+        if ($bloqueo = $this->bloqueadaPorCobro(VentaPieza::find($id), 'ventaPiezas.show')) {
+            return $bloqueo;
         }
 
         $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal', 'pagos', 'cliente'])->findOrFail($id);

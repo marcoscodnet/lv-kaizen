@@ -210,7 +210,10 @@
                             @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('venta-pieza-editar')
-                                actionsHtml += '<a href="{{ route("ventaPiezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                                // Con la forma de pago confirmada solo la edita el administrador
+                                if (row.tiene_pagos != 1 || {{ auth()->user()->can('operacion-cobrada-editar') ? 'true' : 'false' }}) {
+                                    actionsHtml += '<a href="{{ route("ventaPiezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
+                                }
                             @endcan
                                 @can('imprimir-venta-pieza')
                                 actionsHtml += '<a href="{{ route("ventaPiezas.pdf") }}?venta_pieza_id=' + row.id + '" alt="Descargar PDF" title="Descargar PDF" target="_blank"  class="btn btn-link p-0"><span class="fas fa-file-pdf text-500"></span></a>';

@@ -258,7 +258,8 @@
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('servicio-editar')
                                 // Cerrada: solo la edita quien puede reabrirla
-                                if (row.pagado !== 'SI' || {{ auth()->user()->can('servicio-reabrir') ? 'true' : 'false' }}) {
+                                if ((row.pagado !== 'SI' || {{ auth()->user()->can('servicio-reabrir') ? 'true' : 'false' }})
+                                    && (row.tiene_pagos != 1 || {{ auth()->user()->can('operacion-cobrada-editar') ? 'true' : 'false' }})) {
                                     actionsHtml += '<a href="{{ route("servicios.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                                 }
                             @endcan

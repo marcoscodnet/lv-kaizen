@@ -20,6 +20,7 @@ use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Traits\AplicaSenias;
+use App\Traits\BloqueaOperacionCobrada;
 use App\Traits\CatalogoArticulos;
 use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
@@ -39,7 +40,7 @@ use setasign\Fpdi\Fpdi;
 
 class VentaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos, FechaDeCobro, AplicaSenias;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, StockArticulos, FechaDeCobro, AplicaSenias, BloqueaOperacionCobrada;
     /**
      * Display a listing of the resource.
      *
@@ -378,7 +379,8 @@ class VentaController extends Controller
             'modelos.nombre as modelo',
             DB::raw("IFNULL(users.name, ventas.user_name) as usuario_nombre"),
             'sucursals.nombre as sucursal_nombre',
-            DB::raw($this->autorizacionCase('autorizacion'))
+            DB::raw($this->autorizacionCase('autorizacion')),
+            DB::raw($this->tienePagosRaw('venta_id', 'ventas'))
         )
             ->leftJoin('sucursals', 'ventas.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('clientes', 'ventas.cliente_id', '=', 'clientes.id')
@@ -744,6 +746,10 @@ class VentaController extends Controller
 
     public function edit($id) {
         $venta = Venta::with('pagos', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza', 'ventaArticulos.piezas.sucursal')->findOrFail($id);
+
+        if ($bloqueo = $this->bloqueadaPorCobro($venta, 'ventas.show')) {
+            return $bloqueo;
+        }
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -762,6 +768,10 @@ class VentaController extends Controller
     public function update(Request $request, $id)
     {
         $venta = Venta::with('pagos.comprobantes', 'pagos.autorizacion')->findOrFail($id);
+
+        if ($bloqueo = $this->bloqueadaPorCobro($venta, 'ventas.show')) {
+            return $bloqueo;
+        }
 
         $precioSugerido = $request->input('precio', 0);
         $totalMonto = $request->input('totalMonto', 0);

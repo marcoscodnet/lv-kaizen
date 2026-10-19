@@ -21,6 +21,7 @@ use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Models\Entidad;
 use App\Traits\AplicaSenias;
+use App\Traits\BloqueaOperacionCobrada;
 use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
@@ -37,7 +38,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ServicioController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, FechaDeCobro, AplicaSenias;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, FechaDeCobro, AplicaSenias, BloqueaOperacionCobrada;
     /**
      * Display a listing of the resource.
      *
@@ -60,7 +61,8 @@ class ServicioController extends Controller
             return redirect()->route('servicios.show', $servicio->id)
                 ->with('error', 'La orden de servicio está cerrada y ya no se puede modificar.');
         }
-        return null;
+        // Con la forma de pago cargada tampoco, aunque no esté tildado "Cerrado"
+        return $this->bloqueadaPorCobro($servicio, 'servicios.show');
     }
 
     // SQL CASE that returns 'Autorizada' when the service has payments and all are authorized
@@ -197,7 +199,8 @@ class ServicioController extends Controller
             DB::raw("CASE WHEN servicios.pagado = 1 THEN 'SI' ELSE 'NO' END as pagado"),
             'sucursals.nombre as sucursal_nombre',
             'users.name as usuario_nombre',
-            DB::raw($this->autorizacionCase('autorizacion'))
+            DB::raw($this->autorizacionCase('autorizacion')),
+            DB::raw($this->tienePagosRaw('servicio_id', 'servicios'))
 
 
         )
