@@ -14,6 +14,7 @@ use App\Models\VentaPieza;
 use App\Models\PiezaVentaPieza;
 use App\Models\Pago;
 use App\Http\Controllers\Controller;
+use App\Traits\AplicaSenias;
 use App\Traits\CatalogoArticulos;
 use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
@@ -31,7 +32,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class VentaPiezaController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, FechaDeCobro;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, CatalogoArticulos, FechaDeCobro, AplicaSenias;
 
     /**
      * Los artículos vendidos junto con una moto son parte de esa operación: se
@@ -637,8 +638,14 @@ class VentaPiezaController extends Controller
 
         $validator = Validator::make($request->all(), $rules, $messages);
 
+        // Las señas solo se aplican a ventas de Salón (con cliente)
+        if ($request->input('destino') !== 'Salón') {
+            $request->merge(['senias' => []]);
+        }
+
         $validator->after(function ($validator) use ($request) {
             $this->validarCajaAbierta($validator, $request);
+            $this->validarSenias($validator, $request, 'venta_pieza_id');
         });
 
         if ($validator->fails()) {
@@ -647,7 +654,9 @@ class VentaPiezaController extends Controller
 
         DB::beginTransaction();
         try {
-            $this->guardarVenta($request);
+            $venta = $this->guardarVenta($request);
+            // Señas del cliente aplicadas como pago (no tocan caja ni cuenta)
+            $this->sincronizarSenias($request, 'venta_pieza_id', $venta->id);
             DB::commit();
             return redirect()->route('ventaPiezas.index')->with('success', 'Registro creado satisfactoriamente');
         } catch (\Exception $ex) {
@@ -689,8 +698,14 @@ class VentaPiezaController extends Controller
 
         $validator = Validator::make($request->all(), $rules, $messages);
 
-        $validator->after(function ($validator) use ($request) {
+        // Las señas solo se aplican a ventas de Salón (con cliente)
+        if ($request->input('destino') !== 'Salón') {
+            $request->merge(['senias' => []]);
+        }
+
+        $validator->after(function ($validator) use ($request, $id) {
             $this->validarCajaAbierta($validator, $request);
+            $this->validarSenias($validator, $request, 'venta_pieza_id', $id);
         });
 
         if ($validator->fails()) {
@@ -719,8 +734,11 @@ class VentaPiezaController extends Controller
                 'pagos.autorizacion',
             ])->findOrFail($id);
 
-            // Lo que el vendedor no puede tocar, indexado por posición del pago
-            $preservado = $venta->pagos->values()->map(function ($pago) {
+            // Lo que el vendedor no puede tocar, indexado por posición del pago.
+            // Los pagos que aplican una seña no son filas del formulario: se
+            // dejan afuera y se sincronizan aparte con sincronizarSenias().
+            $pagosDeCobro = $venta->pagos->whereNull('senia_aplicada_id')->values();
+            $preservado = $pagosDeCobro->map(function ($pago) {
                 $autorizacion = $pago->autorizacion;
 
                 return [
@@ -764,14 +782,17 @@ class VentaPiezaController extends Controller
 
             // Las autorizaciones se borran antes que los pagos para no quedar
             // huérfanas; guardarVenta() las vuelve a crear sobre los pagos nuevos.
-            \App\Models\Autorizacion::whereIn('pago_id', $venta->pagos->pluck('id'))->delete();
-            Pago::where('venta_pieza_id', $venta->id)->delete();
+            \App\Models\Autorizacion::whereIn('pago_id', $pagosDeCobro->pluck('id'))->delete();
+            Pago::where('venta_pieza_id', $venta->id)->whereNull('senia_aplicada_id')->delete();
 
             // Baja de los movimientos viejos: si no, al recrearlos la plata queda
             // duplicada en la caja y en la cuenta de la entidad.
             $this->bajaMovimientosOperacion('venta_pieza_id', $venta->id);
 
             $this->guardarVenta($request, $venta, $preservado);
+
+            // Señas: deja aplicadas exactamente las tildadas (libera las demás)
+            $this->sincronizarSenias($request, 'venta_pieza_id', $venta->id);
 
             DB::commit();
             return redirect()->route('ventaPiezas.index')->with('success', 'Registro actualizado correctamente');
@@ -930,6 +951,8 @@ class VentaPiezaController extends Controller
 
             // Eliminar relaciones
             PiezaVentaPieza::where('venta_pieza_id', $venta->id)->delete();
+            // Las señas aplicadas vuelven a quedar vigentes para el cliente
+            $this->liberarSeniasDe('venta_pieza_id', $venta->id);
             \App\Models\Pago::where('venta_pieza_id', $venta->id)->delete();
             // Eliminar la venta
             $venta->delete();

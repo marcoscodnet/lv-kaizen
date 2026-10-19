@@ -7,6 +7,7 @@ use App\Models\Autorizacion;
 use App\Models\Entidad;
 use App\Models\MovimientoCuenta;
 use App\Models\Pago;
+use App\Models\Senia;
 use App\Traits\SanitizesInput;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -78,12 +79,15 @@ class AuditoriaController extends Controller
                         IFNULL((SELECT mo.nombre FROM modelos mo WHERE mo.id = servicios.modelo_id), servicios.modelo),
                         NULLIF(servicios.motor, '')
                     )), '')), ''))
+            WHEN pagos.senia_id IS NOT NULL THEN
+                CONCAT('Seña #', pagos.senia_id,
+                    IFNULL(CONCAT(' — ', NULLIF(senias.detalle, '')), ''))
             ELSE '—' END";
 
         $estadoSql = "CASE WHEN autorizacions.id IS NOT NULL THEN 'Autorizado' ELSE 'Pendiente' END";
 
         // Resolve client across the 3 possible origins
-        $clienteSql = "COALESCE(cv.nombre, cvp.nombre, cs.nombre)";
+        $clienteSql = "COALESCE(cv.nombre, cvp.nombre, cs.nombre, cse.nombre)";
 
         $query = Pago::query()
             ->select(
@@ -116,6 +120,8 @@ class AuditoriaController extends Controller
             ->leftJoin('clientes as cvp', 'venta_piezas.cliente_id', '=', 'cvp.id')
             ->leftJoin('servicios', 'pagos.servicio_id', '=', 'servicios.id')
             ->leftJoin('clientes as cs', 'servicios.cliente_id', '=', 'cs.id')
+            ->leftJoin('senias', 'pagos.senia_id', '=', 'senias.id')
+            ->leftJoin('clientes as cse', 'senias.cliente_id', '=', 'cse.id')
             ->leftJoin('users', 'autorizacions.user_id', '=', 'users.id')
             // only payments from entities that require authorization
             ->where('entidads.autorizacion', 1);
@@ -229,6 +235,11 @@ class AuditoriaController extends Controller
                 return response()->json(['error' => 'Este pago ya está autorizado.'], 422);
             }
 
+            if ($error = $this->seniaBloqueada($pago)) {
+                DB::rollBack();
+                return response()->json(['error' => $error], 422);
+            }
+
             $acreditado = $this->sanitizeInput($request->pagado);
             $observaciones = $this->sanitizeInput($request->observaciones ?? null);
 
@@ -284,6 +295,9 @@ class AuditoriaController extends Controller
                 if (Autorizacion::where('pago_id', $pago->id)->exists()) {
                     continue; // skip already authorized
                 }
+                if ($this->seniaBloqueada($pago)) {
+                    continue; // seña ya aplicada o dada de baja
+                }
 
                 Autorizacion::create([
                     'user_id'   => auth()->id(),
@@ -320,6 +334,11 @@ class AuditoriaController extends Controller
                 return response()->json(['error' => 'Este pago no está autorizado.'], 422);
             }
 
+            if ($error = $this->seniaBloqueada($pago)) {
+                DB::rollBack();
+                return response()->json(['error' => $error], 422);
+            }
+
             // Revert account movement to the original payment amount
             if ($pago->entidad && $pago->entidad->cuenta) {
                 $mov = MovimientoCuenta::where('pago_id', $pago->id)->first();
@@ -342,5 +361,29 @@ class AuditoriaController extends Controller
             DB::rollBack();
             return response()->json(['error' => $ex->getMessage()], 500);
         }
+    }
+
+    /**
+     * Un pago de seña no se autoriza ni se desautoriza si la seña ya se aplicó
+     * a una operación o se dio de baja: cambiaría lo que vale una seña que ya
+     * está usada. Primero hay que sacarla de la operación.
+     */
+    private function seniaBloqueada(Pago $pago): ?string
+    {
+        if (!$pago->senia_id) {
+            return null;
+        }
+
+        $senia = Senia::find($pago->senia_id);
+        if (!$senia || $senia->esVigente()) {
+            return null;
+        }
+
+        $donde = $senia->aplicadaA();
+        return 'Este pago es de la seña #' . $senia->id . ', que ya está ' . strtolower($senia->estado)
+            . ($donde ? ' a ' . $donde['texto'] : '')
+            . ($senia->estado === Senia::APLICADA
+                ? '. Para cambiar su autorización, primero sacá la seña de esa operación.'
+                : ': ya no se puede cambiar su autorización.');
     }
 }

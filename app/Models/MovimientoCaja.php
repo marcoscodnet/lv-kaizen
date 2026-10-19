@@ -14,6 +14,7 @@ class MovimientoCaja extends Model
         'venta_id',
         'venta_pieza_id',
         'servicio_id',
+        'senia_id',
         'concepto_id',
         'tipo',
         'monto',
@@ -57,6 +58,12 @@ class MovimientoCaja extends Model
         return $this->belongsTo(Servicio::class, 'servicio_id');
     }
 
+    // Seña que generó el movimiento (ingreso de la seña o su devolución)
+    public function senia()
+    {
+        return $this->belongsTo(Senia::class, 'senia_id');
+    }
+
     /**
      * Etiqueta del origen para los listados contables de caja, identificando
      * el documento: unidad -> nro de motor; pieza -> codigo - descripcion;
@@ -64,6 +71,17 @@ class MovimientoCaja extends Model
      */
     public function getOrigenAttribute(): string
     {
+        // Seña -> cliente y en qué quedó
+        if ($this->senia) {
+            $s = $this->senia;
+            $txt = ($this->tipo === 'Egreso' ? 'Devolución seña #' : 'Seña #') . $s->id
+                . ' — ' . optional($s->cliente)->nombre . ' (' . $s->estado;
+            if ($s->estado === Senia::APLICADA && ($destino = $s->aplicadaA())) {
+                $txt .= ' a ' . $destino['texto'];
+            }
+            return $txt . ')';
+        }
+
         // Venta de unidad -> nro de motor
         if ($this->venta_id) {
             $motor = optional(optional($this->venta)->unidad)->motor;

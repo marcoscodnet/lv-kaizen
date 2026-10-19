@@ -214,6 +214,11 @@
                                     </button>
                                 </div>
                             </div>
+                            {{-- Señas del cliente aplicadas como pago --}}
+                            <div class="col-12">
+                                @include('includes.senias_aplicar', ['columna' => 'venta_pieza_id', 'operacionId' => null])
+                            </div>
+
                             @include('includes.cobro', [
                                 'entidads'    => $entidads,
                                 'formaActual' => '',
@@ -929,6 +934,10 @@
                     var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
                     total += val;
                 });
+                // Señas del cliente aplicadas (includes/senias_aplicar)
+                $('.senia-aplicada:checked').each(function () {
+                    total += parseFloat($(this).data('monto')) || 0;
+                });
                 return total;
             }
 
@@ -972,6 +981,7 @@
 
 // Recalculate notice on any relevant change
             $('body').on('input change', 'input[name="monto[]"], input[name="precio[]"], input[name="cantidad[]"]', controlarCobro);
+            $(document).on('senias:changed', controlarCobro);
             $('#destino').on('change', controlarCobro);
 
             // Compute total from parts rows (price * quantity)
@@ -993,6 +1003,10 @@
                     var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
                     total += val;
                 });
+                // Señas del cliente aplicadas (includes/senias_aplicar)
+                $('.senia-aplicada:checked').each(function () {
+                    total += parseFloat($(this).data('monto')) || 0;
+                });
                 return total;
             }
 
@@ -1036,6 +1050,7 @@
 
 // Recalculate notice on any relevant change
             $('body').on('input change', 'input[name="monto[]"], input[name="precio[]"], input[name="cantidad[]"]', controlarCobro);
+            $(document).on('senias:changed', controlarCobro);
             $('#destino').on('change', controlarCobro);
 
             // Live total of the parts being loaded (price * quantity)

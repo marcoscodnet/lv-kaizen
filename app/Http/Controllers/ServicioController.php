@@ -20,6 +20,7 @@ use App\Models\Caja;
 use App\Models\MovimientoCaja;
 use App\Models\Concepto;
 use App\Models\Entidad;
+use App\Traits\AplicaSenias;
 use App\Traits\FechaDeCobro;
 use App\Traits\RehaceMovimientos;
 use App\Traits\SanitizesInput;
@@ -36,7 +37,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ServicioController extends Controller
 {
-    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, FechaDeCobro;
+    use SanitizesInput, RehaceMovimientos, ValidaCajaAbierta, FechaDeCobro, AplicaSenias;
     /**
      * Display a listing of the resource.
      *
@@ -689,10 +690,11 @@ class ServicioController extends Controller
 
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.
-        $validator->after(function ($validator) use ($request) {
+        $validator->after(function ($validator) use ($request, $servicio) {
             if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
                 $validator->errors()->add('caja', $mensajeCaja);
             }
+            $this->validarSenias($validator, $request, 'servicio_id', optional($servicio)->id);
         });
 
         // Validar y verificar si hay errores
@@ -737,8 +739,11 @@ class ServicioController extends Controller
             $servicio->update($input);
 
             // Preserve auditor data and proofs from existing payments before deleting
+            // Los pagos que aplican una seña no son filas del formulario: se
+            // dejan afuera y se sincronizan aparte con sincronizarSenias().
             $pagosViejos = Pago::with('comprobantes', 'autorizacion')
                 ->where('servicio_id', $servicio->id)
+                ->whereNull('senia_aplicada_id')
                 ->orderBy('id')
                 ->get()
                 ->values();
@@ -761,7 +766,7 @@ class ServicioController extends Controller
             })->all();
 
             \App\Models\Autorizacion::whereIn('pago_id', $pagosViejos->pluck('id'))->delete();
-            Pago::where('servicio_id', $servicio->id)->delete();
+            Pago::where('servicio_id', $servicio->id)->whereNull('senia_aplicada_id')->delete();
 
             // Baja de los movimientos viejos: si no, al recrearlos la plata queda
             // duplicada en la caja y en la cuenta de la entidad.
@@ -857,6 +862,9 @@ class ServicioController extends Controller
                 }
             }
 
+            // Señas del cliente aplicadas como pago (no tocan caja ni cuenta)
+            $this->sincronizarSenias($request, 'servicio_id', $servicio->id);
+
         }catch(QueryException $ex){
             $error = $ex->getMessage();
             $ok=0;
@@ -889,6 +897,8 @@ class ServicioController extends Controller
     {
 
         $servicio = Servicio::findOrFail($id);
+        // Las señas aplicadas vuelven a quedar vigentes para el cliente
+        $this->liberarSeniasDe('servicio_id', $servicio->id);
         // Elimina las relaciones
         $servicio->pagos()->delete();
 

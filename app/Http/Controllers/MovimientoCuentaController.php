@@ -99,6 +99,12 @@ class MovimientoCuentaController extends Controller
                 LEFT JOIN clientes c ON c.id = s.cliente_id
                 WHERE s.id = movimiento_cuentas.servicio_id
             )
+            WHEN movimiento_cuentas.senia_id IS NOT NULL THEN (
+                SELECT CONCAT('Seña #', se.id, IFNULL(CONCAT(' - ', NULLIF(c.nombre, '')), ''))
+                FROM senias se
+                LEFT JOIN clientes c ON c.id = se.cliente_id
+                WHERE se.id = movimiento_cuentas.senia_id
+            )
             ELSE NULL END";
 
         $query = MovimientoCuenta::select(

@@ -10,7 +10,7 @@ class MovimientoCuenta extends Model
     use HasFactory;
     protected $fillable = [
         'entidad_id', 'tipo', 'monto', 'fecha', 'concepto',
-        'venta_id', 'venta_pieza_id', 'servicio_id', 'pago_id','transferencia_id',
+        'venta_id', 'venta_pieza_id', 'servicio_id', 'pago_id','transferencia_id', 'senia_id',
         'user_id', 'observacion',
     ];
 
@@ -20,4 +20,5 @@ class MovimientoCuenta extends Model
     public function servicio()  { return $this->belongsTo(Servicio::class); }
     public function pago()      { return $this->belongsTo(Pago::class); }
     public function user()      { return $this->belongsTo(User::class); }
+    public function senia()     { return $this->belongsTo(Senia::class); }
 }

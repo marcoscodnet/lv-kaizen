@@ -334,10 +334,14 @@
                                     <h5 class="mb-0">Cobro</h5>
                                 </div>
                                 <div class="card-body">
+                                    {{-- Señas del cliente aplicadas como pago --}}
+                                    @include('includes.senias_aplicar', ['columna' => 'servicio_id', 'operacionId' => $servicio->id])
+
                                     @include('includes.cobro', [
                                         'entidads'        => $entidads,
                                         'formaActual'     => $servicio->forma ?? '',
-                                        'pagosExistentes' => $servicio->pagos,
+                                        // Los pagos que aplican una seña van en su propio bloque
+                                        'pagosExistentes' => $servicio->pagos->whereNull('senia_aplicada_id')->values(),
                                     ])
 
                                     {{-- Payment control notice --}}
@@ -810,6 +814,10 @@
                     var val = parseFloat($(this).val().replace(/\./g, '').replace(',', '.')) || 0;
                     total += val;
                 });
+                // Señas del cliente aplicadas (includes/senias_aplicar)
+                $('.senia-aplicada:checked').each(function () {
+                    total += parseFloat($(this).data('monto')) || 0;
+                });
                 return total;
             }
 
@@ -845,6 +853,7 @@
             }
 
             $('body').on('input change', 'input[name="monto[]"]', controlarCobro);
+            $(document).on('senias:changed', controlarCobro);
 
         });
     </script>

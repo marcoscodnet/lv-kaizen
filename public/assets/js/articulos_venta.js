@@ -194,6 +194,10 @@ $(document).ready(function () {
         $('input[name="monto[]"]').each(function () {
             total += leerImporte(this);
         });
+        // Señas del cliente aplicadas a la venta (includes/senias_venta)
+        $('.senia-aplicada:checked').each(function () {
+            total += parseFloat($(this).data('monto')) || 0;
+        });
         return total;
     }
 
@@ -334,6 +338,9 @@ $(document).ready(function () {
         setTimeout(controlarCobroDeLaVenta, 0);
     });
     $(document).on('forma:changed', function () {
+        setTimeout(controlarCobroDeLaVenta, 0);
+    });
+    $(document).on('senias:changed', function () {
         setTimeout(controlarCobroDeLaVenta, 0);
     });
 

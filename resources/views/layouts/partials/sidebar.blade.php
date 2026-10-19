@@ -186,6 +186,15 @@
                             </a>
                         @endcan
 
+                        @can('senia-listar')
+                            <a class="nav-link {{ request()->routeIs('senias.*') ? 'active' : '' }}" href="{{ route('senias.index') }}" role="button">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon"><span class="fas fa-hand-holding-usd"></span></span>
+                                    <span class="nav-link-text ps-1">Señas</span>
+                                </div>
+                            </a>
+                        @endcan
+
                         @can('caja-movimiento-registrar')
                             <!--<a class="nav-link" href="{{ route('movimientos.index') }}" role="button">
                                 <div class="d-flex align-items-center">

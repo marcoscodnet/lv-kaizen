@@ -31,6 +31,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Exports\PiezasExport;
 use App\Http\Controllers\MovimientoPiezaController;
 use App\Http\Controllers\MovimientoCuentaController;
+use App\Http\Controllers\SeniaController;
 use App\Http\Controllers\AuditoriaController;
 
 /*
@@ -262,6 +263,17 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('arqueo/{caja}/export-excel', [CajaController::class, 'generateArqueoExcel'])->name('arqueo.export.excel');
 
 
+    });
+
+// 📌 Señas (se registran con su forma de pago y se aplican al cobrar motos, artículos o servicios)
+    Route::prefix('senias')->name('senias.')->group(function () {
+        Route::get('/', [SeniaController::class, 'index'])->name('index');
+        Route::get('crear', [SeniaController::class, 'create'])->name('create');
+        Route::post('/', [SeniaController::class, 'store'])->name('store');
+        Route::get('aplicables', [SeniaController::class, 'aplicables'])->name('aplicables');
+        Route::post('{senia}/devolver', [SeniaController::class, 'devolver'])->name('devolver');
+        Route::post('{senia}/retener', [SeniaController::class, 'retener'])->name('retener');
+        Route::delete('{senia}', [SeniaController::class, 'destroy'])->name('destroy');
     });
 
 // 📌 Movimientos de Caja
