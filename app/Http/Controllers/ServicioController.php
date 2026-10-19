@@ -51,6 +51,18 @@ class ServicioController extends Controller
         $this->middleware('permission:servicio-eliminar', ['only' => ['destroy']]);
     }
 
+    // Una orden cerrada (pagado = 1) ya no la modifica nadie, salvo quien tenga
+    // `servicio-reabrir`: los técnicos tienen permiso de edición mientras la
+    // orden está abierta, así que el permiso de edición solo no alcanza.
+    private function bloqueadaPorCierre(?Servicio $servicio)
+    {
+        if ($servicio && $servicio->pagado && !auth()->user()->can('servicio-reabrir')) {
+            return redirect()->route('servicios.show', $servicio->id)
+                ->with('error', 'La orden de servicio está cerrada y ya no se puede modificar.');
+        }
+        return null;
+    }
+
     // SQL CASE that returns 'Autorizada' when the service has payments and all are authorized
     private function autorizacionCase(string $alias = ''): string
     {
@@ -596,6 +608,10 @@ class ServicioController extends Controller
             'ventaPiezas.piezas.sucursal',
         ])->find($id);
 
+        if ($bloqueo = $this->bloqueadaPorCierre($servicio)) {
+            return $bloqueo;
+        }
+
         // Defaults: keep stored values (used when service is closed)
         $repuestosTexto = $servicio->repuestos;
         $costoRepuestosCalculado = $servicio->costo_repuestos;
@@ -642,6 +658,10 @@ class ServicioController extends Controller
     {
 
         $servicio = Servicio::find($id);
+
+        if ($bloqueo = $this->bloqueadaPorCierre($servicio)) {
+            return $bloqueo;
+        }
 
         $rules = [
             'venta' => 'nullable|date',

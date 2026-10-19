@@ -319,8 +319,9 @@
                                             <input type="hidden" name="pagado" value="0">
                                             <input class="form-check-input" type="checkbox" id="pagado" name="pagado" value="1"
                                                 {{ old('pagado', $servicio->pagado ?? false) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="pagado">
-                                                Pagado
+                                            <label class="form-check-label" for="pagado"
+                                                   title="Una vez cerrada, la orden no se puede volver a modificar">
+                                                Cerrado
                                             </label>
                                         </div>
                                     </div>
