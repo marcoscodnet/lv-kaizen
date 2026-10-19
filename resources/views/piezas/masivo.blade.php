@@ -72,20 +72,7 @@
                                 <button type="button" class="btn btn-sm btn-danger eliminar-fila"><i class="fa fa-times text-white"></i></button>
                             </td>
                         </tr>
-                    @endforeacheach
-                                </select>
-                            </td>
-                            <td><input type="text" name="descripcion[]" class="form-control" required></td>
-                            <td>
-                                <img src="" class="foto-preview border" style="width:80px; height:60px; display:none;">
-                                <input type="hidden" name="foto[]" class="foto-input">
-                                <button type="button" class="btn btn-sm btn-secondary asignar-foto">Asignar foto</button>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-danger eliminar-fila"><i class="fa fa-times text-white"></i></button>
-                            </td>
-                        </tr>
-                    @endfor
+                    @endforeach
                     </tbody>
                 </table>
 
