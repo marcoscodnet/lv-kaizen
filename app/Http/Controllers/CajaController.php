@@ -332,7 +332,8 @@ class CajaController extends Controller
         $this->autorizarCaja($caja);
 
         $data = [
-            'caja' => $caja
+            'caja'      => $caja,
+            'secciones' => $this->seccionesArqueo($caja),
         ];
 
         $pdf = PDF::loadView('cajas.arqueo_pdf', $data);
@@ -376,49 +377,75 @@ class CajaController extends Controller
             $startRow = 8;
         }
 
-        // Encabezados de la tabla
-        $sheet->setCellValue('A'.$startRow, 'Fecha');
-        $sheet->setCellValue('B'.$startRow, 'Concepto');
-        $sheet->setCellValue('C'.$startRow, 'Referencia');
-        $sheet->setCellValue('D'.$startRow, 'Forma de pago');
-        $sheet->setCellValue('E'.$startRow, 'Origen');
-        $sheet->setCellValue('F'.$startRow, 'Tipo');
-        $sheet->setCellValue('G'.$startRow, 'Monto');
-        $sheet->setCellValue('H'.$startRow, 'Acreditado');
+        // Un bloque por sección (acreditados / pendientes / egresos), cada uno
+        // con su encabezado de columnas y su subtotal, para que no se mezclen.
+        $secciones = $this->seccionesArqueo($caja);
+        $formatoMoneda = '#,##0.00';
+        $row = $startRow;
 
-        $row = $startRow + 1;
+        foreach ($secciones['bloques'] as $bloque) {
+            $sheet->setCellValue('A'.$row, $bloque['titulo']);
+            $sheet->mergeCells('A'.$row.':F'.$row);
+            $sheet->getStyle('A'.$row.':F'.$row)->getFont()->setBold(true)->setSize(12);
+            $sheet->getStyle('A'.$row.':F'.$row)->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setRGB($bloque['color']);
+            $row++;
 
-        foreach($caja->movimientos as $mov){
-            $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i:s'));
-            $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
-            $sheet->setCellValue('C'.$row, $mov->referencia ?: '-');
-            $sheet->setCellValue('D'.$row, optional($mov->entidad)->nombre ?? '-');
-            $sheet->setCellValue('E'.$row, $mov->origen);
-            $sheet->setCellValue('F'.$row, ucfirst($mov->tipo));
-            $sheet->setCellValue('G'.$row, $mov->monto);
-            $sheet->setCellValue('H'.$row, $mov->tipo === 'Ingreso' ? ($mov->acreditado ? 'Sí' : 'No') : '-');
+            $encabezados = ['A' => 'Fecha', 'B' => 'Concepto', 'C' => 'Referencia', 'D' => 'Forma de pago', 'E' => 'Origen', 'F' => 'Monto'];
+            foreach ($encabezados as $col => $titulo) {
+                $sheet->setCellValue($col.$row, $titulo);
+            }
+            $sheet->getStyle('A'.$row.':F'.$row)->getFont()->setBold(true);
+            $row++;
+
+            if ($bloque['movimientos']->isEmpty()) {
+                $sheet->setCellValue('A'.$row, 'Sin movimientos');
+                $sheet->getStyle('A'.$row)->getFont()->setItalic(true);
+                $row++;
+            }
+
+            foreach ($bloque['movimientos'] as $mov) {
+                $sheet->setCellValue('A'.$row, $mov->fecha->format('d/m/Y H:i:s'));
+                $sheet->setCellValue('B'.$row, optional($mov->concepto)->nombre ?? '-');
+                $sheet->setCellValue('C'.$row, $mov->referencia ?: '-');
+                $sheet->setCellValue('D'.$row, optional($mov->entidad)->nombre ?? '-');
+                $sheet->setCellValue('E'.$row, $mov->origen);
+                $sheet->setCellValue('F'.$row, (float) $mov->monto);
+                $sheet->getStyle('F'.$row)->getNumberFormat()->setFormatCode($formatoMoneda);
+                $row++;
+            }
+
+            $sheet->setCellValue('E'.$row, 'Subtotal ' . $bloque['corto'] . ':');
+            $sheet->setCellValue('F'.$row, (float) $bloque['total']);
+            $sheet->getStyle('E'.$row.':F'.$row)->getFont()->setBold(true);
+            $sheet->getStyle('F'.$row)->getNumberFormat()->setFormatCode($formatoMoneda);
+            $row += 2;
+        }
+
+        // Resumen: el saldo es solo lo acreditado menos egresos; lo pendiente
+        // se informa aparte porque todavía no entró.
+        $sheet->setCellValue('A'.$row, 'Resumen');
+        $sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(12);
+        $row++;
+        $resumen = [
+            ['Ingresos acreditados', $secciones['totales']['acreditados'], false],
+            ['Egresos', -$secciones['totales']['egresos'], false],
+            ['Saldo (acreditado − egresos)', $secciones['totales']['saldo'], true],
+            ['Pendiente de acreditar (no suma al saldo)', $secciones['totales']['pendientes'], false],
+        ];
+        foreach ($resumen as [$etiqueta, $valor, $negrita]) {
+            $sheet->setCellValue('E'.$row, $etiqueta);
+            $sheet->setCellValue('F'.$row, (float) $valor);
+            $sheet->getStyle('F'.$row)->getNumberFormat()->setFormatCode($formatoMoneda);
+            if ($negrita) {
+                $sheet->getStyle('E'.$row.':F'.$row)->getFont()->setBold(true);
+            }
             $row++;
         }
 
-        // Totales al final
-        $totalIngresos = $caja->movimientos->where('tipo','Ingreso')->where('acreditado',true)->sum('monto');
-        $totalEgresos = $caja->movimientos->where('tipo','Egreso')->sum('monto');
-        $saldo = $totalIngresos - $totalEgresos;
-
-        $sheet->setCellValue('F'.$row, 'Total Ingresos Acreditados:');
-        $sheet->setCellValue('G'.$row, $totalIngresos);
-        $row++;
-        $sheet->setCellValue('F'.$row, 'Total Egresos:');
-        $sheet->setCellValue('G'.$row, $totalEgresos);
-        $row++;
-        $sheet->setCellValue('F'.$row, 'Saldo Actual:');
-        $sheet->setCellValue('G'.$row, $saldo);
-
-        // Formato de moneda
-        $sheet->getStyle('G'.($startRow+1).':G'.$row)->getNumberFormat()->setFormatCode('#,##0.00');
-
         // Autoajustar ancho de columnas
-        foreach(range('A','H') as $col){
+        foreach(range('A','F') as $col){
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -431,6 +458,36 @@ class CajaController extends Controller
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
+    }
+
+    /**
+     * Movimientos del arqueo separados para el PDF y el Excel:
+     * ingresos acreditados, ingresos pendientes de acreditar y egresos,
+     * cada grupo ordenado por fecha y con su subtotal.
+     */
+    private function seccionesArqueo(Caja $caja): array
+    {
+        $movs = $caja->movimientos->sortBy('fecha')->values();
+
+        $acreditados = $movs->filter(fn ($m) => $m->tipo === 'Ingreso' && $m->acreditado)->values();
+        $pendientes  = $movs->filter(fn ($m) => $m->tipo === 'Ingreso' && !$m->acreditado)->values();
+        $egresos     = $movs->filter(fn ($m) => $m->tipo === 'Egreso')->values();
+
+        $totales = [
+            'acreditados' => $acreditados->sum('monto'),
+            'pendientes'  => $pendientes->sum('monto'),
+            'egresos'     => $egresos->sum('monto'),
+        ];
+        $totales['saldo'] = $totales['acreditados'] - $totales['egresos'];
+
+        return [
+            'bloques' => [
+                ['titulo' => 'Ingresos acreditados', 'corto' => 'acreditados', 'color' => 'D4EDDA', 'movimientos' => $acreditados, 'total' => $totales['acreditados']],
+                ['titulo' => 'Ingresos pendientes de acreditar', 'corto' => 'pendientes', 'color' => 'FFF3CD', 'movimientos' => $pendientes, 'total' => $totales['pendientes']],
+                ['titulo' => 'Egresos', 'corto' => 'egresos', 'color' => 'F8D7DA', 'movimientos' => $egresos, 'total' => $totales['egresos']],
+            ],
+            'totales' => $totales,
+        ];
     }
 
     // 403 si la caja no es de la sucursal del usuario (salvo Administrador).

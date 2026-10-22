@@ -32,7 +32,7 @@
                         <select name="entidad_id" id="entidad_id" class="form-control select2" required>
                             <option value="">Seleccione</option>
                             @foreach($entidads as $entidad)
-                                <option value="{{ $entidad->id }}"
+                                <option value="{{ $entidad->id }}" data-acredita-auto="{{ $entidad->acreditaAutomatico() ? 1 : 0 }}"
                                     {{ $mov->entidad_id == $entidad->id ? 'selected' : '' }}>
                                     {{ $entidad->nombre }}
                                 </option>
@@ -96,6 +96,13 @@
                 if ($('#tipo').val() === 'Ingreso') {
                     $('#acreditado-container').show();
                     $('#acreditado').prop('required', true);
+                    // Efectivo y demás formas sin autorización entran acreditadas
+                    // siempre (el servidor también lo fuerza).
+                    var auto = $('#entidad_id option:selected').data('acredita-auto') == 1;
+                    $('#acreditado option[value="0"]').prop('disabled', auto);
+                    if (auto) {
+                        $('#acreditado').val('1');
+                    }
                 } else {
                     $('#acreditado-container').hide();
                     $('#acreditado').prop('required', false);
@@ -103,7 +110,7 @@
                 }
             }
 
-            $('#tipo').change(toggleAcreditado);
+            $('#tipo, #entidad_id').change(toggleAcreditado);
             toggleAcreditado(); // Ejecutar al cargar la página
         });
 

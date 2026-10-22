@@ -62,7 +62,7 @@ class MovimientoCajaController extends Controller
                 'venta_id' => $this->sanitizeInput($request->venta_id),
                 'tipo' => $this->sanitizeInput($request->tipo),
                 'monto' => $this->sanitizeInput($request->monto),
-                'acreditado' => $request->acreditado ?? true,
+                'acreditado' => $this->acreditadoDelRequest($request, true),
                 'fecha' => now(),
                 'referencia' => $this->sanitizeInput($request->referencia),
                 'user_id' => auth()->id(),
@@ -133,7 +133,7 @@ class MovimientoCajaController extends Controller
             'venta_id' => $this->sanitizeInput($request->venta_id),
             'tipo' => $this->sanitizeInput($request->tipo),
             'monto' => $this->sanitizeInput($request->monto),
-            'acreditado' => $request->acreditado,
+            'acreditado' => $this->acreditadoDelRequest($request, $request->acreditado),
             'referencia' => $this->sanitizeInput($request->referencia),
         ]);
 
@@ -178,6 +178,24 @@ class MovimientoCajaController extends Controller
 
         return redirect()->route('cajas.show', $mov->caja_id)
             ->with('success', 'Movimiento acreditado correctamente.');
+    }
+
+    /**
+     * Un ingreso con una forma de pago que no requiere autorización (efectivo
+     * y similares) entra acreditado siempre, elija lo que elija el usuario:
+     * si no, en el arqueo quedaba "Dinero en efectivo" como pendiente.
+     * Mismo criterio que Entidad::acreditaAutomatico() en ventas/servicios.
+     */
+    private function acreditadoDelRequest(Request $request, $porDefecto)
+    {
+        if ($request->tipo === 'Ingreso' && $request->filled('entidad_id')) {
+            $entidad = Entidad::find($request->entidad_id);
+            if ($entidad && $entidad->acreditaAutomatico()) {
+                return true;
+            }
+        }
+
+        return $request->acreditado ?? $porDefecto;
     }
 
     // 403 si la caja no es de la sucursal del usuario (salvo Administrador).
