@@ -19,6 +19,8 @@
         .nb-b { border-bottom: none; }
         .obs { height: 28px; }
         .pedido { height: 40px; }
+        .renglon td { height: 10px; }
+        .nro { width: 4%; text-align: center; }
         .legal { font-size: 6.5px; padding-right: 10px; }
         .legal-honda { font-size: 5.3px; line-height: 1.15; padding-right: 14px; }
         .sep { height: 3px; border: none; padding: 0; }
@@ -49,6 +51,18 @@
     };
     // El modelo se guarda por modelo_id; la columna de texto "modelo" quedó de la versión vieja
     $modeloNombre = trim(optional($servicio->marca)->nombre . ' ' . ($servicio->modelo()->value('nombre') ?: $servicio->getAttribute('modelo')));
+    // El formulario R270 numera los ítems: cada renglón del texto es un ítem
+    $renglones = function ($texto, $minimo = 3) {
+        $lineas = array_values(array_filter(array_map('trim', preg_split('/\R/', (string) $texto)), 'strlen'));
+        return array_pad($lineas, max($minimo, count($lineas)), '');
+    };
+    // Los repuestos vienen como "código - descripción (xN)": la cantidad va en su columna
+    $repuestos = array_map(function ($linea) {
+        if (preg_match('/^(.*?)\s*\(x\s*([\d.,]+)\)\s*$/u', $linea, $m)) {
+            return ['cant' => $m[2], 'desc' => $m[1]];
+        }
+        return ['cant' => '', 'desc' => $linea];
+    }, $renglones($servicio->repuestos));
     $fecha = function ($valor, $formato = 'd/m/Y') {
         return $valor ? date($formato, strtotime($valor)) : '-';
     };
@@ -182,20 +196,24 @@
 {{-- Recepción --}}
 <table style="margin-top: 3px">
     <tr>
-        <td class="section-title" style="width: 45%">DESCRIPCIÓN DEL PEDIDO DEL CLIENTE</td>
+        <td class="section-title nro">ITEM</td>
+        <td class="section-title" style="width: 41%">DESCRIPCIÓN DEL PEDIDO DEL CLIENTE</td>
         <td class="section-title" style="width: 27%">SERVICIO: {{ optional($servicio->tipoServicio)->nombre }}</td>
         <td class="section-title">FECHA DE COMPROMISO DE ENTREGA: {{ $fecha($servicio->entrega) }}</td>
     </tr>
+    @foreach($renglones($servicio->descripcion) as $i => $linea)
+        <tr class="renglon">
+            <td class="nro">{{ $linea !== '' ? $i + 1 : '' }}</td>
+            <td colspan="3">{{ $linea }}</td>
+        </tr>
+    @endforeach
     <tr>
-        <td colspan="3" class="pedido">{!! nl2br(e($servicio->descripcion)) !!}</td>
-    </tr>
-    <tr>
-        <td colspan="3" class="legal nb-b">Me declaro en conocimiento de la condición en la que se encuentra la unidad, afirmando que los daños en la carrocería detectados en el momento de la recepción son los indicados en la figura. Autorizo a realizar todos los trabajos descriptos a mi exclusiva cuenta y cargo, y a efectuar todas las pruebas necesarias (incluidas en ruta) de la unidad.<br>
+        <td colspan="4" class="legal nb-b">Me declaro en conocimiento de la condición en la que se encuentra la unidad, afirmando que los daños en la carrocería detectados en el momento de la recepción, son los indicados en la figura. Autorizo a realizar todos los trabajos descriptos a mi exclusiva cuenta y cargo, y a efectuar todas las pruebas necesarias (incluidas en ruta) de la unidad.<br>
             <span class="b">VEHÍCULO INGRESADO EL:</span>
         </td>
     </tr>
     <tr>
-        <td colspan="3" class="nb-t">
+        <td colspan="4" class="nb-t">
             <table class="firmas">
                 <tr>
                     <td class="linea" style="width: 22%">{{ $fecha($servicio->ingreso, 'd/m/Y H:i') }}</td>
@@ -217,30 +235,40 @@
 {{-- Taller --}}
 <table style="margin-top: 3px">
     <tr>
+        <td class="section-title nro">ITEM</td>
         <td colspan="2" class="section-title">DIAGNÓSTICO Y REPARACIÓN REALIZADA</td>
     </tr>
+    @foreach($renglones($servicio->diagnostico) as $i => $linea)
+        <tr class="renglon">
+            <td class="nro">{{ $linea !== '' ? $i + 1 : '' }}</td>
+            <td colspan="2">{{ $linea }}</td>
+        </tr>
+    @endforeach
     <tr>
-        <td colspan="2" class="pedido">{!! nl2br(e($servicio->diagnostico)) !!}</td>
-    </tr>
-    <tr>
-        <td style="width: 60%"><span class="b">MECÁNICOS:</span> {{ $servicio->mecanicos }}</td>
+        <td colspan="2"><span class="b">MECÁNICOS:</span> {{ $servicio->mecanicos }}</td>
         <td><span class="b">TIEMPO MANO DE OBRA:</span> {{ $servicio->tiempo }}</td>
     </tr>
     <tr>
-        <td class="section-title">REPUESTOS UTILIZADOS</td>
+        <td class="section-title nro">Cant.</td>
+        <td class="section-title" style="width: 56%">REPUESTOS UTILIZADOS</td>
         <td class="section-title">INSTRUMENTOS DE MEDICIÓN UTILIZADOS</td>
     </tr>
+    @foreach($repuestos as $i => $rep)
+        <tr class="renglon">
+            <td class="nro">{{ $rep['cant'] }}</td>
+            <td>{{ $rep['desc'] }}</td>
+            @if($i === 0)
+                <td rowspan="{{ count($repuestos) }}">{!! nl2br(e($servicio->instrumentos)) !!}</td>
+            @endif
+        </tr>
+    @endforeach
     <tr>
-        <td class="obs">{!! nl2br(e($servicio->repuestos)) !!}</td>
-        <td class="obs">{!! nl2br(e($servicio->instrumentos)) !!}</td>
-    </tr>
-    <tr>
-        <td colspan="2" class="legal nb-b">Dejo expresa constancia que luego de haber sido probada, retiro la unidad antes mencionada con los trabajos de reparación realizados, declarando conocer y aceptar el estado en el que se encuentra la misma. Si los trabajos señalados no fueron aceptados, el cliente retira el producto bajo su exclusiva responsabilidad, liberando al concesionario de las posibles consecuencias de su utilización sin las reparaciones recomendadas. La unidad será retirada por el titular. En caso de no poder asistir, el responsable deberá acreditar la titularidad de la misma (fotocopia de DNI).<br>
+        <td colspan="3" class="legal nb-b">Dejo expresa constancia que luego de haber sido probada, retiro la unidad antes mencionada con los trabajos de reparación realizados, declarando conocer y aceptar el estado en el que se encuentra la misma. Si los trabajos señalados no fueron aceptados, el cliente retira el producto bajo su exclusiva responsabilidad, liberando al concesionario de las posibles consecuencias de su utilización sin las reparaciones recomendadas. La unidad será retirada por el titular. En caso de no poder asistir, el responsable deberá acreditar la titularidad de la misma (fotocopia de DNI).<br>
             <span class="b">VEHÍCULO RETIRADO EL:</span>
         </td>
     </tr>
     <tr>
-        <td colspan="2" class="nb-t">
+        <td colspan="3" class="nb-t">
             <table class="firmas">
                 <tr>
                     <td class="linea" style="width: 22%"></td>
@@ -252,7 +280,7 @@
                 <tr>
                     <td class="rotulo">FECHA</td><td></td>
                     <td class="rotulo">FIRMA Y ACLARACIÓN DEL CLIENTE</td><td></td>
-                    <td class="rotulo">FIRMA DEL TÉCNICO Y LEGAJO</td>
+                    <td class="rotulo">FIRMA Y ACLARACIÓN DEL TÉCNICO Y LEGAJO</td>
                 </tr>
             </table>
         </td>
@@ -264,7 +292,7 @@
 <table style="margin-top: 3px">
     <tr>
         <td class="legal-honda nb-b">
-            Consiento que al momento de adquirir un producto Honda en un concesionario oficial de HONDA MOTOR DE ARGENTINA S.A. (en adelante, “HONDA”) y/o al requerir servicios a un concesionario oficial de HONDA mis datos personales como así también información sobre mi producto Honda podrán ser cedidos y/o compartidos por el concesionario oficial con HONDA para que ésta pueda (i) cumplir las obligaciones que le correspondan de acuerdo con los términos y condiciones de la garantía contractual sobre los productos Honda que fabrica y/o importa; (ii) medir el grado de satisfacción de los clientes con dichos productos y/o con los servicios de su red oficial de concesionarios y/o servicios oficiales; (iii) realizar campañas publicitarias y/o de marketing tendientes a mantenerme actualizado sobre nuevos productos, promociones y/o distintos servicios que ofrezca por sí y/o a través de su red oficial de concesionarios y/o servicios oficiales; (iv) confeccionar estadísticas; (v) comunicar aquella información de seguridad que HONDA estime necesaria para una mejor utilización de los productos que comercializa.
+            Consiento que al momento de adquirir un producto Honda en un concesionario oficial de HONDA MOTOR DE ARGENTINA S.A. (en adelante, “HONDA”) y/o al requerir servicios a un concesionario oficial de HONDA mis datos personales como así también información sobre mi producto Honda podrán ser cedidos y/o compartidos por el concesionario oficial con HONDA para que ésta pueda (i) cumplir las obligaciones que le correspondan de acuerdo con los términos y condiciones de la garantía contractual sobre los productos Honda que fabrica y/o importa; (ii) medir el grado de satisfacción de los clientes con dichos productos y/o con los servicios de su red oficial de concesionarios y/o servicios oficiales; (iii) realizar campañas publicitarias y/o de marketing tendientes a mantenerme actualizado sobre nuevos productos, promociones y/o distintos servicios que ofrezca por sí y/o a través de su red oficial de concesionarios y/o servicios oficiales; (iv) confeccionar de estadísticas; (V) comunicar aquella información de seguridad que HONDA estime necesaria para una mejor utilización de los productos que comercializa;
             En este sentido, HONDA podrá ceder y/o compartir los datos que proporcione (tanto personales como del vehículo) con (i) agencias de publicidad para realizar eventos y/o promociones y/o cualquier otra acción de marketing; (ii) empresas que le provean cualquier tipo de servicios informáticos y/o de archivo de información electrónica y/o física; (iii) empresas que operen sus canales de atención al cliente; (iv) cualquier empresa vinculada a HONDA que ofrezca líneas de crédito o financiación para su gama de productos; (v) HONDA MOTOR CO., LTD., sus empresas relacionadas y/o vinculadas; y (vi) la red de Concesionarios y Servicios Oficiales de HONDA.
             Las compañías mencionadas en los puntos i) a v) podrían estar radicadas en países que no proporcionen medidas de seguridad adecuadas de acuerdo con los estándares de la normativa argentina en materia de protección de datos personales. HONDA se compromete a incluir en sus acuerdos con dichas compañías la obligación de respetar la normativa argentina vigente en materia de protección de datos personales.
             He sido informado que (i) tengo la facultad de ejercer el derecho de acceso a mis datos personales en forma gratuita a intervalos no inferiores a seis meses, salvo que se acredite un interés legítimo al efecto conforme lo establecido en el artículo 14, inciso 3 de la Ley 25.326; (ii) que la Agencia de Acceso a la Información Pública es el órgano de Control de la Ley 25.326 y tiene la atribución de atender las denuncias y reclamos que se interpongan con relación al incumplimiento de las normas sobre protección de datos personales; y (iii) podré acceder a mis datos personales a fin de actualizar y/o modificar y/o pedir la supresión de los mencionados datos comunicándome vía correo electrónico a har_dataprivacy@honda.com.ar.
