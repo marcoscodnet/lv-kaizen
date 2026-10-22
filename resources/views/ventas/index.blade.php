@@ -267,14 +267,18 @@
                         "render": function(data, type, row) {
                             // Construir HTML para las acciones
                             var actionsHtml = '<div>';
+                            // Cada vendedor ve y edita solo sus ventas (salvo el Administrador)
+                            var esPropia = {{ auth()->user()->veOperacionesAjenas() ? 'true' : 'false' }}
+                                || row.user_id == {{ (int) auth()->id() }};
                             @can('venta-ver')
-
-                                actionsHtml += '<a href="{{ route("ventas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
+                                if (esPropia) {
+                                    actionsHtml += '<a href="{{ route("ventas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
+                                }
                             @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('venta-editar')
                                 // Con la forma de pago confirmada solo la edita el administrador
-                                if (row.tiene_pagos != 1 || {{ auth()->user()->can('operacion-cobrada-editar') ? 'true' : 'false' }}) {
+                                if (esPropia && (row.tiene_pagos != 1 || {{ auth()->user()->can('operacion-cobrada-editar') ? 'true' : 'false' }})) {
                                     actionsHtml += '<a href="{{ route("ventas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                                 }
                             @endcan

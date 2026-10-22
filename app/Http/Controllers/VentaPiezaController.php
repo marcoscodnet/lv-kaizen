@@ -279,6 +279,7 @@ class VentaPiezaController extends Controller
         $query = VentaPieza::select(
             'venta_piezas.id as id',
             'venta_piezas.venta_id as venta_id',
+            'venta_piezas.user_id',
             'venta_piezas.fecha',
             DB::raw("IFNULL(clientes.nombre, IFNULL(clientes_serv.nombre, venta_piezas.cliente)) as cliente"),
             DB::raw($this->origenCase('orden_servicio')),
@@ -669,6 +670,8 @@ class VentaPiezaController extends Controller
 
     public function update(Request $request, $id)
     {
+        abort_unless(auth()->user()->puedeVerOperacion(VentaPieza::findOrFail($id)), 403, 'Esta venta la cargó otro vendedor.');
+
         if ($bloqueo = $this->bloqueadaPorCobro(VentaPieza::find($id), 'ventaPiezas.show')) {
             return $bloqueo;
         }
@@ -817,6 +820,8 @@ class VentaPiezaController extends Controller
                 ->with('error', 'Estos artículos se cargaron dentro de la venta de la moto: se modifican desde ahí.');
         }
 
+        abort_unless(auth()->user()->puedeVerOperacion(VentaPieza::findOrFail($id)), 403, 'Esta venta la cargó otro vendedor.');
+
         if ($bloqueo = $this->bloqueadaPorCobro(VentaPieza::find($id), 'ventaPiezas.show')) {
             return $bloqueo;
         }
@@ -869,6 +874,7 @@ class VentaPiezaController extends Controller
     public function show($id)
     {
         $ventaPieza = VentaPieza::with(['piezas', 'piezas.pieza', 'piezas.sucursal', 'pagos', 'pagos.entidad', 'pagos.comprobantes'])->findOrFail($id);
+        abort_unless(auth()->user()->puedeVerOperacion($ventaPieza), 403, 'Esta venta la cargó otro vendedor.');
 
         // Cliente name via the relationship (the model also has a legacy free-text "cliente" column
         // that shadows the relation, so resolve it explicitly by cliente_id).

@@ -64,4 +64,23 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Sucursal::class);
     }
+
+    /**
+     * Ve el detalle de las operaciones de otros vendedores: el Administrador
+     * y quien tenga el permiso `operacion-ver-todas`.
+     */
+    public function veOperacionesAjenas(): bool
+    {
+        return $this->hasRole('Administrador') || $this->can('operacion-ver-todas');
+    }
+
+    /**
+     * Cada vendedor ve (y edita) solo sus operaciones: venta, venta de
+     * artículos. La operación es "suya" si figura como su vendedor (user_id).
+     */
+    public function puedeVerOperacion($operacion): bool
+    {
+        return $operacion
+            && ($this->veOperacionesAjenas() || (int) $operacion->user_id === (int) $this->id);
+    }
 }

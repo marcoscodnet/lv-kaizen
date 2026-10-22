@@ -374,6 +374,7 @@ class VentaController extends Controller
         $query = Venta::select(
             'ventas.id as id',
             'ventas.fecha',
+            'ventas.user_id',
             'clientes.nombre as cliente',
             'unidads.motor',
             'modelos.nombre as modelo',
@@ -746,6 +747,7 @@ class VentaController extends Controller
 
     public function edit($id) {
         $venta = Venta::with('pagos', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza', 'ventaArticulos.piezas.sucursal')->findOrFail($id);
+        abort_unless(auth()->user()->puedeVerOperacion($venta), 403, 'Esta venta la cargó otro vendedor.');
 
         if ($bloqueo = $this->bloqueadaPorCobro($venta, 'ventas.show')) {
             return $bloqueo;
@@ -768,6 +770,7 @@ class VentaController extends Controller
     public function update(Request $request, $id)
     {
         $venta = Venta::with('pagos.comprobantes', 'pagos.autorizacion')->findOrFail($id);
+        abort_unless(auth()->user()->puedeVerOperacion($venta), 403, 'Esta venta la cargó otro vendedor.');
 
         if ($bloqueo = $this->bloqueadaPorCobro($venta, 'ventas.show')) {
             return $bloqueo;
@@ -1016,6 +1019,7 @@ class VentaController extends Controller
 
     public function show($id) {
         $venta = Venta::with('pagos.comprobantes', 'pagos.entidad', 'unidad', 'cliente', 'ventaArticulos.piezas.pieza', 'ventaArticulos.piezas.sucursal')->findOrFail($id);
+        abort_unless(auth()->user()->puedeVerOperacion($venta), 403, 'Esta venta la cargó otro vendedor.');
         $users = \App\Models\User::orderBy('name')
             ->pluck('name', 'id')
             ->prepend('', '');

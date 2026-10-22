@@ -193,25 +193,30 @@
                         "render": function(data, type, row) {
                             // Construir HTML para las acciones
                             var actionsHtml = '<div>';
+                            // Cada vendedor ve y edita solo sus ventas (salvo el Administrador)
+                            var esPropia = {{ auth()->user()->veOperacionesAjenas() ? 'true' : 'false' }}
+                                || row.user_id == {{ (int) auth()->id() }};
 
                             // Los artículos vendidos junto con una moto son parte de esa
                             // operación: no se editan ni se anulan por afuera. Desde acá
                             // solo se va a ver la venta que los contiene.
                             if (row.venta_id) {
                                 @can('venta-listar')
+                                    if (esPropia)
                                     actionsHtml += '<a href="{{ route("ventas.show", ":id") }}" class="btn btn-link p-0" alt="Ver la venta" title="Ver la venta de la moto" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-motorcycle"></span></a>'.replace(':id', row.venta_id);
                                 @endcan
                                 return actionsHtml + '</div>';
                             }
 
                             @can('venta-pieza-ver')
-
-                                actionsHtml += '<a href="{{ route("ventaPiezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
+                                if (esPropia) {
+                                    actionsHtml += '<a href="{{ route("ventaPiezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
+                                }
                             @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('venta-pieza-editar')
                                 // Con la forma de pago confirmada solo la edita el administrador
-                                if (row.tiene_pagos != 1 || {{ auth()->user()->can('operacion-cobrada-editar') ? 'true' : 'false' }}) {
+                                if (esPropia && (row.tiene_pagos != 1 || {{ auth()->user()->can('operacion-cobrada-editar') ? 'true' : 'false' }})) {
                                     actionsHtml += '<a href="{{ route("ventaPiezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top" ><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                                 }
                             @endcan
