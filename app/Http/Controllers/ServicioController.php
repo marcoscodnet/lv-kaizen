@@ -55,6 +55,33 @@ class ServicioController extends Controller
     // Una orden cerrada (pagado = 1) ya no la modifica nadie, salvo quien tenga
     // `servicio-reabrir`: los técnicos tienen permiso de edición mientras la
     // orden está abierta, así que el permiso de edición solo no alcanza.
+    /**
+     * La orden no se carga si el cliente no tiene mail y celular: se exige
+     * corregirlo desde el ABM de Clientes para que se acostumbren a cargarlos.
+     */
+    private function faltanContactosCliente($clienteId): ?string
+    {
+        $cliente = $clienteId ? Cliente::find($clienteId) : null;
+        if (!$cliente) {
+            return null;
+        }
+
+        $faltan = [];
+        if (blank($cliente->email) || !filter_var(trim($cliente->email), FILTER_VALIDATE_EMAIL)) {
+            $faltan[] = 'dirección de correo electrónico';
+        }
+        if (blank($cliente->celular)) {
+            $faltan[] = 'teléfono celular';
+        }
+        if (!$faltan) {
+            return null;
+        }
+
+        return 'El cliente ' . $cliente->nombre . ' no tiene cargado ' . implode(' ni ', $faltan) . '. '
+            . 'No se puede guardar la orden de servicio: ingresá a Clientes, modificá el cliente y agregá '
+            . implode(' y ', $faltan) . '.';
+    }
+
     private function bloqueadaPorCierre(?Servicio $servicio)
     {
         if ($servicio && $servicio->pagado && !auth()->user()->can('servicio-reabrir')) {
@@ -460,6 +487,9 @@ class ServicioController extends Controller
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.
         $validator->after(function ($validator) use ($request) {
+            if ($mensajeCliente = $this->faltanContactosCliente($request->cliente_id)) {
+                $validator->errors()->add('cliente_id', $mensajeCliente);
+            }
             if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
                 $validator->errors()->add('caja', $mensajeCaja);
             }
@@ -714,6 +744,9 @@ class ServicioController extends Controller
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.
         $validator->after(function ($validator) use ($request, $servicio) {
+            if ($mensajeCliente = $this->faltanContactosCliente($request->cliente_id)) {
+                $validator->errors()->add('cliente_id', $mensajeCliente);
+            }
             if ($mensajeCaja = $this->faltaCajaAbierta($request->sucursal_id, (array) $request->input('entidad_id', []))) {
                 $validator->errors()->add('caja', $mensajeCaja);
             }
@@ -960,16 +993,20 @@ class ServicioController extends Controller
 
         $motor = $servicio->motor;
 
-        $marcaId = Unidad::where('motor', $motor)
-            ->join('productos', 'unidads.producto_id', '=', 'productos.id')
-            ->value('productos.marca_id');
-        $esHonda=0;
-        if ($marcaId == Constants::ID_HONDA) {
-            $esHonda=1;
-        }
+        $unidad = $motor ? Unidad::where('motor', $motor)->first() : null;
+
+        $marcaId = $unidad
+            ? Unidad::where('unidads.id', $unidad->id)
+                ->join('productos', 'unidads.producto_id', '=', 'productos.id')
+                ->value('productos.marca_id')
+            : null;
+        // Si la moto no la vendimos nosotros, la marca sale de la propia orden
+        $esHonda = ($marcaId == Constants::ID_HONDA || $servicio->marca_id == Constants::ID_HONDA) ? 1 : 0;
+
         $data = [
             'servicio' => $servicio,
-            'esHonda' => $esHonda
+            'esHonda' => $esHonda,
+            'patente' => optional($unidad)->patente,
         ];
         //dd($data);
         $pdf = PDF::loadView($template, $data);
