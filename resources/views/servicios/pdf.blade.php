@@ -44,6 +44,11 @@
 <body>
 
 @php
+    $tel = function ($area, $numero) {
+        return trim($numero) === '' ? '-' : trim((trim($area) !== '' ? '(' . trim($area) . ') ' : '') . $numero);
+    };
+    // El modelo se guarda por modelo_id; la columna de texto "modelo" quedó de la versión vieja
+    $modeloNombre = trim(optional($servicio->marca)->nombre . ' ' . ($servicio->modelo()->value('nombre') ?: $servicio->getAttribute('modelo')));
     $fecha = function ($valor, $formato = 'd/m/Y') {
         return $valor ? date($formato, strtotime($valor)) : '-';
     };
@@ -116,15 +121,15 @@
     <tr>
         <td class="bg-gray nb-r">Dirección: {{ $servicio->cliente->calle }} {{ $servicio->cliente->nro }} {{ $servicio->cliente->piso }} {{ $servicio->cliente->depto }}</td>
         <td class="bg-gray nb-l">Localidad: {{ optional($servicio->cliente->localidad)->nombre }} &nbsp; C.P.: {{ $servicio->cliente->cp }}</td>
-        <td class="bg-gray">Modelo y año: {{ $servicio->modelo }} - {{ $servicio->year }}</td>
+        <td class="bg-gray">Modelo y año: {{ $modeloNombre ?: '-' }} - {{ $servicio->year }}</td>
     </tr>
     <tr>
         <td class="bg-gray nb-r">E-mail: {{ $servicio->cliente->email }}</td>
-        <td class="bg-gray nb-l">Celular: ({{ $servicio->cliente->celular_area }}) {{ $servicio->cliente->celular }}</td>
+        <td class="bg-gray nb-l">Celular: {{ $tel($servicio->cliente->celular_area, $servicio->cliente->celular) }}</td>
         <td class="bg-gray">Nº de chasis: {{ $servicio->chasis }}</td>
     </tr>
     <tr>
-        <td class="bg-gray nb-r">Teléfono: ({{ $servicio->cliente->particular_area }}) {{ $servicio->cliente->particular }}</td>
+        <td class="bg-gray nb-r">Teléfono: {{ $tel($servicio->cliente->particular_area, $servicio->cliente->particular) }}</td>
         <td class="bg-gray nb-l"></td>
         <td class="bg-gray">Nº de motor: {{ $servicio->motor }}</td>
     </tr>
