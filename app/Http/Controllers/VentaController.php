@@ -1063,33 +1063,99 @@ class VentaController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Anular una venta.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Lo cobrado NO se pierde: los pagos de la venta (efectivo, transferencias,
+     * autorizados o no) pasan a una seña Vigente a favor del cliente, con sus
+     * comprobantes y autorizaciones. Desde Señas se aplica a otra operación,
+     * se devuelve o se retiene. Los movimientos de caja y de cuenta no se
+     * tocan en importe (la plata entró ese día, aunque la caja esté cerrada):
+     * solo pasan a referenciar la seña en lugar de la venta.
      */
     public function destroy($id)
     {
-        $venta = Venta::with('ventaArticulos.piezas.pieza.tipoPieza')->findOrFail($id);
+        $venta = Venta::with('ventaArticulos.piezas.pieza.tipoPieza', 'cliente', 'unidad.producto.marca', 'unidad.producto.modelo')
+            ->findOrFail($id);
+        abort_unless(auth()->user()->puedeVerOperacion($venta), 403, 'Esta venta la cargó otro vendedor.');
 
-        // Los conceptos vuelven al stock antes de irse con la venta.
-        // La fila de venta_piezas se borra sola por la FK en cascada.
-        if ($venta->ventaArticulos) {
-            $this->reponerStockArticulos($venta->ventaArticulos->piezas);
+        DB::beginTransaction();
+        try {
+            // Los conceptos vuelven al stock
+            if ($venta->ventaArticulos) {
+                $this->reponerStockArticulos($venta->ventaArticulos->piezas);
+            }
+
+            $venta->autorizaciones()->delete();
+            // Las señas aplicadas vuelven a quedar vigentes para el cliente
+            $this->liberarSeniasDe('venta_id', $venta->id);
+            // Lo cobrado queda como seña a favor del cliente
+            $senia = $this->pasarCobroASenia($venta);
+
+            // Conceptos (patentamiento, seguro...): primero el detalle, que no
+            // tiene cascada, y después la venta de artículos.
+            if ($venta->ventaArticulos) {
+                PiezaVentaPieza::where('pieza_venta_id', $venta->ventaArticulos->id)->delete();
+                $venta->ventaArticulos->delete();
+            }
+
+            // Lo que pudiera quedar apuntando a la venta (FK sin cascada)
+            $venta->pagos()->delete();
+            MovimientoCaja::where('venta_id', $venta->id)->update(['venta_id' => null]);
+            \App\Models\MovimientoCuenta::where('venta_id', $venta->id)->update(['venta_id' => null]);
+
+            $venta->delete();
+            DB::commit();
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            \Log::error('Error al anular la venta #' . $id . ': ' . $ex->getMessage());
+            return redirect()->back()->with('error', 'No se pudo anular la venta: ' . $ex->getMessage());
         }
 
-        $venta->autorizaciones()->delete();
-        // Las señas aplicadas vuelven a quedar vigentes para el cliente
-        $this->liberarSeniasDe('venta_id', $venta->id);
-        // Elimina las relaciones
-        $venta->pagos()->delete();
+        $mensaje = 'Venta anulada.';
+        if ($senia) {
+            $mensaje .= ' Lo cobrado ($' . number_format((float) $senia->monto, 2, ',', '.') . ') quedó como seña #'
+                . $senia->id . ' a favor de ' . optional($venta->cliente)->nombre
+                . ($senia->estaAutorizada() ? '.' : ' (tiene pagos pendientes de autorización).');
+        }
 
+        return redirect()->route('ventas.index')->with('success', $mensaje);
+    }
 
-        // Elimina el venta
-        $venta->delete();
+    /**
+     * Pasa los pagos de la venta (sin los que aplicaban señas, que ya se
+     * liberaron) a una seña Vigente nueva del cliente. Devuelve la seña, o null
+     * si la venta no tenía nada cobrado.
+     */
+    private function pasarCobroASenia(Venta $venta): ?\App\Models\Senia
+    {
+        $pagos = Pago::where('venta_id', $venta->id)->whereNull('senia_aplicada_id')->get();
+        if ($pagos->isEmpty()) {
+            return null;
+        }
 
-        return redirect()->route('ventas.index')
-            ->with('success','Venta eliminada con éxito');
+        $unidad = $venta->unidad;
+        $moto = $unidad ? trim(
+            optional(optional($unidad->producto)->marca)->nombre . ' '
+            . optional(optional($unidad->producto)->modelo)->nombre
+            . ' — Motor ' . $unidad->motor
+        ) : null;
+
+        $senia = \App\Models\Senia::create([
+            'cliente_id'  => $venta->cliente_id,
+            'sucursal_id' => $venta->sucursal_id,
+            'fecha'       => now(),
+            'monto'       => round((float) $pagos->sum('monto'), 2),
+            'detalle'     => mb_substr('Saldo de venta anulada #' . $venta->id . ($moto ? ' — ' . $moto : ''), 0, 255),
+            'estado'      => \App\Models\Senia::VIGENTE,
+            'observacion' => 'Generada al anular la venta #' . $venta->id . ' (' . auth()->user()->name . ', ' . now()->format('d/m/Y H:i') . ')',
+            'user_id'     => auth()->id(),
+        ]);
+
+        Pago::whereIn('id', $pagos->pluck('id'))->update(['venta_id' => null, 'senia_id' => $senia->id]);
+        MovimientoCaja::where('venta_id', $venta->id)->update(['venta_id' => null, 'senia_id' => $senia->id]);
+        \App\Models\MovimientoCuenta::where('venta_id', $venta->id)->update(['venta_id' => null, 'senia_id' => $senia->id]);
+
+        return $senia->load('pagos.entidad', 'pagos.autorizacion');
     }
 
     /**
