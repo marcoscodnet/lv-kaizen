@@ -493,11 +493,14 @@ class VentaController extends Controller
     public function unidadDataTable(Request $request)
     {
         $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','sucursals.nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro']; // Define las columnas disponibles
-        $columnaOrden = $columnas[$request->input('order.0.column')];
+        // La columna 10 (Bloqueo) no entra en la búsqueda general, solo se ordena
+        $columnaOrden = $columnas[$request->input('order.0.column')] ?? 'unidads.bloqueada';
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
 
         $query = Unidad::select('unidads.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro')
+            ->addSelect(UnidadController::columnasBloqueo())
+            ->leftJoin('users as bloqueo_users', 'unidads.bloqueo_user_id', '=', 'bloqueo_users.id')
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('sucursals', 'unidads.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('tipo_unidads', 'productos.tipo_unidad_id', '=', 'tipo_unidads.id')
@@ -530,6 +533,7 @@ class VentaController extends Controller
 
 
         $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
+        UnidadController::marcarPermisosBloqueo($datos, $request->user());
 
         // Obtener la cantidad total de registros sin filtrar
         $recordsTotal = Unidad::count();
@@ -544,9 +548,22 @@ class VentaController extends Controller
         ]);
     }
 
+    /** Agrega el error si la unidad está bloqueada para la venta. */
+    private function validarUnidadNoBloqueada($validator, $unidadId)
+    {
+        $unidad = $unidadId ? Unidad::find($unidadId) : null;
+        if ($unidad && $unidad->bloqueada) {
+            $validator->errors()->add('unidad_id', 'La unidad no se puede vender. ' . $unidad->textoBloqueo());
+        }
+    }
+
     public function vender($id)
     {
-        $unidad = Unidad::find($id);
+        $unidad = Unidad::findOrFail($id);
+        if ($unidad->bloqueada) {
+            return redirect()->route('ventas.unidads')
+                ->with('error', 'La unidad no se puede vender. ' . $unidad->textoBloqueo());
+        }
         $users = \App\Models\User::where('activo', 1)
             ->orderBy('name')
             ->pluck('name', 'id')
@@ -595,6 +612,12 @@ class VentaController extends Controller
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
+
+        // Una unidad bloqueada no se vende (puede haberse bloqueado mientras se
+        // cargaba la venta, o venir por URL directa).
+        $validator->after(function ($validator) use ($request) {
+            $this->validarUnidadNoBloqueada($validator, $request->unidad_id);
+        });
 
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.
@@ -809,6 +832,14 @@ class VentaController extends Controller
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
+
+        // Al editar solo se controla si cambia la unidad: la que ya está
+        // vendida en esta venta no se toca.
+        $validator->after(function ($validator) use ($request, $venta) {
+            if ((int) $request->unidad_id !== (int) $venta->unidad_id) {
+                $this->validarUnidadNoBloqueada($validator, $request->unidad_id);
+            }
+        });
 
         // La caja se controla acá y no en medio del guardado: así el aviso sale
         // junto al resto de los errores y no se pierde lo que cargó el usuario.

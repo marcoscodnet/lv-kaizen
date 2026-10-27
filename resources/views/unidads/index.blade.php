@@ -94,6 +94,7 @@
                         <th scope="col">Envío</th>
                         <th scope="col">Motor</th>
                         <th scope="col">Cuadro</th>
+                        <th scope="col">Bloqueo</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -108,6 +109,7 @@
 
 
     </div>
+    @include('unidads._bloqueo')
     <!-- /.content-wrapper -->
 @endsection
 @section('footerSection')
@@ -187,6 +189,12 @@
                     { data: 'envio', name: 'envio' },
                     { data: 'motor', name: 'motor' },
                     { data: 'cuadro', name: 'cuadro' },
+                    {
+                        data: 'bloqueada',
+                        name: 'bloqueada',
+                        searchable: false,
+                        render: function (data, type, row) { return badgeBloqueoUnidad(row); }
+                    },
                     // Actions column
                     {
                         "data": "id",
@@ -209,6 +217,8 @@
                                 actionsHtml += '<a href="{{ route("unidads.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
                             @endcan
 
+                            actionsHtml += accionesBloqueoUnidad(row);
+
                             // Agregar formulario de eliminación si el unidad tiene permiso
                             @can('unidad-eliminar')
                                 actionsHtml += '<form id="delete-form-' + row.id + '" method="post" action="{{ route('unidads.destroy', '') }}/' + row.id + '" style="display: none">';
@@ -227,6 +237,7 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                createdRow: function (tr, row) { filaBloqueoUnidad(tr, row); },
                 stateSave: true,
                 stateSaveParams: function (settings, data) {
 

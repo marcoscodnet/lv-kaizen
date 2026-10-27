@@ -55,19 +55,22 @@ class UnidadController extends Controller
     public function dataTable(Request $request)
     {
         $columnas = ['tipo_unidads.nombre','marcas.nombre','modelos.nombre','colors.nombre','sucursals.nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro']; // Define las columnas disponibles
-        $columnaOrden = $columnas[$request->input('order.0.column')];
+        // La columna 10 (Bloqueo) no entra en la búsqueda general, solo se ordena
+        $columnaOrden = $columnas[$request->input('order.0.column')] ?? 'unidads.bloqueada';
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
         $marca_id = $request->input('marca_id');
         $fechaDesde = $request->input('fecha_desde');
         $fechaHasta = $request->input('fecha_hasta');
         $query = Unidad::select('unidads.id as id', 'tipo_unidads.nombre as tipo_unidad_nombre', 'marcas.nombre as marca_nombre', 'modelos.nombre as modelo_nombre', 'colors.nombre as color_nombre','sucursals.nombre as sucursal_nombre','unidads.ingreso','unidads.year','unidads.envio','unidads.motor','unidads.cuadro')
+            ->addSelect(static::columnasBloqueo())
             ->leftJoin('productos', 'unidads.producto_id', '=', 'productos.id')
             ->leftJoin('sucursals', 'unidads.sucursal_id', '=', 'sucursals.id')
             ->leftJoin('tipo_unidads', 'productos.tipo_unidad_id', '=', 'tipo_unidads.id')
             ->leftJoin('marcas', 'productos.marca_id', '=', 'marcas.id')
             ->leftJoin('modelos', 'productos.modelo_id', '=', 'modelos.id')
-            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id');
+            ->leftJoin('colors', 'productos.color_id', '=', 'colors.id')
+            ->leftJoin('users as bloqueo_users', 'unidads.bloqueo_user_id', '=', 'bloqueo_users.id');
 
 
         if (!empty($marca_id) && $marca_id != '-1') {
@@ -107,6 +110,7 @@ class UnidadController extends Controller
 
 
         $datos = $query->orderBy($columnaOrden, $orden)->skip($request->input('start'))->take($request->input('length'))->get();
+        static::marcarPermisosBloqueo($datos, $request->user());
 
         // Obtener la cantidad total de registros sin filtrar
         $recordsTotal = Unidad::count();
@@ -119,6 +123,89 @@ class UnidadController extends Controller
             'recordsFiltered' => $recordsFiltered,
             'draw' => $request->draw,
         ]);
+    }
+
+    /* ---------- Bloqueo para la venta ---------- */
+
+    /**
+     * Columnas del bloqueo para los listados de unidades. Requiere el join
+     * "users as bloqueo_users".
+     */
+    public static function columnasBloqueo(): array
+    {
+        return [
+            'unidads.bloqueada',
+            'unidads.motivo_bloqueo',
+            'unidads.bloqueo_fecha',
+            'unidads.bloqueo_user_id',
+            'bloqueo_users.name as bloqueo_user_nombre',
+            DB::raw('EXISTS (SELECT 1 FROM ventas WHERE ventas.unidad_id = unidads.id) as vendida'),
+        ];
+    }
+
+    /** Agrega a cada fila si el usuario actual puede desbloquearla. */
+    public static function marcarPermisosBloqueo($filas, $user)
+    {
+        foreach ($filas as $fila) {
+            $fila->bloqueada = (bool) $fila->bloqueada;
+            $fila->vendida = (bool) $fila->vendida;
+            $fila->puede_desbloquear = $fila->bloqueada
+                && Unidad::puedeDesbloquearComo($user, $fila->bloqueo_user_id);
+        }
+        return $filas;
+    }
+
+    /** Cualquier usuario puede bloquear una unidad que todavía no se vendió. */
+    public function bloquear(Request $request, $id)
+    {
+        $unidad = Unidad::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'motivo_bloqueo' => 'required|string|max:255',
+        ], [
+            'motivo_bloqueo.required' => 'Indique el motivo del bloqueo.',
+            'motivo_bloqueo.max' => 'El motivo no puede superar los 255 caracteres.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator);
+        }
+        if ($unidad->estaVendida()) {
+            return redirect()->back()->with('error', 'La unidad ya está vendida, no se puede bloquear.');
+        }
+        if ($unidad->bloqueada) {
+            return redirect()->back()->with('error', 'La unidad ya estaba bloqueada. ' . $unidad->textoBloqueo());
+        }
+
+        $unidad->bloqueada = true;
+        $unidad->motivo_bloqueo = $this->sanitizeInput($request->input('motivo_bloqueo'));
+        $unidad->bloqueo_user_id = $request->user()->id;
+        $unidad->bloqueo_fecha = now();
+        $unidad->save();
+
+        return redirect()->back()->with('success', 'Unidad bloqueada para la venta.');
+    }
+
+    /** Desbloquea el usuario que la bloqueó o un Administrador. */
+    public function desbloquear(Request $request, $id)
+    {
+        $unidad = Unidad::findOrFail($id);
+
+        if (!$unidad->bloqueada) {
+            return redirect()->back()->with('error', 'La unidad no está bloqueada.');
+        }
+        if (!$unidad->puedeDesbloquear($request->user())) {
+            return redirect()->back()->with('error', 'Solo puede desbloquearla quien la bloqueó ('
+                . (optional($unidad->bloqueoUser)->name ?? 'otro usuario') . ') o un administrador.');
+        }
+
+        $unidad->bloqueada = false;
+        $unidad->motivo_bloqueo = null;
+        $unidad->bloqueo_user_id = null;
+        $unidad->bloqueo_fecha = null;
+        $unidad->save();
+
+        return redirect()->back()->with('success', 'Unidad desbloqueada.');
     }
 
     /**

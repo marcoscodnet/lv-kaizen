@@ -25,6 +25,9 @@
                     <div class="box-body">
 
                         @include('includes.messages')
+                        @if($unidad->bloqueada)
+                            <div class="alert alert-danger"><span class="fas fa-lock me-2"></span>{{ $unidad->textoBloqueo() }}</div>
+                        @endif
                         <div class="row">
                             <div class="col-12 col-lg-6">
                                 <div class="form-group">

@@ -114,6 +114,9 @@ Route::group(['middleware' => ['auth']], function() {
         ->name('unidads.exportarPDF');
 
     Route::resource('unidads', UnidadController::class);
+    // Bloqueo para la venta: bloquea cualquiera; desbloquea quien bloqueó o un Administrador
+    Route::post('unidads/{unidad}/bloquear', [UnidadController::class, 'bloquear'])->name('unidads.bloquear');
+    Route::post('unidads/{unidad}/desbloquear', [UnidadController::class, 'desbloquear'])->name('unidads.desbloquear');
     Route::post('unidad-datatable', [UnidadController::class, 'dataTable'])->name('unidads.dataTable');
     Route::get('/api/unidads-por-producto/{productoId}', [UnidadController::class, 'getUnidadsPorProducto'])->name('api.unidads.getUnidadsPorProducto');
 

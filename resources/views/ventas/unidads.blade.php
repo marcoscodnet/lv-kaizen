@@ -35,6 +35,7 @@
                         <th scope="col">Envío</th>
                         <th scope="col">Motor</th>
                         <th scope="col">Cuadro</th>
+                        <th scope="col">Bloqueo</th>
                         <th scope="col">Acciones</th>
 
                     </tr>
@@ -49,6 +50,7 @@
 
 
     </div>
+    @include('unidads._bloqueo')
     <!-- /.content-wrapper -->
 @endsection
 @section('footerSection')
@@ -123,6 +125,12 @@
                     { data: 'envio', name: 'envio' },
                     { data: 'motor', name: 'motor' },
                     { data: 'cuadro', name: 'cuadro' },
+                    {
+                        data: 'bloqueada',
+                        name: 'bloqueada',
+                        searchable: false,
+                        render: function (data, type, row) { return badgeBloqueoUnidad(row); }
+                    },
                     // Actions column
                     {
                         "data": "id",
@@ -134,8 +142,14 @@
 
                             // Agregar enlace de edición si el usuario tiene permiso
                             @can('unidad-vender')
+                            if (row.bloqueada) {
+                                // Bloqueada: el botón queda deshabilitado, con el motivo
+                                actionsHtml += '<span class="btn btn-link p-0 disabled" title="No se puede vender: bloqueada"><span class="text-300 fas fa-shopping-cart"></span></span>';
+                            } else {
                                 actionsHtml += '<a href="{{ route("unidads.vender", ":id") }}" class="btn btn-link p-0" alt="Vender" title="Vender" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-shopping-cart"></span></a>'.replace(':id', row.id);
+                            }
                             @endcan
+                            actionsHtml += accionesBloqueoUnidad(row);
 
 
 
@@ -149,6 +163,7 @@
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },
+                createdRow: function (tr, row) { filaBloqueoUnidad(tr, row); },
                 initComplete: function () {
                     // Eliminar las clases 'form-control' y 'input-sm', y agregar 'form-select' (para Bootstrap 5)
                     $('select[name="example1_length"]').removeClass('form-control');
