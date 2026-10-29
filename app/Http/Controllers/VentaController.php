@@ -1094,7 +1094,7 @@ class VentaController extends Controller
             // Conceptos (patentamiento, seguro...): primero el detalle, que no
             // tiene cascada, y después la venta de artículos.
             if ($venta->ventaArticulos) {
-                PiezaVentaPieza::where('pieza_venta_id', $venta->ventaArticulos->id)->delete();
+                PiezaVentaPieza::where('venta_pieza_id', $venta->ventaArticulos->id)->delete();
                 $venta->ventaArticulos->delete();
             }
 
