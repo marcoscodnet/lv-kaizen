@@ -21,7 +21,7 @@ class AuditoriaController extends Controller
     function __construct()
     {
         $this->middleware('permission:autorizacion-listar', ['only' => ['index', 'dataTable', 'datos']]);
-        $this->middleware('permission:autorizacion-crear', ['only' => ['autorizar', 'autorizarLote']]);
+        $this->middleware('permission:autorizacion-crear', ['only' => ['autorizar', 'autorizarLote', 'modificar']]);
         $this->middleware('permission:autorizacion-eliminar', ['only' => ['desautorizar']]);
     }
 
@@ -206,11 +206,15 @@ class AuditoriaController extends Controller
             $comprobantes = collect([asset($pago->comprobante_path)]);
         }
 
+        $autorizacion = Autorizacion::where('pago_id', $pago->id)->first();
+
         return response()->json([
             'id'           => $pago->id,
             'monto'        => $pago->monto,
             'pagado'       => $pago->pagado,
             'contadora'    => $pago->contadora,
+            'autorizado'   => (bool) $autorizacion,
+            'observaciones'=> optional($autorizacion)->observaciones,
             'entidad'      => $pago->entidad->nombre ?? '',
             'comprobante'  => $comprobantes->first(), // compatibilidad
             'comprobantes' => $comprobantes,
@@ -315,6 +319,63 @@ class AuditoriaController extends Controller
 
             DB::commit();
             return response()->json(['success' => "$autorizados pago(s) autorizado(s)."]);
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            return response()->json(['error' => $ex->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Corregir una autorización ya hecha (acreditado, fecha contadora,
+     * observaciones) sin desautorizarla: desautorizar borra lo cargado y obliga
+     * a tipear todo de nuevo. El pago sigue autorizado por quien lo autorizó.
+     */
+    public function modificar(Request $request, $pagoId)
+    {
+        $request->validate([
+            'pagado'    => 'required|numeric|min:0',
+            'contadora' => 'nullable|date',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $pago = Pago::with('entidad')->findOrFail($pagoId);
+
+            $autorizacion = Autorizacion::where('pago_id', $pago->id)->first();
+            if (!$autorizacion) {
+                DB::rollBack();
+                return response()->json(['error' => 'Este pago no está autorizado: usá Autorizar.'], 422);
+            }
+
+            if ($error = $this->seniaBloqueada($pago)) {
+                DB::rollBack();
+                return response()->json(['error' => $error], 422);
+            }
+
+            $acreditado = $this->sanitizeInput($request->pagado);
+            $observaciones = $this->sanitizeInput($request->observaciones ?? null);
+
+            $autorizacion->observaciones = $observaciones;
+            $autorizacion->save();
+
+            $pago->pagado    = $acreditado;
+            $pago->contadora = $request->filled('contadora') ? $request->contadora : null;
+            if (!empty($observaciones)) {
+                $pago->observacion = $observaciones;
+            }
+            $pago->save();
+
+            // El movimiento de la cuenta refleja lo acreditado (mismo criterio que autorizar)
+            if ($pago->entidad && $pago->entidad->cuenta) {
+                $mov = MovimientoCuenta::where('pago_id', $pago->id)->first();
+                if ($mov) {
+                    $mov->monto = $acreditado;
+                    $mov->save();
+                }
+            }
+
+            DB::commit();
+            return response()->json(['success' => 'Autorización modificada correctamente.']);
         } catch (\Exception $ex) {
             DB::rollBack();
             return response()->json(['error' => $ex->getMessage()], 500);

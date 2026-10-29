@@ -213,6 +213,10 @@
                             if (row.estado === 'Pendiente' && puedeAutorizar) {
                                 html += '<a href="#" class="btn btn-link p-0 btn-autorizar" data-id="' + data + '" title="Autorizar"><span class="text-success fas fa-check"></span></a>';
                             }
+                            // Corregir lo autorizado sin desautorizar (no se pierde lo cargado)
+                            if (row.estado === 'Autorizado' && puedeAutorizar) {
+                                html += '<a href="#" class="btn btn-link p-0 me-2 btn-modificar-autorizacion" data-id="' + data + '" title="Modificar autorización"><span class="text-primary fas fa-edit"></span></a>';
+                            }
                             if (row.estado === 'Autorizado' && puedeDesautorizar) {
                                 html += '<a href="#" class="btn btn-link p-0 btn-desautorizar" data-id="' + data + '" title="Desautorizar"><span class="text-danger fas fa-undo"></span></a>';
                             }
@@ -255,17 +259,24 @@
                 $('#btnAutorizarLote').prop('disabled', seleccionados.length === 0);
             }
 
+            // El mismo modal sirve para autorizar y para modificar una autorización
+            var modoModal = 'autorizar';
+
             // Open authorize modal (single)
-            $('#tablaAuditoria tbody').on('click', '.btn-autorizar', function (e) {
+            $('#tablaAuditoria tbody').on('click', '.btn-autorizar, .btn-modificar-autorizacion', function (e) {
                 e.preventDefault();
                 var id = $(this).data('id');
+                modoModal = $(this).hasClass('btn-modificar-autorizacion') ? 'modificar' : 'autorizar';
                 $.get("{{ url('auditoria') }}/" + id + "/datos", function (p) {
+                    var modificar = modoModal === 'modificar';
+                    $('#autorizarModal .modal-title').text(modificar ? 'Modificar autorización' : 'Autorizar pago');
+                    $('#btnConfirmarAutorizar').text(modificar ? 'Guardar cambios' : 'Autorizar');
                     $('#autPagoId').val(p.id);
                     $('#autEntidad').val(p.entidad);
                     $('#autMonto').val(fmt(p.monto));
-                    autPagadoAN.set(p.pagado || p.monto);
-                    $('#autContadora').val(p.contadora || '');
-                    $('#autObservaciones').val('');
+                    autPagadoAN.set(p.pagado !== null && p.pagado !== '' ? p.pagado : p.monto);
+                    $('#autContadora').val(p.contadora ? String(p.contadora).substring(0, 10) : '');
+                    $('#autObservaciones').val(modificar ? (p.observaciones || '') : '');
 
                     // Mostrar comprobantes (uno o varios)
                     var $wrap = $('#autComprobantesWrapper').empty();
@@ -290,7 +301,7 @@
             $('#btnConfirmarAutorizar').on('click', function () {
                 var id = $('#autPagoId').val();
                 $.ajax({
-                    url: "{{ url('auditoria') }}/" + id + "/autorizar",
+                    url: "{{ url('auditoria') }}/" + id + "/" + modoModal,
                     type: "POST",
                     data: {
                         _token: CSRF,
@@ -303,7 +314,8 @@
                         tabla.ajax.reload();
                     },
                     error: function (xhr) {
-                        alert(xhr.responseJSON ? xhr.responseJSON.error : 'Error al autorizar');
+                        alert(xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error
+                            : (modoModal === 'modificar' ? 'Error al modificar la autorización' : 'Error al autorizar'));
                     }
                 });
             });

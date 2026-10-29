@@ -333,6 +333,7 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('/{pago}/datos', [AuditoriaController::class, 'datos'])->name('auditoria.datos');
         Route::post('/{pago}/autorizar', [AuditoriaController::class, 'autorizar'])->name('auditoria.autorizar');
         Route::post('/lote', [AuditoriaController::class, 'autorizarLote'])->name('auditoria.autorizarLote');
+        Route::post('/{pago}/modificar', [AuditoriaController::class, 'modificar'])->name('auditoria.modificar');
         Route::delete('/{pago}/desautorizar', [AuditoriaController::class, 'desautorizar'])->name('auditoria.desautorizar');
     });
 
