@@ -254,7 +254,40 @@ $(document).ready(function () {
         });
 
         actualizarTotalesPago();
+        restaurarComprobantesOld();
         return true;
+    }
+
+    /**
+     * Los comprobantes que el usuario había adjuntado vuelven del servidor
+     * (middleware ConservaComprobantes) indexados por la posición de la fila.
+     * Se bajan y se vuelven a meter en el input de esa fila, así se suben de
+     * nuevo con el próximo submit sin que el usuario tenga que hacer nada.
+     */
+    function restaurarComprobantesOld() {
+        var porFila = window.comprobantesOld || {};
+        window.comprobantesOld = {};
+        if (!esVendedor || !window.fetch) return;
+
+        var $filas = $('#cuerpoPago .pago-item');
+        Object.keys(porFila).forEach(function (i) {
+            var uid = $filas.eq(parseInt(i, 10)).data('uid');
+            if (uid === undefined) return;
+
+            (porFila[i] || []).forEach(function (c) {
+                fetch(c.url, { credentials: 'same-origin' })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error(r.status);
+                        return r.blob();
+                    })
+                    .then(function (blob) {
+                        addFilesToRow(uid, [new File([blob], c.nombre, { type: c.mime || blob.type })]);
+                    })
+                    .catch(function () {
+                        alert('No se pudo recuperar el comprobante "' + c.nombre + '". Volvé a adjuntarlo.');
+                    });
+            });
+        });
     }
 
     function actualizarTotalesPago() {
@@ -379,9 +412,16 @@ $(document).ready(function () {
     if (esVendedor) {
         var $filaActiva = null;
         var streamActivo = null;
-        var $modalCamara = $('#capturarComprobanteModal');
+        // El modal se incluye adentro del formulario (cards anidadas): si queda
+        // ahí, el fondo oscuro del modal puede taparlo. Colgado del body no pasa.
+        var $modalCamara = $('#capturarComprobanteModal').appendTo('body');
 
         $('body').on('click', '.btn-capturar-comprobante', function () {
+            // La cámara del navegador solo funciona en https (o localhost)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Este navegador no permite usar la cámara en esta página (hace falta https). Adjuntá el comprobante como archivo.');
+                return;
+            }
             $filaActiva = $(this).closest('.pago-item');
             $modalCamara.modal('show');
         });
@@ -412,6 +452,13 @@ $(document).ready(function () {
 
             var video = document.getElementById('videoComprobante');
             var canvas = document.getElementById('canvasComprobante');
+            if (!video.videoWidth) {
+                alert('La cámara todavía no muestra imagen. Esperá un momento y volvé a tomar la foto.');
+                return;
+            }
+            // Mismo tamaño que la imagen real de la cámara (si no, la foto sale deformada)
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             var ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 

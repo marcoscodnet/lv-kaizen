@@ -7,8 +7,10 @@
     // Las filas de pago las arma cobro.js, así que un error de validación las
     // borraba todas. Se pasan los valores de old() para que las reconstruya
     // con lo que el usuario ya había cargado.
-    // Ojo: los comprobantes adjuntos no se pueden restaurar (el navegador no
-    // deja re-armar un input file), hay que volver a subirlos.
+    // Los comprobantes adjuntos el navegador no los deja re-armar: los guarda en
+    // un temporal el middleware ConservaComprobantes y llegan en
+    // old('comprobantes_conservados'), por posición de fila; cobro.js los
+    // vuelve a cargar en su fila.
     $pagosOld = [];
     foreach ((array) old('entidad_id', []) as $iOld => $entidadIdOld) {
         $pagosOld[] = [
@@ -25,6 +27,7 @@
 
 <script>
     window.pagosOld = @json($pagosOld);
+    window.comprobantesOld = @json((object) old('comprobantes_conservados', []));
 </script>
 
 {{-- Condición de venta: Contado / Crédito (solo vendedor) --}}

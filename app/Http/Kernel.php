@@ -35,6 +35,9 @@ class Kernel extends HttpKernel
             \Illuminate\Session\Middleware\StartSession::class,
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            // Si una operación vuelve al formulario por un error, guarda los
+            // comprobantes adjuntos para que no haya que subirlos de nuevo.
+            \App\Http\Middleware\ConservaComprobantes::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

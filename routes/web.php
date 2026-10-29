@@ -268,6 +268,11 @@ Route::group(['middleware' => ['auth']], function() {
 
     });
 
+// 📎 Comprobantes conservados cuando una operación vuelve al formulario por un error
+    Route::get('comprobantes-temporales/{token}', [\App\Http\Controllers\ComprobanteTemporalController::class, 'show'])
+        ->where('token', '[A-Za-z0-9]{40}')
+        ->name('comprobantes.temporal');
+
 // 📌 Señas (se registran con su forma de pago y se aplican al cobrar motos, artículos o servicios)
     Route::prefix('senias')->name('senias.')->group(function () {
         Route::get('/', [SeniaController::class, 'index'])->name('index');
