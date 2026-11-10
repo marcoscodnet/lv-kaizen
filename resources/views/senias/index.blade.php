@@ -22,6 +22,8 @@
                 Una seña en efectivo queda disponible en el momento. Si se pagó con transferencia, tarjeta u otra forma que
                 requiere autorización, queda <strong>pendiente de autorización</strong> hasta que Auditoría la autorice.
                 Las disponibles se aplican como pago al cobrar una moto, artículos o un servicio del mismo cliente, por lo acreditado.
+                Si el cliente va a usar la seña más adelante no hace falta hacer nada: queda disponible.
+                <strong>Dar por perdida</strong> es solo cuando el cliente desiste y la seña queda para el negocio.
             </p>
             @include('includes.messages')
         </div>
@@ -134,8 +136,9 @@
                                             @csrf
                                             <input type="hidden" name="observacion" class="obs-baja">
                                             <button type="submit" class="btn btn-sm btn-outline-secondary btn-baja"
-                                                    data-mensaje="¿Retener la seña #{{ $s->id }} de {{ optional($s->cliente)->nombre }}? No se devuelve la plata y no se mueve caja ni cuenta.">
-                                                Retener
+                                                    title="El cliente pierde la seña: la plata queda para el negocio y ya no se puede aplicar"
+                                                    data-mensaje="¿Dar por perdida la seña #{{ $s->id }} de {{ optional($s->cliente)->nombre }}?&#10;&#10;El cliente PIERDE la seña: la plata queda para el negocio y la seña ya NO se puede aplicar a otra operación.&#10;&#10;Si el cliente la va a usar más adelante, no hagas nada: la seña queda disponible sola.">
+                                                Dar por perdida
                                             </button>
                                         </form>
                                         <form action="{{ route('senias.destroy', $s->id) }}" method="POST" class="d-inline">
@@ -146,6 +149,19 @@
                                                 Anular
                                             </button>
                                         </form>
+                                    @endcan
+                                @elseif($s->estado === \App\Models\Senia::RETENIDA)
+                                    @can('senia-baja')
+                                        <form action="{{ route('senias.reactivar', $s->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="observacion" class="obs-baja">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary btn-baja"
+                                                    data-mensaje="¿Reactivar la seña #{{ $s->id }} de {{ optional($s->cliente)->nombre }}? Vuelve a quedar disponible para aplicarla a una operación del cliente.">
+                                                Reactivar
+                                            </button>
+                                        </form>
+                                    @else
+                                        -
                                     @endcan
                                 @else
                                     -

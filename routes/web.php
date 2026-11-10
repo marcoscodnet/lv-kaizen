@@ -281,6 +281,7 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('aplicables', [SeniaController::class, 'aplicables'])->name('aplicables');
         Route::post('{senia}/devolver', [SeniaController::class, 'devolver'])->name('devolver');
         Route::post('{senia}/retener', [SeniaController::class, 'retener'])->name('retener');
+        Route::post('{senia}/reactivar', [SeniaController::class, 'reactivar'])->name('reactivar');
         Route::delete('{senia}', [SeniaController::class, 'destroy'])->name('destroy');
     });
 

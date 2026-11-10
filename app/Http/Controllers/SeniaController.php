@@ -42,7 +42,7 @@ class SeniaController extends Controller
     {
         $this->middleware('permission:senia-listar', ['only' => ['index']]);
         $this->middleware('permission:senia-crear', ['only' => ['create', 'store']]);
-        $this->middleware('permission:senia-baja', ['only' => ['devolver', 'retener', 'destroy']]);
+        $this->middleware('permission:senia-baja', ['only' => ['devolver', 'retener', 'reactivar', 'destroy']]);
     }
 
     /* ======================================================================
@@ -382,7 +382,35 @@ class SeniaController extends Controller
             'observacion' => $this->observacion($senia, $request),
         ]);
 
-        return redirect()->back()->with('success', 'Seña #' . $senia->id . ' retenida.');
+        return redirect()->back()->with('success', 'Seña #' . $senia->id . ' retenida: el cliente la pierde y ya no se puede aplicar.');
+    }
+
+    /**
+     * Reactivar una seña retenida: vuelve a quedar vigente para el cliente.
+     * Retener no movió caja ni cuenta, así que deshacerlo tampoco mueve nada.
+     */
+    public function reactivar(Request $request, $id)
+    {
+        $senia = Senia::findOrFail($id);
+
+        if (!$senia->esVisiblePara(auth()->user())) {
+            abort(403, 'No tenés acceso a las señas de otra sucursal.');
+        }
+
+        if ($senia->estado !== Senia::RETENIDA) {
+            return redirect()->back()->withErrors('Solo se puede reactivar una seña retenida. La seña #' . $senia->id . ' está ' . strtolower($senia->estado) . '.');
+        }
+
+        $nota = 'Reactivada el ' . now()->format('d/m/Y') . ' por ' . optional(auth()->user())->name;
+        $motivo = trim((string) $this->sanitizeInput($request->input('observacion')));
+
+        $senia->update([
+            'estado'      => Senia::VIGENTE,
+            'fecha_baja'  => null,
+            'observacion' => trim(($senia->observacion ? $senia->observacion . ' | ' : '') . $nota . ($motivo !== '' ? ': ' . $motivo : '')),
+        ]);
+
+        return redirect()->back()->with('success', 'Seña #' . $senia->id . ' reactivada: ya se puede aplicar a una operación del cliente.');
     }
 
     /**
