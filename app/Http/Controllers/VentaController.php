@@ -588,7 +588,8 @@ class VentaController extends Controller
             'user_id' => 'required',
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
-            'forma' => 'required',
+            // Si se cancela todo con señas no hace falta condición de venta
+            'forma' => 'required_without:senias',
             'monto_unidad' => 'required|numeric|min:0',
             'fecha' => 'required|date_format:d/m/Y H:i:s',
             // Sin filas de cobro alcanza con aplicar señas
@@ -601,6 +602,7 @@ class VentaController extends Controller
 
         $messages = [
             'fecha.required' => 'La fecha es obligatoria.',
+            'forma.required_without' => 'Elegí la condición de venta (Contado o Crédito) o aplicá una seña.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
             'entidad_id.required_without' => 'Debe agregar al menos un pago.',
             'entidad_id.min' => 'Debe agregar al menos un pago.',
@@ -666,7 +668,8 @@ class VentaController extends Controller
                 ? $request->monto_unidad
                 : $request->precio);
             $venta->total = $venta->monto;
-            $venta->forma = $this->sanitizeInput($request->forma);
+            // Pagada solo con señas: queda como Contado
+            $venta->forma = $this->sanitizeInput($request->forma) ?: 'Contado';
             $venta->save();
 
             // Conceptos cargados junto con la moto (patentamiento, seguro, casco).
@@ -807,7 +810,8 @@ class VentaController extends Controller
             'user_id' => 'required',
             'cliente_id' => 'required',
             'sucursal_id' => 'required',
-            'forma' => 'required',
+            // Si se cancela todo con señas no hace falta condición de venta
+            'forma' => 'required_without:senias',
             'monto_unidad' => 'required|numeric|min:0',
             'fecha' => 'required|date_format:d/m/Y H:i:s',
             // Sin filas de cobro alcanza con aplicar señas
@@ -820,6 +824,7 @@ class VentaController extends Controller
 
         $messages = [
             'fecha.required' => 'La fecha es obligatoria.',
+            'forma.required_without' => 'Elegí la condición de venta (Contado o Crédito) o aplicá una seña.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
             'entidad_id.required_without' => 'Debe agregar al menos un pago.',
             'entidad_id.min' => 'Debe agregar al menos un pago.',
@@ -902,7 +907,8 @@ class VentaController extends Controller
                 ? $request->monto_unidad
                 : $request->precio);
             $venta->total = $venta->monto;
-            $venta->forma = $this->sanitizeInput($request->forma);
+            // Pagada solo con señas: queda como Contado
+            $venta->forma = $this->sanitizeInput($request->forma) ?: 'Contado';
             $venta->save();
 
             // Conceptos cargados junto con la moto (patentamiento, seguro, casco).
