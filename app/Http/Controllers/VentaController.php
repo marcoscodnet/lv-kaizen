@@ -1085,11 +1085,15 @@ class VentaController extends Controller
                 $this->reponerStockArticulos($venta->ventaArticulos->piezas);
             }
 
-            $venta->autorizaciones()->delete();
             // Las señas aplicadas vuelven a quedar vigentes para el cliente
             $this->liberarSeniasDe('venta_id', $venta->id);
-            // Lo cobrado queda como seña a favor del cliente
+            // Lo cobrado queda como seña a favor del cliente. Los pagos se mudan
+            // a la seña CON su autorización (quién, cuándo, observaciones): la
+            // plata ya entró y Auditoría ya la controló, anular la venta no lo
+            // deshace. Por eso las autorizaciones se borran recién después, y
+            // solo las de los pagos que quedaron en la venta.
             $senia = $this->pasarCobroASenia($venta);
+            $venta->autorizaciones()->delete();
 
             // Conceptos (patentamiento, seguro...): primero el detalle, que no
             // tiene cascada, y después la venta de artículos.
