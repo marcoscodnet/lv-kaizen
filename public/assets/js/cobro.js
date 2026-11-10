@@ -68,8 +68,10 @@ $(document).ready(function () {
         });
     }
 
+    // Arranca sin forma de pago elegida: que el vendedor la elija a conciencia
+    // (antes quedaba la primera de la lista, p. ej. "Cheque físico").
     function getEntidadOptions(forma) {
-        return entidadsData
+        return '<option value="">Seleccionar...</option>' + entidadsData
             .filter(function (e) { return e.forma === forma; })
             .map(function (e) {
                 return '<option value="' + e.id + '" data-autorizacion="' + (e.autorizacion ? 1 : 0) + '" data-tangible="' + (e.tangible ? 1 : 0) + '">' + e.nombre + '</option>';
@@ -125,8 +127,9 @@ $(document).ready(function () {
                     </div>` : '';
 
         return `
-            <div class="card p-3 mb-3 pago-item" data-uid="${uid}">
+            <div class="card p-3 mb-3 pago-item" data-uid="${uid}" data-forma="${forma || ''}">
                 <input type="hidden" name="pago_uid[]" value="${uid}">
+                ${forma ? `<div class="mb-2"><span class="badge ${forma === 'Contado' ? 'bg-success' : 'bg-info'}">${forma}</span></div>` : ''}
                 <div class="row">
                     <div class="col-md-4">
                         <label>Forma de pago</label>
@@ -342,21 +345,12 @@ $(document).ready(function () {
         }
     }
 
-    // Show/hide the proof block based on whether the selected entity requires authorization
+    // Comprobantes en TODAS las formas de pago, efectivo incluido: los chicos
+    // sacan foto a los dólares o al cheque físico para controlarlos después.
     function toggleComprobante($select) {
-        var $row = $select.closest('.pago-item');
-        var $wrapper = $row.find('.comprobante-wrapper');
+        var $wrapper = $select.closest('.pago-item').find('.comprobante-wrapper');
         if ($wrapper.length === 0) return; // Not present in auditor context
-
-        // Show the proof block for every payment method EXCEPT physical cash (tangible entity)
-        var esEfectivo = parseInt($select.find('option:selected').data('tangible'), 10) === 1;
-
-        if (!esEfectivo) {
-            $wrapper.css('display', 'flex');
-        } else {
-            $wrapper.hide();
-            clearRowFiles($row.data('uid'));
-        }
+        $wrapper.css('display', 'flex');
     }
 
     $(document).on('forma:changed', function (e, forma) {

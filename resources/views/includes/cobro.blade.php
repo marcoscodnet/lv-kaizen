@@ -49,16 +49,6 @@
     </div>
 @endif
 
-<div class="row mb-2 mt-2">
-    <div class="col">
-        @if($esVendedor)
-            <button type="button" id="addItemPago" class="btn btn-success btn-sm" style="display:none">
-                <i class="fa fa-plus"></i> Agregar pago
-            </button>
-        @endif
-    </div>
-</div>
-
 <div id="cuerpoPago" style="display:none">
     @isset($pagosExistentes)
         @foreach($pagosExistentes as $i => $pago)
@@ -67,8 +57,11 @@
                 $esEfectivo = $entidadPago && $entidadPago->tangible;
                 $uid = 'e' . $i;
             @endphp
-            <div class="card p-3 mb-3 pago-item" data-uid="{{ $uid }}">
+            <div class="card p-3 mb-3 pago-item" data-uid="{{ $uid }}" data-forma="{{ optional($entidadPago)->forma }}">
                 <input type="hidden" name="pago_uid[]" value="{{ $uid }}">
+                @if(optional($entidadPago)->forma)
+                    <div class="mb-2"><span class="badge {{ $entidadPago->forma === 'Contado' ? 'bg-success' : 'bg-info' }}">{{ $entidadPago->forma }}</span></div>
+                @endif
                 <div class="row">
                     <div class="col-md-4">
                         <label>Forma de pago</label>
@@ -123,8 +116,8 @@
                     </div>
                 </div>
 
-                {{-- Comprobantes: visibles salvo efectivo --}}
-                <div class="row mt-2 comprobante-wrapper" style="display: {{ $esEfectivo ? 'none' : 'flex' }};">
+                {{-- Comprobantes: en todas las formas de pago (también efectivo, dólares, cheque físico) --}}
+                <div class="row mt-2 comprobante-wrapper" style="display: flex;">
                     <div class="col-md-12">
                         <label>Comprobantes</label>
 
@@ -185,6 +178,17 @@
         @endforeach
     @endisset
 </div>
+
+{{-- Debajo de los pagos: cada pago nuevo aparece arriba del botón y el botón va bajando --}}
+@if($esVendedor)
+    <div class="row mb-2">
+        <div class="col">
+            <button type="button" id="addItemPago" class="btn btn-success btn-sm" style="display:none">
+                <i class="fa fa-plus"></i> Agregar pago
+            </button>
+        </div>
+    </div>
+@endif
 
 <div class="row mt-2" id="totalesPago" style="display:none">
     <div class="col-md-3">

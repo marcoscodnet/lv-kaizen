@@ -461,11 +461,14 @@ class ServicioController extends Controller
             'entrega' => 'nullable|date',
             'mano_de_obra' => 'nullable|numeric|min:0',
             'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
+            // Las filas de pago arrancan sin forma de pago: hay que elegirla
+            'entidad_id.*' => 'required',
         ];
 
 
         // Definir los mensajes de error personalizados
         $messages = [
+            'entidad_id.*.required' => 'Elegí la forma de pago de cada pago cargado.',
 
             'year.required' => 'El año es obligatorio.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
@@ -715,11 +718,14 @@ class ServicioController extends Controller
             'tiempo' => 'required_if:pagado,1',
             'diagnostico' => 'required_if:pagado,1',
             'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
+            // Las filas de pago arrancan sin forma de pago: hay que elegirla
+            'entidad_id.*' => 'required',
         ];
 
 
         // Definir los mensajes de error personalizados
         $messages = [
+            'entidad_id.*.required' => 'Elegí la forma de pago de cada pago cargado.',
 
             'year.required' => 'El año es obligatorio.',
             'sucursal_id.required' => 'Debe seleccionar una sucursal.',
