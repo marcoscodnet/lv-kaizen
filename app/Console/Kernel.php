@@ -31,7 +31,16 @@ class Kernel extends ConsoleKernel
         // Cierre automático de fin de día: a las 00:00 se cierran las cajas que
         // quedaron abiertas de días anteriores. Si un administrador reabre una
         // caja vieja, queda abierta hasta la medianoche siguiente.
-        $schedule->command('cajas:cerrar-vencidas')
+        //
+        // Se usa call() y no command(): command() lanza un proceso aparte con
+        // proc_open, y el hosting la tiene deshabilitada ("The Process class
+        // relies on proc_open..."), así que el comando nunca llegaba a correr.
+        // call() + Artisan::call() lo ejecuta dentro del mismo proceso.
+        // Cualquier tarea nueva del scheduler tiene que ir así también.
+        $schedule->call(function () {
+            \Illuminate\Support\Facades\Artisan::call('cajas:cerrar-vencidas');
+        })
+            ->name('cajas:cerrar-vencidas')
             ->dailyAt('00:00')
             ->withoutOverlapping();
     }
