@@ -39,6 +39,22 @@
             });
         });
     </script>
+    <script>
+        // Los importes (AutoNumeric) no usan el autocompletado de Chrome: si se
+        // elige un valor de la lista ("33.000,00"), Chrome lo pega sin pasar por
+        // AutoNumeric y el importe llega mal o se rechaza. Vale también para las
+        // filas que se agregan después (por eso se engancha al foco).
+        (function () {
+            var SELECTOR = '.formato-numero, .formato-numero-pago';
+            function apagar(el) {
+                if (el && el.matches && el.matches(SELECTOR)) el.setAttribute('autocomplete', 'off');
+            }
+            document.addEventListener('focusin', function (e) { apagar(e.target); }, true);
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll(SELECTOR).forEach(apagar);
+            });
+        })();
+    </script>
 
 
 

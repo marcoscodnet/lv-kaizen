@@ -83,7 +83,7 @@
                     </div>
                     <div class="col-md-3">
                         <label>Importe</label>
-                        <input type="text" name="monto[]" class="form-control formato-numero"
+                        <input type="text" name="monto[]" class="form-control formato-numero" autocomplete="off"
                                value="{{ old('monto.'.$i, $pago->monto) }}"
                             {{ $esAuditor ? 'readonly' : 'required' }}>
                     </div>
@@ -103,7 +103,7 @@
                     {{-- Campos del auditor: solo visibles en contexto auditor --}}
                     <div class="col-md-2 campos-auditor" style="display: {{ $esAuditor ? 'block' : 'none' }};">
                         <label>Acreditado</label>
-                        <input type="text" name="pagado[]" class="form-control formato-numero"
+                        <input type="text" name="pagado[]" class="form-control formato-numero" autocomplete="off"
                                value="{{ old('pagado.'.$i, $pago->pagado) }}">
                     </div>
                 </div>

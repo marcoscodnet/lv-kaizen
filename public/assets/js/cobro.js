@@ -108,7 +108,7 @@ $(document).ready(function () {
         var camposAuditorHtml = `
                 <div class="col-md-2 campos-auditor" style="display:${esAuditor ? 'block' : 'none'};">
                     <label>Acreditado</label>
-                    <input type="text" name="pagado[]" class="form-control formato-numero-pago">
+                    <input type="text" name="pagado[]" class="form-control formato-numero-pago" autocomplete="off">
                 </div>`;
 
         var fechaContadoraHtml = `
@@ -139,7 +139,7 @@ $(document).ready(function () {
                     </div>
                     <div class="col-md-3">
                         <label>Importe</label>
-                        <input type="text" name="monto[]" class="form-control formato-numero-pago" ${esAuditor ? 'readonly' : 'required'}>
+                        <input type="text" name="monto[]" class="form-control formato-numero-pago" autocomplete="off" ${esAuditor ? 'readonly' : 'required'}>
                     </div>
                     <div class="col-md-3">
                         <label class="labelFechaPago">${labelFecha}</label>
