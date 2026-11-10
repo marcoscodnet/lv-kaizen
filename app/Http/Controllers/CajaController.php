@@ -32,6 +32,13 @@ class CajaController extends Controller
         $this->middleware('permission:caja-reabrir', ['only' => ['reabrir']]);
         $this->middleware('permission:caja-arqueo', ['only' => ['arqueo']]);
 
+        // Red de seguridad del cierre automático: si el cron de medianoche no
+        // corrió, la caja de un día anterior se cierra apenas alguien entra.
+        $this->middleware(function ($request, $next) {
+            Caja::cerrarVencidas();
+            return $next($request);
+        });
+
     }
 
     // Listado de cajas

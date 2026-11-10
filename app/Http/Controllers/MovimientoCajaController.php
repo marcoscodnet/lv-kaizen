@@ -18,6 +18,13 @@ class MovimientoCajaController extends Controller
         $this->middleware('permission:caja-movimiento-editar', ['only' => ['edit','update']]);
         $this->middleware('permission:caja-movimiento-eliminar', ['only' => ['destroy']]);
         $this->middleware('permission:caja-acreditar', ['only' => ['acreditar']]);
+
+        // Red de seguridad del cierre automático: si el cron de medianoche no
+        // corrió, la caja de un día anterior se cierra apenas alguien entra.
+        $this->middleware(function ($request, $next) {
+            Caja::cerrarVencidas();
+            return $next($request);
+        });
     }
 
     // Listado de movimientos (opcional)
@@ -32,6 +39,12 @@ class MovimientoCajaController extends Controller
     {
         $caja = Caja::findOrFail($caja_id);
         $this->autorizarCaja($caja);
+
+        if ($caja->estado === 'Cerrada') {
+            return redirect()->route('cajas.show', $caja->id)
+                ->withErrors('La caja está cerrada: no se pueden registrar movimientos.');
+        }
+
         $conceptos = Concepto::where('activo', true)->get();
         $entidads = Entidad::where('activa', true)->where('tangible', true)->get();
 
@@ -52,7 +65,15 @@ class MovimientoCajaController extends Controller
             'referencia' => 'nullable|string|max:255'
         ]);
 
-        $this->autorizarCaja(Caja::findOrFail($request->caja_id));
+        $caja = Caja::findOrFail($request->caja_id);
+        $this->autorizarCaja($caja);
+
+        // Antes no había control: se podían cargar movimientos en cualquier caja,
+        // incluso cerrada o de un día anterior.
+        if ($caja->estado === 'Cerrada') {
+            return redirect()->route('cajas.show', $caja->id)
+                ->withErrors('La caja está cerrada: no se pueden registrar movimientos.');
+        }
 
         DB::transaction(function () use ($request) {
             MovimientoCaja::create([
@@ -172,8 +193,15 @@ class MovimientoCajaController extends Controller
     // Acreditar movimiento
     public function acreditar($movimiento_id)
     {
-        $mov = MovimientoCaja::findOrFail($movimiento_id);
+        $mov = MovimientoCaja::with('caja')->findOrFail($movimiento_id);
         $this->autorizarCaja($mov->caja);
+
+        // Acreditar cambia el final de la caja: en una cerrada el arqueo ya no cerraría.
+        if ($mov->caja->estado === 'Cerrada') {
+            return redirect()->route('cajas.show', $mov->caja_id)
+                ->withErrors('No se pueden acreditar movimientos de una caja cerrada.');
+        }
+
         $mov->update(['acreditado' => true]);
 
         return redirect()->route('cajas.show', $mov->caja_id)
