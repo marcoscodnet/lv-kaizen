@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <form role="form" action="{{ route('documentos.update',$documento->id) }}" method="post" >
+            <form role="form" action="{{ route('documentos.update',$documento->id) }}" method="post" enctype="multipart/form-data">
                 {{ csrf_field() }}
                 {{ method_field('PUT') }}
                 <div class="tab-content">

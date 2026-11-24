@@ -30,25 +30,6 @@
     window.comprobantesOld = @json((object) old('comprobantes_conservados', []));
 </script>
 
-{{-- Condición de venta: Contado / Crédito (solo vendedor) --}}
-@if($esVendedor)
-    <div class="row">
-        <div class="col-lg-3">
-            <div class="form-group">
-                <label for="forma">Condición de venta</label>
-                <select name="forma" id="forma" class="form-control">
-                    <option value="">Seleccionar...</option>
-                    @foreach (config('formas') as $key => $label)
-                        <option value="{{ $key }}" {{ old('forma', $formaActual ?? '') == $key ? 'selected' : '' }}>
-                            {{ $label }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-    </div>
-@endif
-
 <div id="cuerpoPago" style="display:none">
     @isset($pagosExistentes)
         @foreach($pagosExistentes as $i => $pago)
@@ -179,11 +160,26 @@
     @endisset
 </div>
 
-{{-- Debajo de los pagos: cada pago nuevo aparece arriba del botón y el botón va bajando --}}
+{{-- Debajo de los pagos: la condición de venta (Contado / Crédito) y el botón
+     van juntos y bajan a medida que se agregan pagos. Se elige la condición,
+     se agrega el pago, se cambia la condición, se agrega otro, y así. --}}
 @if($esVendedor)
-    <div class="row mb-2">
-        <div class="col">
-            <button type="button" id="addItemPago" class="btn btn-success btn-sm" style="display:none">
+    <div class="row mb-2 align-items-end">
+        <div class="col-lg-3">
+            <div class="form-group mb-0">
+                <label for="forma">Condición de venta</label>
+                <select name="forma" id="forma" class="form-control">
+                    <option value="">Seleccionar...</option>
+                    @foreach (config('formas') as $key => $label)
+                        <option value="{{ $key }}" {{ old('forma', $formaActual ?? '') == $key ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-auto">
+            <button type="button" id="addItemPago" class="btn btn-success" style="display:none">
                 <i class="fa fa-plus"></i> Agregar pago
             </button>
         </div>
