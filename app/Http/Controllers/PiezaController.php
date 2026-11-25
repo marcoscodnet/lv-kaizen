@@ -23,7 +23,8 @@ class PiezaController extends Controller
     {
         $this->middleware('permission:pieza-listar|pieza-crear|pieza-editar|pieza-eliminar|pieza-modificar-descripcion', ['only' => ['index','store']]);
 
-        $this->middleware('permission:pieza-crear', ['only' => ['create','store']]);
+        // La carga masiva es crear artículos: mismo permiso que "Nueva"
+        $this->middleware('permission:pieza-crear', ['only' => ['create','store','createMasivo','storeMasivo','verificarCodigosMasivo']]);
 
         // Ahora ambos permisos pueden entrar a edit/update
         $this->middleware('permission:pieza-editar|pieza-modificar-descripcion', ['only' => ['edit','update']]);

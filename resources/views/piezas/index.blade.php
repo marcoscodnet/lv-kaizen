@@ -17,6 +17,7 @@
                 <div class="col-8 col-sm-auto text-end ps-2">
 
                     <div id="table-customers-replace-element">
+                        @can('pieza-crear')
                         <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center" href="{{ route('piezas.create') }}">
                             <span class="fas fa-plus"></span>
                             <span class="d-none d-sm-inline-block ms-2">Nueva</span>
@@ -25,6 +26,7 @@
                             <span class="fas fa-layer-group"></span>
                             <span class="d-none d-sm-inline-block ms-2">Carga masiva</span>
                         </a>
+                        @endcan
 
                         <a class="btn btn-falcon-default btn-sm d-inline-flex align-items-center ms-2"
                            href="#"
@@ -196,12 +198,9 @@
                                 actionsHtml += '<a href="{{ route("piezas.show", ":id") }}" class="btn btn-link p-0" alt="Ver" title="Ver" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-search"></span></a>'.replace(':id', row.id);
                             @endcan
                             // Agregar enlace de edición si el usuario tiene permiso
-                            @can('pieza-editar')
+                            @canany(['pieza-editar','pieza-modificar-descripcion'])
                                 actionsHtml += '<a href="{{ route("piezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
-                            @endcan
-                                @can('pieza-modificar-descripcion')
-                                actionsHtml += '<a href="{{ route("piezas.edit", ":id") }}" class="btn btn-link p-0" alt="Editar" title="Editar" data-bs-toggle="tooltip" data-bs-placement="top"><span class="text-500 fas fa-edit"></span></a>'.replace(':id', row.id);
-                            @endcan
+                            @endcanany
 
                             // Agregar formulario de eliminación si el pieza tiene permiso
                             @can('pieza-eliminar')
