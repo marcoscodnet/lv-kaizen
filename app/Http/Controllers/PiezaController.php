@@ -49,6 +49,24 @@ class PiezaController extends Controller
      * Subconsulta de stock actual. Si se filtra por sucursal, suma solo el stock
      * de esa sucursal; si no ("Todas"), suma el de todas.
      */
+    /**
+     * Guarda la foto capturada (base64 en el campo "foto") en public/images/piezas.
+     * Devuelve la ruta relativa a guardar en la DB, o null si no vino foto.
+     */
+    private function guardarFotoBase64(Request $request)
+    {
+        if (!$request->filled('foto')) {
+            return null;
+        }
+
+        $data = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('foto'));
+        $fileName = 'pieza_' . time() . '.png';
+
+        file_put_contents(public_path('images/piezas/'.$fileName), base64_decode($data));
+
+        return 'piezas/'.$fileName;
+    }
+
     private function sqlStockActual($sucursal_id)
     {
         $filtroSucursal = ($sucursal_id && $sucursal_id != '-1')
@@ -360,29 +378,14 @@ class PiezaController extends Controller
             ]);
 
 
-            // Manejar la foto si viene en base64
-            if ($request->filled('foto')) {
-                $data = preg_replace('#^data:image/\w+;base64,#i', '', $request->input('foto'));
-                $image = base64_decode($data);
-
-                $fileName = 'pieza_' . time() . '.png';
-                $filePath = 'images/piezas/'.$fileName;
-
-                // Guardar directamente en public
-                file_put_contents(public_path($filePath), $image);
-
-                $input['foto'] = 'piezas/'.$fileName;
-            }
-
             $input = $this->sanitizeInput($request->all());
 
-            // Mantener la ruta de la foto si se cargó
-            if (isset($filePath)) {
-                $input['foto'] = 'piezas/'.$fileName;
-            } else {
-                // No se capturó foto nueva: conservar la que ya tenía.
-                // (el hidden "foto" llega vacío -> null por ConvertEmptyStringsToNull y la pisaba)
-                unset($input['foto']);
+            // Foto: solo se pisa si se capturó una nueva; si no, se conserva la que tenía.
+            // (el hidden "foto" llega vacío -> null por ConvertEmptyStringsToNull y la pisaba)
+            unset($input['foto']);
+            $foto = $this->guardarFotoBase64($request);
+            if ($foto) {
+                $input['foto'] = $foto;
             }
 
             try{
@@ -410,13 +413,21 @@ class PiezaController extends Controller
                 throw $e;
             }
         }
-        // Si solo puede modificar descripción
+        // Sin "editar artículo": puede modificar descripción, tipo y foto (no código, costos, stock ni ubicaciones)
         elseif ($request->user()->can('pieza-modificar-descripcion')) {
             $this->validate($request, [
                 'descripcion' => 'required|string|max:500',
+                'tipo_pieza_id' => 'required|integer|exists:tipo_piezas,id',
             ]);
 
-            $pieza->descripcion = $request->input('descripcion');
+            $pieza->descripcion = $this->sanitizeInput($request->input('descripcion'));
+            $pieza->tipo_pieza_id = $request->input('tipo_pieza_id');
+
+            $foto = $this->guardarFotoBase64($request);
+            if ($foto) {
+                $pieza->foto = $foto;
+            }
+
             $pieza->save();
         }
         // Si no tiene permisos, prohibir

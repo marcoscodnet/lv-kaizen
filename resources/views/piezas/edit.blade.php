@@ -37,7 +37,7 @@
                             </div>
                             <div class="col-lg-2">
                                 <label for="tipo_pieza_id">Tipo</label>
-                                <select id="tipo_pieza_id" name="tipo_pieza_id" class="form-control js-example-basic-single" required @cannot('pieza-editar') disabled @endcannot>
+                                <select id="tipo_pieza_id" name="tipo_pieza_id" class="form-control js-example-basic-single" required>
                                     <option value="">Seleccione...</option>
                                     @foreach($tipos as $tipoId => $tipo)
                                         <option value="{{ $tipoId }}" {{ old('tipo_pieza_id',$pieza->tipo_pieza_id) == $tipoId ? 'selected' : '' }}>
@@ -49,7 +49,7 @@
                             <div class="col-12 col-lg-5">
                                 <div class="form-group">
                                     <label for="descripcion">Descripción</label>
-                                    <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="@if (old('descripcion')){{ old('descripcion') }}@else{{ $pieza->descripcion }}@endif" required @cannot('pieza-editar') @cannot('pieza-modificar-descripcion') disabled @endcannot @endcannot>
+                                    <input type="text" class="form-control" id="descripcion" name="descripcion" placeholder="Descripcion" value="@if (old('descripcion')){{ old('descripcion') }}@else{{ $pieza->descripcion }}@endif" required>
                                 </div>
                             </div>
                         </div>
@@ -117,7 +117,7 @@
                                         <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
                                         <img id="photo" src="{{ $pieza->foto ? asset('images/'.$pieza->foto) : '' }}"  alt="Foto actual" style="margin-top:10px; max-width:320px; border:1px solid #ccc;">
                                     </div>
-                                    <button type="button" id="capture" class="btn btn-info mt-2" @cannot('pieza-editar') disabled @endcannot>📸 Capturar</button>
+                                    <button type="button" id="capture" class="btn btn-info mt-2">📸 Capturar</button>
                                     <input type="hidden" name="foto" id="foto">
                                 </div>
                             </div>
