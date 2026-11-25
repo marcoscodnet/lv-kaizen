@@ -113,7 +113,7 @@
                                             <input type="text" name="precio_minimo[]" class="form-control formato-numero" value="{{ $precioMinimo }}">
                                         </td> --}}
                                         <td>
-                                            <input type="number" name="cantidad[]" class="form-control" value="{{ $cantidad }}">
+                                            <input type="number" name="cantidad[]" class="form-control" value="{{ $cantidad }}" min="1" step="1" required>
                                         </td>
                                         <td style="width: 10%;">
                                             <input type="text" name="precio[]" class="form-control formato-numero" value="{{ $precio }}">
@@ -566,7 +566,7 @@
                 </td>
                 {{-- <td><input type="text" name="costo[]" class="form-control formato-numero costo" readonly></td>
                 <td><input type="text" name="precio_minimo[]" class="form-control formato-numero precio_minimo" readonly></td> --}}
-                <td><input type="number" name="cantidad[]" class="form-control cantidad" required></td>
+                <td><input type="number" name="cantidad[]" class="form-control cantidad" min="1" step="1" required></td>
                 <td style="width: 10%;"><input type="text" name="precio[]" class="form-control formato-numero precio" required></td>
                 <td><a href="#" class="btn btn-danger btn-sm removeRow"><i class="fa fa-times text-white"></i></a></td>
             </tr>

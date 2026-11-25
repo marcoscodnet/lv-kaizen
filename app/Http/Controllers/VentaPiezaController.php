@@ -615,6 +615,9 @@ class VentaPiezaController extends Controller
             'fecha'        => 'required|date',
             'pieza_id'     => 'required|array|min:1',
             'pieza_id.*'   => 'required|distinct',
+            // Sin cantidad la línea suma $0 y la venta cierra con excedente
+            'cantidad'     => 'required|array',
+            'cantidad.*'   => 'required|integer|min:1',
             // Las filas de pago arrancan sin forma de pago: hay que elegirla
             'entidad_id.*' => 'required_if:destino,Salón',
             'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
@@ -626,6 +629,9 @@ class VentaPiezaController extends Controller
             'pieza_id.min'          => 'Debe agregar al menos un artículo.',
             'pieza_id.*.required'   => 'Debe seleccionar un artículo.',
             'pieza_id.*.distinct'   => 'No puede repetir artículos.',
+            'cantidad.*.required'   => 'Debe ingresar la cantidad de cada artículo.',
+            'cantidad.*.integer'    => 'La cantidad debe ser un número entero.',
+            'cantidad.*.min'        => 'La cantidad debe ser al menos 1.',
             'entidad_id.*.required_if' => 'Elegí la forma de pago de cada pago cargado.',
             'comprobante.*.mimes'   => 'El comprobante debe ser JPG, PNG o PDF.',
             'comprobante.*.max'     => 'El comprobante no puede superar los 5MB.',
@@ -684,6 +690,9 @@ class VentaPiezaController extends Controller
             'fecha'        => 'required|date',
             'pieza_id'     => 'required|array|min:1',
             'pieza_id.*'   => 'required|distinct',
+            // Sin cantidad la línea suma $0 y la venta cierra con excedente
+            'cantidad'     => 'required|array',
+            'cantidad.*'   => 'required|integer|min:1',
             // Las filas de pago arrancan sin forma de pago: hay que elegirla
             'entidad_id.*' => 'required_if:destino,Salón',
             'comprobante.*' => 'nullable|file|mimes:jpeg,png,pdf|max:5120',
@@ -695,6 +704,9 @@ class VentaPiezaController extends Controller
             'pieza_id.min'          => 'Debe agregar al menos un artículo.',
             'pieza_id.*.required'   => 'Debe seleccionar un artículo.',
             'pieza_id.*.distinct'   => 'No puede repetir artículos.',
+            'cantidad.*.required'   => 'Debe ingresar la cantidad de cada artículo.',
+            'cantidad.*.integer'    => 'La cantidad debe ser un número entero.',
+            'cantidad.*.min'        => 'La cantidad debe ser al menos 1.',
             'entidad_id.*.required_if' => 'Elegí la forma de pago de cada pago cargado.',
             'comprobante.*.mimes'   => 'El comprobante debe ser JPG, PNG o PDF.',
             'comprobante.*.max'     => 'El comprobante no puede superar los 5MB.',
