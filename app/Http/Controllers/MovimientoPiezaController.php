@@ -304,9 +304,10 @@ class MovimientoPiezaController extends Controller
                 StockPieza::create([
                     'pieza_id'    => $piezaId,
                     'sucursal_id' => $sucursalOrigen,
+                    'remito'      => 'Movimiento anulado',
                     'cantidad'    => $cantidad,
                     'ingreso'     => $movimiento->fecha,
-                    'inicial'     => 0
+                    'inicial'     => $cantidad,
                 ]);
 
                 // borrar detalle
@@ -724,9 +725,10 @@ class MovimientoPiezaController extends Controller
                 StockPieza::create([
                     'pieza_id'    => $piezaId,
                     'sucursal_id' => $movimiento->sucursal_destino_id,
+                    'remito'      => 'Movimiento',
                     'cantidad'    => $cantidad,
                     'ingreso'     => now(),
-                    'inicial'     => 0,
+                    'inicial'     => $cantidad,
                 ]);
             }
 

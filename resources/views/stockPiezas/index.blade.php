@@ -93,7 +93,6 @@
                         <th scope="col">Tipo</th>
                         <th scope="col">Descripción</th>
                         <th scope="col">Cant. Inicial</th>
-                        <th scope="col">Cant. Actual</th>
                         <th scope="col">Costo</th>
                         <th scope="col">Precio mín.</th>
                         <th scope="col">Sucursal</th>
@@ -183,12 +182,21 @@
                     }
                 },
                 columns: [
-                    { data: 'remito', name: 'remito' },
+                    {
+                        data: 'remito',
+                        name: 'remito',
+                        render: function (data, type, row) {
+                            // Filas viejas generadas por movimientos entre sucursales: sin remito e inicial 0
+                            if (!data && Number(row.inicial) === 0) {
+                                return 'Movimiento';
+                            }
+                            return data ?? '';
+                        }
+                    },
                     { data: 'codigo', name: 'codigo' },
                     { data: 'tipo_nombre', name: 'tipo_nombre' },
                     { data: 'descripcion', name: 'descripcion' },
                     { data: 'inicial', name: 'inicial' },
-                    { data: 'cantidad', name: 'cantidad' },
                     { data: 'costo', name: 'costo', render: formatCurrency },
                     { data: 'precio_minimo', name: 'precio_minimo' , render: formatCurrency},
                     { data: 'sucursal_nombre', name: 'sucursal_nombre' },
@@ -243,7 +251,7 @@
                     },
                     { data: 'id', name: 'id', visible: false }, // Columna oculta para ordenar
                 ],
-                order: [[10, 'desc']], // Ordenar por la columna oculta 'id' descendente
+                order: [[9, 'desc']], // Ordenar por fecha de ingreso descendente
                 "language": {
                     "url": "{{ asset('bower_components/datatables.net/lang/es-AR.json') }}"
                 },

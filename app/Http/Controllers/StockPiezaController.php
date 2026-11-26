@@ -48,7 +48,8 @@ class StockPiezaController extends Controller
 
     public function dataTable(Request $request)
     {
-        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.cantidad','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','proveedors.nombre','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
+        // Debe coincidir 1 a 1 con las columnas del DataTable (stockPiezas/index). "Cant. Actual" se sacó de la vista.
+        $columnas = ['stock_piezas.remito','piezas.codigo','tipo_piezas.nombre','piezas.descripcion','stock_piezas.inicial','stock_piezas.costo','stock_piezas.precio_minimo','sucursals.nombre','proveedors.nombre','stock_piezas.ingreso','stock_piezas.id']; // Define las columnas disponibles
         $columnaOrden = $columnas[$request->input('order.0.column')];
         $orden = $request->input('order.0.dir');
         $busqueda = $request->input('search.value');
