@@ -205,7 +205,9 @@
                         @endcan
 
                         @php
-                            $cajaAbierta = \App\Models\Caja::where('estado', 'Abierta')->first();
+                            $cajaAbierta = \App\Models\Caja::where('estado', 'Abierta')
+                                ->visiblesPara(auth()->user())
+                                ->first();
                         @endphp
 
                         @can('caja-arqueo')

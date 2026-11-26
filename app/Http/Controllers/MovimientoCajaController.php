@@ -30,8 +30,8 @@ class MovimientoCajaController extends Controller
     // Listado de movimientos (opcional)
     public function index()
     {
-        $movimientos = MovimientoCaja::with(['caja', 'concepto', 'entidad'])->latest()->get();
-        return view('movimiento_cajas.index', compact('movimientos'));
+        // There is no standalone list view: cash movements are managed from each cash register
+        return redirect()->route('cajas.index');
     }
 
     // Formulario para crear un movimiento
