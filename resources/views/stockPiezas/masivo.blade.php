@@ -192,10 +192,8 @@
         }
 
         function removeRow(btn) {
-            if(confirm("¿Está seguro que desea eliminar esta fila?")) {
-                btn.closest('tr').remove();
-            }
-
+            // Sin confirmación: es una fila de la carga, todavía no se guardó nada
+            btn.closest('tr').remove();
         }
 
         $(document).ready(function () {
